@@ -1,0 +1,48 @@
+# ============================================================
+# 🚫 Docker Ignore - Insurance Platform
+# ============================================================
+# Exclure les fichiers inutiles du contexte Docker
+# pour accélérer le build et réduire la taille
+# ============================================================
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.gitignore
+
+# Build outputs (on rebuild dans Docker)
+**/target/
+**/*.jar
+**/*.class
+
+# Logs
+**/*.log
+
+# Docker
+docker-compose*.yml
+.dockerignore
+Dockerfile
+
+# Documentation
+*.md
+*.drawio
+*.drawio.png
+docs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment (sécurité)
+.env
+
+# Node (si frontend)
+**/node_modules/
+
+# Test reports
+**/surefire-reports/
+**/failsafe-reports/
