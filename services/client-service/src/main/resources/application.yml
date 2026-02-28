@@ -23,6 +23,8 @@ spring:
       on-profile: docker
   datasource:
     url: jdbc:postgresql://postgres-db:5432/assureflow_db
+server:
+  port: 8080
 
 # Actuator & Prometheus
 management:
