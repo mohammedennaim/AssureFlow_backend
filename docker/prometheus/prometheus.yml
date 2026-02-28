@@ -1,0 +1,60 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'api-gateway'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['api-gateway:8080']
+        labels:
+          service: api-gateway
+
+  - job_name: 'iam-service'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['iam-service:8080']
+        labels:
+          service: iam-service
+
+  - job_name: 'policy-service'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['policy-service:8080']
+        labels:
+          service: policy-service
+
+  - job_name: 'client-service'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['client-service:8080']
+        labels:
+          service: client-service
+
+  - job_name: 'billing-service'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['billing-service:8080']
+        labels:
+          service: billing-service
+
+  - job_name: 'claims-service'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['claims-service:8080']
+        labels:
+          service: claims-service
+
+  - job_name: 'notification-service'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['notification-service:8080']
+        labels:
+          service: notification-service
+
+  - job_name: 'workflow-service'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['workflow-service:8080']
+        labels:
+          service: workflow-service

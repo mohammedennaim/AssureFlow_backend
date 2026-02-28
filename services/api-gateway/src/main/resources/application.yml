@@ -1,0 +1,115 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      # Configuration globale
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+
+      # Routes vers les microservices
+      routes:
+        # --- IAM Service ---
+        - id: iam-service
+          uri: http://iam-service:8080
+          predicates:
+            - Path=/api/v1/auth/**, /api/v1/users/**
+          filters:
+            - StripPrefix=0
+
+        # --- Policy Service ---
+        - id: policy-service
+          uri: http://policy-service:8080
+          predicates:
+            - Path=/api/v1/policies/**
+          filters:
+            - StripPrefix=0
+
+        # --- Client Service ---
+        - id: client-service
+          uri: http://client-service:8080
+          predicates:
+            - Path=/api/v1/clients/**
+          filters:
+            - StripPrefix=0
+
+        # --- Billing Service ---
+        - id: billing-service
+          uri: http://billing-service:8080
+          predicates:
+            - Path=/api/v1/billing/**, /api/v1/invoices/**, /api/v1/payments/**
+          filters:
+            - StripPrefix=0
+
+        # --- Claims Service ---
+        - id: claims-service
+          uri: http://claims-service:8080
+          predicates:
+            - Path=/api/v1/claims/**
+          filters:
+            - StripPrefix=0
+
+        # --- Notification Service ---
+        - id: notification-service
+          uri: http://notification-service:8080
+          predicates:
+            - Path=/api/v1/notifications/**
+          filters:
+            - StripPrefix=0
+
+        # --- Workflow Service ---
+        - id: workflow-service
+          uri: http://workflow-service:8080
+          predicates:
+            - Path=/api/v1/workflows/**
+          filters:
+            - StripPrefix=0
+
+        # --- Swagger UI IAM (via /iam/ prefix) ---
+        - id: iam-swagger-ui
+          uri: http://iam-service:8080
+          predicates:
+            - Path=/iam/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: iam-api-docs
+          uri: http://iam-service:8080
+          predicates:
+            - Path=/iam/v3/api-docs/**
+          filters:
+            - StripPrefix=1
+
+        # --- Swagger UI direct (for internal Swagger calls) ---
+        - id: iam-swagger-direct
+          uri: http://iam-service:8080
+          predicates:
+            - Path=/swagger-ui/**, /v3/api-docs/**
+          filters:
+            - StripPrefix=0
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true

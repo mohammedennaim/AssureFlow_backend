@@ -4,7 +4,6 @@
 # Usage: docker build --build-arg SERVICE_NAME=policy-service -f docker/Dockerfile .
 # ============================================================
 
-# ---- ARG Global ----
 ARG JAVA_VERSION=17
 
 # ============================================================
@@ -12,16 +11,13 @@ ARG JAVA_VERSION=17
 # ============================================================
 FROM eclipse-temurin:${JAVA_VERSION}-jdk-focal AS builder
 
-# Argument pour spécifier quel service builder
 ARG SERVICE_NAME
 
-# Installer Maven et créer un fake toolchains.xml pour satisfaire le plugin local
+# Installer Maven
 RUN apt-get update && \
-    apt-get install -y maven && \
+    apt-get install -y --no-install-recommends maven && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir -p ~/.m2 && \
-    echo '<?xml version="1.0" encoding="UTF-8"?>\n<toolchains>\n  <toolchain>\n    <type>jdk</type>\n    <provides>\n      <version>17</version>\n      <vendor>microsoft</vendor>\n    </provides>\n    <configuration>\n      <jdkHome>/opt/java/openjdk</jdkHome>\n    </configuration>\n  </toolchain>\n</toolchains>' > ~/.m2/toolchains.xml
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -30,7 +26,7 @@ COPY pom.xml ./pom.xml
 COPY shared-kernel/pom.xml ./shared-kernel/pom.xml
 COPY services/${SERVICE_NAME}/pom.xml ./services/${SERVICE_NAME}/pom.xml
 
-# Supprimer les autres modules du pom parent pour éviter l'erreur "Child module does not exist"
+# Supprimer les autres modules du pom parent pour éviter "Child module does not exist"
 RUN sed -i '/<modules>/,/<\/modules>/c\
     <modules>\
         <module>shared-kernel<\/module>\
@@ -38,18 +34,17 @@ RUN sed -i '/<modules>/,/<\/modules>/c\
     <\/modules>' pom.xml
 
 # 2. Télécharger les dépendances (cette couche sera mise en cache)
-RUN mvn dependency:go-offline -pl shared-kernel,services/${SERVICE_NAME} -am -B 2>/dev/null || true
+RUN mvn dependency:go-offline -pl shared-kernel,services/${SERVICE_NAME} -am -B -Ddocker.build=true 2>/dev/null || true
 
 # 3. Copier le code source
 COPY shared-kernel/ ./shared-kernel/
 COPY services/${SERVICE_NAME}/ ./services/${SERVICE_NAME}/
 
-# 4. Builder le service (skip tests pour accélérer le build Docker, et skip toolchains vu qu'on est déjà dans l'image Temurin 17)
-RUN mvn clean package -DskipTests -B -Dtoolchain.skip=true
-
+# 4. Builder le service (skip tests + skip toolchains via profil Maven)
+RUN mvn clean package -DskipTests -B -Ddocker.build=true
 
 # ============================================================
-# 📦 STAGE 2 : RUNTIME (JRE seulement - Image légère ~200MB)
+# 📦 STAGE 2 : RUNTIME (JRE - Image légère)
 # ============================================================
 FROM eclipse-temurin:${JAVA_VERSION}-jre-focal AS runtime
 
@@ -72,18 +67,18 @@ COPY --from=builder /app/services/${SERVICE_NAME}/target/*.jar app.jar
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# Port par défaut (peut être overridé dans docker-compose)
+# Port par défaut
 EXPOSE 8080
 
 # Health check intégré
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
+    CMD curl -sf http://localhost:8080/actuator/health || exit 1
 
-# Variables JVM pour optimiser la mémoire dans Docker
+# Variables JVM optimisées pour les conteneurs
 ENV JAVA_OPTS="-XX:+UseContainerSupport \
                -XX:MaxRAMPercentage=75.0 \
                -XX:InitialRAMPercentage=50.0 \
                -Djava.security.egd=file:/dev/./urandom"
 
-# Lancer l'application - Les logs Spring Boot s'affichent directement dans stdout
+# Lancer l'application
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar app.jar"]

@@ -12,6 +12,7 @@
 
     <modules>
         <module>shared-kernel</module>
+        <module>services/api-gateway</module>
         <module>services/policy-service</module>
         <module>services/client-service</module>
         <module>services/billing-service</module>
