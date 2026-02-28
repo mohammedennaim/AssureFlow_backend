@@ -15,11 +15,13 @@ FROM eclipse-temurin:${JAVA_VERSION}-jdk-focal AS builder
 # Argument pour spécifier quel service builder
 ARG SERVICE_NAME
 
-# Installer Maven
+# Installer Maven et créer un fake toolchains.xml pour satisfaire le plugin local
 RUN apt-get update && \
     apt-get install -y maven && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p ~/.m2 && \
+    echo '<?xml version="1.0" encoding="UTF-8"?>\n<toolchains>\n  <toolchain>\n    <type>jdk</type>\n    <provides>\n      <version>17</version>\n      <vendor>microsoft</vendor>\n    </provides>\n    <configuration>\n      <jdkHome>/opt/java/openjdk</jdkHome>\n    </configuration>\n  </toolchain>\n</toolchains>' > ~/.m2/toolchains.xml
 
 WORKDIR /app
 
@@ -28,6 +30,13 @@ COPY pom.xml ./pom.xml
 COPY shared-kernel/pom.xml ./shared-kernel/pom.xml
 COPY services/${SERVICE_NAME}/pom.xml ./services/${SERVICE_NAME}/pom.xml
 
+# Supprimer les autres modules du pom parent pour éviter l'erreur "Child module does not exist"
+RUN sed -i '/<modules>/,/<\/modules>/c\
+    <modules>\
+        <module>shared-kernel<\/module>\
+        <module>services/'"${SERVICE_NAME}"'<\/module>\
+    <\/modules>' pom.xml
+
 # 2. Télécharger les dépendances (cette couche sera mise en cache)
 RUN mvn dependency:go-offline -pl shared-kernel,services/${SERVICE_NAME} -am -B 2>/dev/null || true
 
@@ -35,8 +44,9 @@ RUN mvn dependency:go-offline -pl shared-kernel,services/${SERVICE_NAME} -am -B 
 COPY shared-kernel/ ./shared-kernel/
 COPY services/${SERVICE_NAME}/ ./services/${SERVICE_NAME}/
 
-# 4. Builder le service (skip tests pour accélérer le build Docker)
-RUN mvn clean package -pl shared-kernel,services/${SERVICE_NAME} -am -DskipTests -B
+# 4. Builder le service (skip tests pour accélérer le build Docker, et skip toolchains vu qu'on est déjà dans l'image Temurin 17)
+RUN mvn clean package -DskipTests -B -Dtoolchain.skip=true
+
 
 # ============================================================
 # 📦 STAGE 2 : RUNTIME (JRE seulement - Image légère ~200MB)
