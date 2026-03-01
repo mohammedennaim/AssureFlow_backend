@@ -75,28 +75,28 @@ spring:
           filters:
             - StripPrefix=0
 
-        # --- Swagger UI IAM (via /iam/ prefix) ---
-        - id: iam-swagger-ui
-          uri: http://iam-service:8080
-          predicates:
-            - Path=/iam/swagger-ui/**
-          filters:
-            - StripPrefix=1
-
+        # --- Swagger API Docs Endpoints ---
         - id: iam-api-docs
           uri: http://iam-service:8080
           predicates:
-            - Path=/iam/v3/api-docs/**
+            - Path=/v3/api-docs/iam-service
           filters:
-            - StripPrefix=1
+            - RewritePath=/v3/api-docs/iam-service, /v3/api-docs
 
-        # --- Swagger UI direct (for internal Swagger calls) ---
-        - id: iam-swagger-direct
-          uri: http://iam-service:8080
+        - id: client-api-docs
+          uri: http://client-service:8080
           predicates:
-            - Path=/swagger-ui/**, /v3/api-docs/**
+            - Path=/v3/api-docs/client-service
           filters:
-            - StripPrefix=0
+            - RewritePath=/v3/api-docs/client-service, /v3/api-docs
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+    url: /v3/api-docs/all
 
 # Actuator
 management:
