@@ -49,6 +49,8 @@ public class PolicyEntity {
     @Column(nullable = false)
     private BigDecimal premiumAmount;
 
+    private BigDecimal coverageAmount;
+
     @OneToMany(mappedBy = "policy", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<CoverageEntity> coverages = new ArrayList<>();

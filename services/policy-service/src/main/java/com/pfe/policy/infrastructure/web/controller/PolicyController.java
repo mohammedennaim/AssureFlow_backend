@@ -60,7 +60,7 @@ public class PolicyController {
         return ResponseEntity.ok(policyService.getAllPolicies());
     }
 
-    @Operation(summary = "Update an existing policy", description = "Updates specific fields of an existing policy (e.g., end date)")
+    @Operation(summary = "Update an existing policy", description = "Updates specific fields of an existing policy")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Policy updated successfully"),
             @ApiResponse(responseCode = "404", description = "Policy not found")
@@ -72,15 +72,71 @@ public class PolicyController {
         return ResponseEntity.ok(policyService.updatePolicy(id, request));
     }
 
-    @Operation(summary = "Cancel a policy", description = "Changes the status of a policy to CANCELLED")
+    @Operation(summary = "Submit a policy", description = "Submits a DRAFT policy for activation")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Policy submitted successfully"),
+            @ApiResponse(responseCode = "404", description = "Policy not found"),
+            @ApiResponse(responseCode = "400", description = "Policy cannot be submitted (invalid status)")
+    })
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<Void> submitPolicy(
+            @Parameter(description = "The unique ID of the policy to submit") @PathVariable String id) {
+        policyService.submitPolicy(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Approve a policy", description = "Approves an active policy")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Policy approved successfully"),
+            @ApiResponse(responseCode = "404", description = "Policy not found"),
+            @ApiResponse(responseCode = "400", description = "Policy cannot be approved (invalid status)")
+    })
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<Void> approvePolicy(
+            @Parameter(description = "The unique ID of the policy to approve") @PathVariable String id) {
+        policyService.approvePolicy(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Reject a policy", description = "Rejects a policy with a reason")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Policy rejected successfully"),
+            @ApiResponse(responseCode = "404", description = "Policy not found"),
+            @ApiResponse(responseCode = "400", description = "Policy cannot be rejected (invalid status)")
+    })
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<Void> rejectPolicy(
+            @Parameter(description = "The unique ID of the policy to reject") @PathVariable String id,
+            @Parameter(description = "Reason for rejection") @RequestParam String reason) {
+        policyService.rejectPolicy(id, reason);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Cancel a policy", description = "Cancels a policy with a reason")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Policy cancelled successfully"),
-            @ApiResponse(responseCode = "404", description = "Policy not found")
+            @ApiResponse(responseCode = "404", description = "Policy not found"),
+            @ApiResponse(responseCode = "400", description = "Policy is already cancelled")
     })
     @PostMapping("/{id}/cancel")
     public ResponseEntity<Void> cancelPolicy(
-            @Parameter(description = "The unique ID of the policy to cancel") @PathVariable String id) {
-        policyService.cancelPolicy(id);
+            @Parameter(description = "The unique ID of the policy to cancel") @PathVariable String id,
+            @Parameter(description = "Reason for cancellation") @RequestParam String reason) {
+        policyService.cancelPolicy(id, reason);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Expire a policy", description = "Marks an active policy as expired with a reason")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Policy expired successfully"),
+            @ApiResponse(responseCode = "404", description = "Policy not found"),
+            @ApiResponse(responseCode = "400", description = "Policy cannot be expired (invalid status)")
+    })
+    @PostMapping("/{id}/expire")
+    public ResponseEntity<Void> expirePolicy(
+            @Parameter(description = "The unique ID of the policy to expire") @PathVariable String id,
+            @Parameter(description = "Reason for expiration") @RequestParam String reason) {
+        policyService.expirePolicy(id, reason);
         return ResponseEntity.noContent().build();
     }
 

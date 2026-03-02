@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -24,6 +25,8 @@ public class PolicyDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private BigDecimal premiumAmount;
+    private BigDecimal coverageAmount;
+    private LocalDateTime createdAt;
     private List<CoverageDto> coverages;
     private List<BeneficiaryDto> beneficiaries;
     private List<PolicyDocumentDto> documents;

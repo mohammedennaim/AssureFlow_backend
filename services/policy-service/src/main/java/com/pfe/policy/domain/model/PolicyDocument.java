@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 public class PolicyDocument {
     private String id;
     private String policyId;
-    private String fileName;
-    private String documentType;
-    private String uploadedBy;
+    private DocumentType documentType;
+    private String filePath;
     private LocalDateTime uploadedAt;
+    private String uploadedBy;
 }

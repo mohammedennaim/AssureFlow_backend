@@ -27,6 +27,7 @@ public interface PolicyEntityMapper {
     @Mapping(target = "policyId", source = "policy.id")
     PolicyDocument toDomain(PolicyDocumentEntity entity);
 
+    @Mapping(target = "updatedAt", ignore = true)
     PolicyEntity toEntity(Policy domain);
 
     @Mapping(target = "policy", ignore = true)

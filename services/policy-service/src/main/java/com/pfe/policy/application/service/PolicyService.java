@@ -17,7 +17,15 @@ public interface PolicyService {
 
     PolicyDto updatePolicy(String id, UpdatePolicyRequest request);
 
-    void cancelPolicy(String id);
+    void cancelPolicy(String id, String reason);
+
+    void submitPolicy(String id);
+
+    void approvePolicy(String id);
+
+    void rejectPolicy(String id, String reason);
+
+    void expirePolicy(String id, String reason);
 
     PolicyDto renewPolicy(String id);
 }

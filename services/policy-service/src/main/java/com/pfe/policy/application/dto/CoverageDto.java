@@ -16,4 +16,5 @@ public class CoverageDto {
     private String coverageType;
     private BigDecimal amount;
     private BigDecimal deductible;
+    private Double percentage;
 }

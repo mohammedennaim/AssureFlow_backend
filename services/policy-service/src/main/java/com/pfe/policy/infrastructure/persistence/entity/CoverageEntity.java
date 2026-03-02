@@ -31,4 +31,6 @@ public class CoverageEntity {
     private BigDecimal amount;
 
     private BigDecimal deductible;
+
+    private Double percentage;
 }

@@ -1,5 +1,6 @@
 package com.pfe.policy.infrastructure.persistence.entity;
 
+import com.pfe.policy.domain.model.DocumentType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,11 +25,12 @@ public class PolicyDocumentEntity {
     @JoinColumn(name = "policy_id", nullable = false)
     private PolicyEntity policy;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String fileName;
+    private DocumentType documentType;
 
     @Column(nullable = false)
-    private String documentType;
+    private String filePath;
 
     @Column(nullable = false)
     private String uploadedBy;

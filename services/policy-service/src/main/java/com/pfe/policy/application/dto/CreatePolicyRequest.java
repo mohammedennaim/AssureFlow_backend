@@ -20,6 +20,7 @@ public class CreatePolicyRequest {
     private LocalDate startDate;
     private LocalDate endDate;
     private BigDecimal premiumAmount;
+    private BigDecimal coverageAmount;
     private List<CoverageDto> coverages;
     private List<BeneficiaryDto> beneficiaries;
 }

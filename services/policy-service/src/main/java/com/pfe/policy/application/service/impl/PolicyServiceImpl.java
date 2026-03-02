@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,6 +31,11 @@ public class PolicyServiceImpl implements PolicyService {
         Policy policy = policyMapper.toDomain(request);
         policy.setPolicyNumber("POL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         policy.setStatus(PolicyStatus.DRAFT);
+        policy.setCreatedAt(LocalDateTime.now());
+
+        if (policy.getCoverageAmount() != null) {
+            policy.calculatePremium();
+        }
 
         if (policy.getCoverages() != null) {
             policy.getCoverages().forEach(c -> c.setPolicyId(policy.getId()));
@@ -72,6 +78,15 @@ public class PolicyServiceImpl implements PolicyService {
         if (request.getEndDate() != null) {
             policy.setEndDate(request.getEndDate());
         }
+        if (request.getPremiumAmount() != null) {
+            policy.setPremiumAmount(request.getPremiumAmount());
+        }
+        if (request.getCoverageAmount() != null) {
+            policy.setCoverageAmount(request.getCoverageAmount());
+        }
+        if (request.getType() != null) {
+            policy.setType(request.getType());
+        }
 
         Policy updatedPolicy = policyRepository.save(policy);
         return policyMapper.toDto(updatedPolicy);
@@ -79,10 +94,46 @@ public class PolicyServiceImpl implements PolicyService {
 
     @Override
     @Transactional
-    public void cancelPolicy(String id) {
+    public void cancelPolicy(String id, String reason) {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
-        policy.cancelPolicy();
+        policy.cancel(reason);
+        policyRepository.save(policy);
+    }
+
+    @Override
+    @Transactional
+    public void submitPolicy(String id) {
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new PolicyNotFoundException(id));
+        policy.submit();
+        policyRepository.save(policy);
+    }
+
+    @Override
+    @Transactional
+    public void approvePolicy(String id) {
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new PolicyNotFoundException(id));
+        policy.approve();
+        policyRepository.save(policy);
+    }
+
+    @Override
+    @Transactional
+    public void rejectPolicy(String id, String reason) {
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new PolicyNotFoundException(id));
+        policy.reject(reason);
+        policyRepository.save(policy);
+    }
+
+    @Override
+    @Transactional
+    public void expirePolicy(String id, String reason) {
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new PolicyNotFoundException(id));
+        policy.expire(reason);
         policyRepository.save(policy);
     }
 
@@ -92,15 +143,16 @@ public class PolicyServiceImpl implements PolicyService {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
 
-        // Simple logic for renewal: duplicate and set new dates
         Policy newPolicy = Policy.builder()
                 .clientId(policy.getClientId())
                 .policyNumber("POL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .type(policy.getType())
                 .status(PolicyStatus.DRAFT)
                 .premiumAmount(policy.getPremiumAmount())
+                .coverageAmount(policy.getCoverageAmount())
                 .startDate(policy.getEndDate().plusDays(1))
                 .endDate(policy.getEndDate().plusYears(1))
+                .createdAt(LocalDateTime.now())
                 .coverages(policy.getCoverages())
                 .beneficiaries(policy.getBeneficiaries())
                 .build();

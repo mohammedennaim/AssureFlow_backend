@@ -17,4 +17,5 @@ public class Coverage {
     private String coverageType;
     private BigDecimal amount;
     private BigDecimal deductible;
+    private Double percentage;
 }

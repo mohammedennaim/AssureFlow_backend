@@ -21,6 +21,7 @@ public interface PolicyMapper {
     @Mapping(target = "policyNumber", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "documents", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     Policy toDomain(CreatePolicyRequest request);
 
     @Mapping(target = "id", ignore = true)
