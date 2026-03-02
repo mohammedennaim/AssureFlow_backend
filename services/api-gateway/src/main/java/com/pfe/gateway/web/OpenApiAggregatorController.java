@@ -23,7 +23,8 @@ public class OpenApiAggregatorController {
     // List of active microservices
     private final List<String> services = List.of(
             "http://iam-service:8080/v3/api-docs",
-            "http://client-service:8080/v3/api-docs"
+            "http://client-service:8080/v3/api-docs",
+            "http://policy-service:8080/v3/api-docs"
     );
 
     public OpenApiAggregatorController(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
@@ -38,7 +39,7 @@ public class OpenApiAggregatorController {
                         .uri(url)
                         .retrieve()
                         .bodyToMono(JsonNode.class)
-                        .onErrorResume(e -> Mono.empty()) // ignore failures
+                        .onErrorResume(e -> Mono.empty())
                 )
                 .collectList()
                 .map(this::mergeJsonNodes);
