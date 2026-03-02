@@ -1,71 +1,129 @@
 package com.pfe.iam.infrastructure.config;
 
+import com.pfe.iam.domain.model.Permission;
 import com.pfe.iam.domain.model.Role;
 import com.pfe.iam.domain.model.User;
-import com.pfe.iam.infrastructure.persistence.repository.UserRepositoryAdapter;
+import com.pfe.iam.domain.model.UserRole;
+import com.pfe.iam.domain.repository.PermissionRepository;
+import com.pfe.iam.domain.repository.RoleRepository;
+import com.pfe.iam.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class DataSeeder implements CommandLineRunner {
 
-    private final UserRepositoryAdapter userRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public void run(String... args) {
         log.info("Checking if database seeder should run...");
+        seedPermissions();
+        seedRoles();
+        seedUsers();
+        log.info("Database seeding completed.");
+    }
 
+    private void seedPermissions() {
+        if (permissionRepository.findAll().isEmpty()) {
+            log.info("Seeding permissions...");
+            String[][] perms = {
+                    {"users", "read"}, {"users", "write"}, {"users", "delete"},
+                    {"policies", "read"}, {"policies", "write"}, {"policies", "approve"},
+                    {"claims", "read"}, {"claims", "write"}, {"claims", "approve"},
+                    {"billing", "read"}, {"billing", "write"}
+            };
+            for (String[] p : perms) {
+                permissionRepository.save(Permission.builder().resource(p[0]).action(p[1]).build());
+            }
+            log.info("Seeded {} permissions", perms.length);
+        }
+    }
+
+    private void seedRoles() {
+        for (UserRole ur : UserRole.values()) {
+            if (!roleRepository.existsByName(ur)) {
+                log.info("Seeding role: {}", ur.name());
+                Role role = Role.builder()
+                        .name(ur)
+                        .description(ur.name() + " role")
+                        .build();
+                roleRepository.save(role);
+            }
+        }
+
+        // Assign all permissions to ADMIN role
+        roleRepository.findByName(UserRole.ADMIN).ifPresent(adminRole -> {
+            if (adminRole.getPermissions().isEmpty()) {
+                List<Permission> allPerms = permissionRepository.findAll();
+                allPerms.forEach(adminRole::grantPermission);
+                roleRepository.save(adminRole);
+                log.info("Assigned {} permissions to ADMIN role", allPerms.size());
+            }
+        });
+    }
+
+    private void seedUsers() {
         if (!userRepository.existsByEmail("admin@assureflow.com")) {
             log.info("Seeding Admin user...");
+            Role adminRole = roleRepository.findByName(UserRole.ADMIN).orElseThrow();
             User admin = User.builder()
                     .id(UUID.randomUUID().toString())
+                    .username("admin")
                     .email("admin@assureflow.com")
                     .password(passwordEncoder.encode("admin123"))
                     .firstName("Super")
                     .lastName("Admin")
                     .active(true)
-                    .roles(Set.of(Role.ADMIN))
+                    .roles(new HashSet<>(Set.of(adminRole)))
                     .build();
             userRepository.save(admin);
         }
 
         if (!userRepository.existsByEmail("agent@assureflow.com")) {
             log.info("Seeding Agent user...");
+            Role agentRole = roleRepository.findByName(UserRole.AGENT).orElseThrow();
             User agent = User.builder()
                     .id(UUID.randomUUID().toString())
+                    .username("agent")
                     .email("agent@assureflow.com")
                     .password(passwordEncoder.encode("agent123"))
                     .firstName("Test")
                     .lastName("Agent")
                     .active(true)
-                    .roles(Set.of(Role.AGENT))
+                    .roles(new HashSet<>(Set.of(agentRole)))
                     .build();
             userRepository.save(agent);
         }
 
         if (!userRepository.existsByEmail("client@assureflow.com")) {
             log.info("Seeding Client user...");
+            Role clientRole = roleRepository.findByName(UserRole.CLIENT).orElseThrow();
             User client = User.builder()
                     .id(UUID.randomUUID().toString())
+                    .username("client")
                     .email("client@assureflow.com")
                     .password(passwordEncoder.encode("client123"))
                     .firstName("Test")
                     .lastName("Client")
                     .active(true)
-                    .roles(Set.of(Role.CLIENT))
+                    .roles(new HashSet<>(Set.of(clientRole)))
                     .build();
             userRepository.save(client);
         }
 
-        log.info("Database seeding completed.");
+        log.info("User seeding completed.");
     }
 }

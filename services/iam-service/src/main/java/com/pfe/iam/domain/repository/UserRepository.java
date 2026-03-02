@@ -2,6 +2,7 @@ package com.pfe.iam.domain.repository;
 
 import com.pfe.iam.domain.model.User;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
@@ -12,4 +13,8 @@ public interface UserRepository {
     User save(User user);
 
     boolean existsByEmail(String email);
+
+    List<User> findAll();
+
+    void deleteById(String id);
 }

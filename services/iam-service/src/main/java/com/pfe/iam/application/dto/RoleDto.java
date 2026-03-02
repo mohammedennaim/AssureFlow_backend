@@ -5,14 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest {
-    private String username;
-    private String email;
-    private String password;
-    private String firstName;
-    private String lastName;
+public class RoleDto {
+    private String id;
+    private String name;
+    private String description;
+    private List<PermissionDto> permissions;
 }

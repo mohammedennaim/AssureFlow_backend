@@ -1,5 +1,6 @@
 package com.pfe.iam.infrastructure.config;
 
+import com.pfe.commons.security.JwtAuthenticationFilter;
 import com.pfe.iam.infrastructure.persistence.entity.UserEntity;
 import com.pfe.iam.infrastructure.persistence.repository.JpaUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,31 +10,43 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JpaUserRepository jpaUserRepository;
+    private final JwtAuthenticationFilter jwtAuthFilter;
 
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> {
             UserEntity userEntity = jpaUserRepository.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
-            return new User(userEntity.getEmail(), userEntity.getPassword(), Collections.emptyList());
+
+            List<SimpleGrantedAuthority> authorities = userEntity.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
+                    .collect(Collectors.toList());
+
+            return new User(userEntity.getEmail(), userEntity.getPassword(), authorities);
         };
     }
 
@@ -54,6 +67,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -63,7 +77,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/actuator/**")
                         .permitAll()
-                        .anyRequest().authenticated());
+                        .requestMatchers("/api/v1/audit/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

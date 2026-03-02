@@ -1,0 +1,82 @@
+package com.pfe.iam.application.service.impl;
+
+import com.pfe.iam.application.dto.SessionDto;
+import com.pfe.iam.application.service.SessionService;
+import com.pfe.iam.domain.model.Session;
+import com.pfe.iam.domain.repository.SessionRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class SessionServiceImpl implements SessionService {
+
+    private final SessionRepository sessionRepository;
+
+    @Override
+    @Transactional
+    public SessionDto createSession(String userId, String token, long expirationMs) {
+        Session session = Session.builder()
+                .userId(userId)
+                .token(token)
+                .expiresAt(LocalDateTime.now().plusNanos(expirationMs * 1_000_000))
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Session saved = sessionRepository.save(session);
+        log.info("Session created for user: {}", userId);
+        return toDto(saved);
+    }
+
+    @Override
+    public List<SessionDto> getSessionsByUserId(String userId) {
+        return sessionRepository.findByUserId(userId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void invalidateSession(String sessionId) {
+        sessionRepository.deleteById(sessionId);
+        log.info("Session invalidated: {}", sessionId);
+    }
+
+    @Override
+    @Transactional
+    public void invalidateAllUserSessions(String userId) {
+        sessionRepository.deleteByUserId(userId);
+        log.info("All sessions invalidated for user: {}", userId);
+    }
+
+    @Override
+    @Transactional
+    public void cleanupExpiredSessions() {
+        sessionRepository.deleteExpiredSessions();
+        log.info("Expired sessions cleaned up");
+    }
+
+    @Override
+    public boolean isSessionValid(String token) {
+        return sessionRepository.findByToken(token)
+                .map(session -> !session.isExpired())
+                .orElse(false);
+    }
+
+    private SessionDto toDto(Session session) {
+        return SessionDto.builder()
+                .id(session.getId())
+                .userId(session.getUserId())
+                .expiresAt(session.getExpiresAt())
+                .createdAt(session.getCreatedAt())
+                .expired(session.isExpired())
+                .build();
+    }
+}

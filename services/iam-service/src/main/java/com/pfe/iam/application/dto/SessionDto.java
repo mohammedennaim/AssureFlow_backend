@@ -6,20 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDto {
+public class SessionDto {
     private String id;
-    private String username;
-    private String email;
-    private String firstName;
-    private String lastName;
-    private boolean active;
-    private List<String> roles;
+    private String userId;
+    private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private boolean expired;
 }

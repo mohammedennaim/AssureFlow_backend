@@ -1,13 +1,7 @@
 package com.pfe.iam.infrastructure.persistence.entity;
 
-import com.pfe.iam.domain.model.Role;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.pfe.iam.domain.model.UserRole;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,16 +23,27 @@ public class UserEntity {
     @Id
     private String id;
 
+    @Column(unique = true)
+    private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String password;
+
     private String firstName;
     private String lastName;
     private boolean active;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     @Builder.Default
-    private Set<Role> roles = new HashSet<>();
+    private Set<RoleEntity> roles = new HashSet<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;

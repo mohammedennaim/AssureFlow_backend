@@ -5,14 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest {
-    private String username;
-    private String email;
-    private String password;
-    private String firstName;
-    private String lastName;
+public class AuditLogDto {
+    private String id;
+    private String userId;
+    private String action;
+    private LocalDateTime timestamp;
 }

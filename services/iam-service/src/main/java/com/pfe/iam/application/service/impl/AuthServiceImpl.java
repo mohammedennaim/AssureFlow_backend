@@ -5,12 +5,15 @@ import com.pfe.iam.application.dto.RegisterRequest;
 import com.pfe.iam.application.dto.TokenResponse;
 import com.pfe.iam.application.dto.UserDto;
 import com.pfe.iam.application.mapper.UserMapper;
+import com.pfe.iam.application.service.AuditService;
 import com.pfe.iam.application.service.AuthService;
+import com.pfe.iam.application.service.SessionService;
 import com.pfe.iam.domain.exception.EmailAlreadyExistsException;
 import com.pfe.iam.domain.model.User;
 import com.pfe.iam.domain.repository.UserRepository;
 import com.pfe.commons.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -31,6 +35,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
+    private final AuditService auditService;
+    private final SessionService sessionService;
 
     @Override
     @Transactional
@@ -44,6 +50,8 @@ public class AuthServiceImpl implements AuthService {
         user.setActive(true);
 
         User savedUser = userRepository.save(user);
+        auditService.log(savedUser.getId(), "USER_REGISTERED");
+        log.info("User registered: {}", savedUser.getEmail());
         return userMapper.toDto(savedUser);
     }
 
@@ -56,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
         List<String> roles = user.getRoles().stream()
-                .map(Enum::name)
+                .map(role -> role.getName().name())
                 .collect(Collectors.toList());
 
         List<SimpleGrantedAuthority> authorities = roles.stream()
@@ -70,6 +78,9 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         String token = jwtService.generateToken(userDetails, roles);
+        sessionService.createSession(user.getId(), token, 86400000L);
+        auditService.log(user.getId(), "USER_LOGIN");
+        log.info("User logged in: {}", user.getEmail());
         return new TokenResponse(token, userMapper.toDto(user));
     }
 }
