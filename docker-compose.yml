@@ -97,11 +97,11 @@ services:
     networks:
       - insurance-net
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
-      interval: 15s
-      timeout: 10s
+      test: ["CMD-SHELL", "kafka-metadata.sh --snapshot /var/lib/kafka/data/__cluster_metadata-0/00000000000000000000.log --cluster-id JgOOpmOWQ1aB3cbgf6c6ZQ 2>/dev/null || nc -z localhost 9092"]
+      interval: 20s
+      timeout: 30s
       retries: 10
-      start_period: 60s
+      start_period: 90s
     deploy:
       resources:
         limits:
