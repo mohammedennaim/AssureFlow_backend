@@ -171,7 +171,6 @@
                             <toolchains>
                                 <jdk>
                                     <version>17</version>
-                                    <vendor>microsoft</vendor>
                                 </jdk>
                             </toolchains>
                         </configuration>
