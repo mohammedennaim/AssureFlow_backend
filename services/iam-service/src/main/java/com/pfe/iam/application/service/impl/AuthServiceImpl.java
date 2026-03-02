@@ -1,5 +1,6 @@
 package com.pfe.iam.application.service.impl;
 
+import com.pfe.iam.domain.model.Role;
 import com.pfe.iam.application.dto.LoginRequest;
 import com.pfe.iam.application.dto.RegisterRequest;
 import com.pfe.iam.application.dto.TokenResponse;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,8 +43,10 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = userMapper.toDomain(request);
+        user.setId(UUID.randomUUID().toString());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setActive(true);
+        user.setRoles(Set.of(Role.CLIENT));
 
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
