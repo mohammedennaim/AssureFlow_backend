@@ -10,6 +10,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
+import com.pfe.client.domain.model.ClientType;
 
 @Data
 @Builder
@@ -36,6 +38,9 @@ public class ClientRequest {
     private String cin;
 
     @Valid
-    @NotNull(message = "Address is required")
-    private AddressDto address;
+    private List<AddressDto> addresses;
+
+    private ClientType type;
+
+    private String userId;
 }

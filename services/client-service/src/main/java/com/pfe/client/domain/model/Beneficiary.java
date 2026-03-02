@@ -9,12 +9,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Address {
+public class Beneficiary {
     private String id;
     private String clientId;
-    private String street;
-    private String city;
-    private String postalCode;
-    private String country;
-    private boolean primary;
+    private String firstName;
+    private String lastName;
+    private String relationship;
+    private String phone;
+    private String email;
+    private Integer percentage;
 }

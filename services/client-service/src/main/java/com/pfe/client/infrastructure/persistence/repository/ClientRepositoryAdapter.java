@@ -27,7 +27,9 @@ public class ClientRepositoryAdapter implements ClientRepository {
 
     @Override
     public Optional<Client> findById(String id) {
-        return jpaClientRepository.findById(id).map(mapper::toDomain);
+        return jpaClientRepository.findById(id)
+                .filter(ClientEntity::isActive)
+                .map(mapper::toDomain);
     }
 
     @Override
@@ -43,13 +45,26 @@ public class ClientRepositoryAdapter implements ClientRepository {
     @Override
     public List<Client> findAll() {
         return jpaClientRepository.findAll().stream()
+            .filter(ClientEntity::isActive)
+            .map(mapper::toDomain)
+            .collect(Collectors.toList());
+    }
+
+        @Override
+        public List<Client> findAll(int page, int size) {
+        var p = org.springframework.data.domain.PageRequest.of(page, size);
+            return jpaClientRepository.findAll(p).stream()
+                .filter(com.pfe.client.infrastructure.persistence.entity.ClientEntity::isActive)
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
-    }
+        }
 
     @Override
     public void deleteById(String id) {
-        jpaClientRepository.deleteById(id);
+        jpaClientRepository.findById(id).ifPresent(entity -> {
+            entity.setActive(false);
+            jpaClientRepository.save(entity);
+        });
     }
 
     @Override

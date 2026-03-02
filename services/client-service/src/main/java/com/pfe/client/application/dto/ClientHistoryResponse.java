@@ -1,20 +1,20 @@
-package com.pfe.client.domain.model;
+package com.pfe.client.application.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Address {
+public class ClientHistoryResponse {
     private String id;
     private String clientId;
-    private String street;
-    private String city;
-    private String postalCode;
-    private String country;
-    private boolean primary;
+    private String action;
+    private LocalDateTime performedAt;
+    private String performedBy;
 }

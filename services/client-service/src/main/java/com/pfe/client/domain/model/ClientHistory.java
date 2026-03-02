@@ -5,16 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Address {
+public class ClientHistory {
     private String id;
     private String clientId;
-    private String street;
-    private String city;
-    private String postalCode;
-    private String country;
-    private boolean primary;
+    private String action;
+    private LocalDateTime performedAt;
+    private String performedBy;
 }

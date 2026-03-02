@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,15 +16,27 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Client {
     private String id;
+    private String clientNumber;
     private String firstName;
     private String lastName;
     private String email;
     private String phone;
     private LocalDate dateOfBirth;
-    private Address address;
     private String cin;
+    private ClientStatus status;
+    private ClientType type;
+    private String userId;
+    @Builder.Default
+    private boolean active = true;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @Builder.Default
+    private List<Address> addresses = new ArrayList<>();
+
+    public String getFullName() {
+        return (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");
+    }
 
     public void update(Client newClientData) {
         if (newClientData.getFirstName() != null)
@@ -35,10 +49,20 @@ public class Client {
             this.phone = newClientData.getPhone();
         if (newClientData.getDateOfBirth() != null)
             this.dateOfBirth = newClientData.getDateOfBirth();
-        if (newClientData.getAddress() != null)
-            this.address = newClientData.getAddress();
         if (newClientData.getCin() != null)
             this.cin = newClientData.getCin();
+        if (newClientData.getStatus() != null)
+            this.status = newClientData.getStatus();
+        if (newClientData.getType() != null)
+            this.type = newClientData.getType();
+        if (newClientData.getUserId() != null)
+            this.userId = newClientData.getUserId();
+        if (newClientData.isActive() != this.active)
+            this.active = newClientData.isActive();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }

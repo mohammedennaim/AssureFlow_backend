@@ -8,6 +8,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import com.pfe.client.domain.model.ClientStatus;
+import com.pfe.client.domain.model.ClientType;
 
 @Entity
 @Table(name = "clients")
@@ -20,6 +24,9 @@ public class ClientEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @Column(nullable = false, unique = true)
+    private String clientNumber;
 
     @Column(nullable = false)
     private String firstName;
@@ -37,8 +44,21 @@ public class ClientEntity {
     @Column(unique = true)
     private String cin;
 
-    @Embedded
-    private AddressEmbeddable address;
+    @OneToMany(mappedBy = "clientId", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<AddressEntity> addresses = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    private ClientStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private ClientType type;
+
+    private String userId;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

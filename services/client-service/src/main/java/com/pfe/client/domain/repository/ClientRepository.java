@@ -15,6 +15,7 @@ public interface ClientRepository {
     Optional<Client> findByCin(String cin);
 
     List<Client> findAll();
+    List<Client> findAll(int page, int size);
 
     void deleteById(String id);
 

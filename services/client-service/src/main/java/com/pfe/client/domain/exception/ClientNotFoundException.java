@@ -1,7 +1,9 @@
 package com.pfe.client.domain.exception;
 
-public class ClientNotFoundException extends RuntimeException {
+import com.pfe.commons.exceptions.ResourceNotFoundException;
+
+public class ClientNotFoundException extends ResourceNotFoundException {
     public ClientNotFoundException(String id) {
-        super("Client with ID " + id + " not found");
+        super("Client", "id", id);
     }
 }
