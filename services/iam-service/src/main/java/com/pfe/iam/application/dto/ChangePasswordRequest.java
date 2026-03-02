@@ -9,8 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest {
-    private String username;
-    private String email;
-    private String password;
+public class ChangePasswordRequest {
+    private String oldPassword;
+    private String newPassword;
 }

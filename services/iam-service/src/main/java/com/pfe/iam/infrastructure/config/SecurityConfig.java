@@ -42,11 +42,11 @@ public class SecurityConfig {
             UserEntity userEntity = jpaUserRepository.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-            List<SimpleGrantedAuthority> authorities = userEntity.getRoles().stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
-                    .collect(Collectors.toList());
+            List<SimpleGrantedAuthority> authorities = userEntity.getRole() != null
+                    ? List.of(new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().getName().name()))
+                    : List.of();
 
-            return new User(userEntity.getEmail(), userEntity.getPassword(), authorities);
+            return new User(userEntity.getEmail(), userEntity.getPasswordHash(), authorities);
         };
     }
 

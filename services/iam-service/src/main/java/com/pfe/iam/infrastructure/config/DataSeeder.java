@@ -40,10 +40,10 @@ public class DataSeeder implements CommandLineRunner {
         if (permissionRepository.findAll().isEmpty()) {
             log.info("Seeding permissions...");
             String[][] perms = {
-                    {"users", "read"}, {"users", "write"}, {"users", "delete"},
-                    {"policies", "read"}, {"policies", "write"}, {"policies", "approve"},
-                    {"claims", "read"}, {"claims", "write"}, {"claims", "approve"},
-                    {"billing", "read"}, {"billing", "write"}
+                    { "users", "read" }, { "users", "write" }, { "users", "delete" },
+                    { "policies", "read" }, { "policies", "write" }, { "policies", "approve" },
+                    { "claims", "read" }, { "claims", "write" }, { "claims", "approve" },
+                    { "billing", "read" }, { "billing", "write" }
             };
             for (String[] p : perms) {
                 permissionRepository.save(Permission.builder().resource(p[0]).action(p[1]).build());
@@ -83,11 +83,9 @@ public class DataSeeder implements CommandLineRunner {
                     .id(UUID.randomUUID().toString())
                     .username("admin")
                     .email("admin@assureflow.com")
-                    .password(passwordEncoder.encode("admin123"))
-                    .firstName("Super")
-                    .lastName("Admin")
+                    .passwordHash(passwordEncoder.encode("admin123"))
                     .active(true)
-                    .roles(new HashSet<>(Set.of(adminRole)))
+                    .role(adminRole)
                     .build();
             userRepository.save(admin);
         }
@@ -99,11 +97,9 @@ public class DataSeeder implements CommandLineRunner {
                     .id(UUID.randomUUID().toString())
                     .username("agent")
                     .email("agent@assureflow.com")
-                    .password(passwordEncoder.encode("agent123"))
-                    .firstName("Test")
-                    .lastName("Agent")
+                    .passwordHash(passwordEncoder.encode("agent123"))
                     .active(true)
-                    .roles(new HashSet<>(Set.of(agentRole)))
+                    .role(agentRole)
                     .build();
             userRepository.save(agent);
         }
@@ -115,11 +111,9 @@ public class DataSeeder implements CommandLineRunner {
                     .id(UUID.randomUUID().toString())
                     .username("client")
                     .email("client@assureflow.com")
-                    .password(passwordEncoder.encode("client123"))
-                    .firstName("Test")
-                    .lastName("Client")
+                    .passwordHash(passwordEncoder.encode("client123"))
                     .active(true)
-                    .roles(new HashSet<>(Set.of(clientRole)))
+                    .role(clientRole)
                     .build();
             userRepository.save(client);
         }
