@@ -54,11 +54,12 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
 
-        if (request.getUsername() != null) user.setUsername(request.getUsername());
-        if (request.getEmail() != null) user.setEmail(request.getEmail());
-        if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
-        if (request.getLastName() != null) user.setLastName(request.getLastName());
-        if (request.getActive() != null) user.setActive(request.getActive());
+        if (request.getUsername() != null)
+            user.setUsername(request.getUsername());
+        if (request.getEmail() != null)
+            user.setEmail(request.getEmail());
+        if (request.getActive() != null)
+            user.setActive(request.getActive());
 
         User saved = userRepository.save(user);
         auditService.log(id, "USER_UPDATED");
@@ -85,7 +86,7 @@ public class UserServiceImpl implements UserService {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RoleNotFoundException(roleId));
 
-        user.addRole(role);
+        user.setRole(role);
         User saved = userRepository.save(user);
         auditService.log(userId, "ROLE_ASSIGNED: " + role.getName().name());
         log.info("Role {} assigned to user {}", role.getName(), userId);
@@ -100,7 +101,9 @@ public class UserServiceImpl implements UserService {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RoleNotFoundException(roleId));
 
-        user.getRoles().removeIf(r -> r.getId().equals(roleId));
+        if (user.getRole() != null && user.getRole().getId().equals(roleId)) {
+            user.setRole(null);
+        }
         User saved = userRepository.save(user);
         auditService.log(userId, "ROLE_REMOVED: " + role.getName().name());
         log.info("Role {} removed from user {}", role.getName(), userId);
@@ -108,16 +111,14 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserDto toDto(User user) {
+        String roleStr = user.getRole() != null ? user.getRole().getName().name() : null;
+
         return UserDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
                 .active(user.isActive())
-                .roles(user.getRoles().stream()
-                        .map(r -> r.getName().name())
-                        .collect(Collectors.toList()))
+                .role(roleStr)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

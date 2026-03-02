@@ -54,19 +54,15 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     private User toDomain(UserEntity entity) {
-        Set<Role> roles = entity.getRoles().stream()
-                .map(this::roleToDomain)
-                .collect(Collectors.toSet());
+        Role role = entity.getRole() != null ? roleToDomain(entity.getRole()) : null;
 
         return User.builder()
                 .id(entity.getId())
                 .username(entity.getUsername())
                 .email(entity.getEmail())
-                .password(entity.getPassword())
-                .firstName(entity.getFirstName())
-                .lastName(entity.getLastName())
+                .passwordHash(entity.getPasswordHash())
                 .active(entity.isActive())
-                .roles(roles)
+                .role(role)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -75,12 +71,12 @@ public class UserRepositoryAdapter implements UserRepository {
     private Role roleToDomain(RoleEntity re) {
         Set<Permission> permissions = re.getPermissions() != null
                 ? re.getPermissions().stream()
-                    .map(pe -> Permission.builder()
-                            .id(pe.getId())
-                            .resource(pe.getResource())
-                            .action(pe.getAction())
-                            .build())
-                    .collect(Collectors.toSet())
+                        .map(pe -> Permission.builder()
+                                .id(pe.getId())
+                                .resource(pe.getResource())
+                                .action(pe.getAction())
+                                .build())
+                        .collect(Collectors.toSet())
                 : new HashSet<>();
 
         return Role.builder()
@@ -92,14 +88,13 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     private UserEntity toEntity(User domain) {
-        Set<RoleEntity> roleEntities = new HashSet<>();
-        if (domain.getRoles() != null) {
-            for (Role role : domain.getRoles()) {
-                if (role.getId() != null) {
-                    jpaRoleRepository.findById(role.getId()).ifPresent(roleEntities::add);
-                } else if (role.getName() != null) {
-                    jpaRoleRepository.findByName(role.getName()).ifPresent(roleEntities::add);
-                }
+        RoleEntity roleEntity = null;
+        if (domain.getRole() != null) {
+            Role role = domain.getRole();
+            if (role.getId() != null) {
+                roleEntity = jpaRoleRepository.findById(role.getId()).orElse(null);
+            } else if (role.getName() != null) {
+                roleEntity = jpaRoleRepository.findByName(role.getName()).orElse(null);
             }
         }
 
@@ -107,11 +102,9 @@ public class UserRepositoryAdapter implements UserRepository {
                 .id(domain.getId())
                 .username(domain.getUsername())
                 .email(domain.getEmail())
-                .password(domain.getPassword())
-                .firstName(domain.getFirstName())
-                .lastName(domain.getLastName())
+                .passwordHash(domain.getPasswordHash())
                 .active(domain.isActive())
-                .roles(roleEntities)
+                .role(roleEntity)
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
                 .build();

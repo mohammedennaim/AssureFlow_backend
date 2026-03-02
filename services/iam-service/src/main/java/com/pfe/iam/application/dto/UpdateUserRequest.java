@@ -18,7 +18,5 @@ public class UpdateUserRequest {
     @Email(message = "Invalid email format")
     private String email;
 
-    private String firstName;
-    private String lastName;
     private Boolean active;
 }
