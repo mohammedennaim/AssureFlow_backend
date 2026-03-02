@@ -1,4 +1,4 @@
-package com.pfe.policy.domain.model;
+package com.pfe.policy.application.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,9 +11,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PolicyDocument {
+public class PolicyDocumentDto {
     private String id;
-    private String policyId;
     private String fileName;
     private String documentType;
     private String uploadedBy;
