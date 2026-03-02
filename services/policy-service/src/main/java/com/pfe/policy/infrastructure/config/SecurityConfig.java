@@ -16,8 +16,12 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/policies/**").permitAll() // Simple permissions for this service as it
-                                                                            // relies on IAM later
+                        .requestMatchers(
+                                "/api/v1/policies/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html")
+                        .permitAll()
                         .anyRequest().authenticated());
         return http.build();
     }

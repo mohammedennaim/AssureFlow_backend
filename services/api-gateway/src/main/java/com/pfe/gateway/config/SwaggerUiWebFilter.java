@@ -1,44 +1,38 @@
 package com.pfe.gateway.config;
 
-import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
+
 /**
- * Rewrites requests from /swagger-ui/** to /webjars/swagger-ui/** so that
- * the Swagger UI is accessible on a clean path without exposing "/webjars"
- * in the browser URL.
+ * Redirects /swagger-ui and /swagger-ui/index.html to the springdoc-managed
+ * Swagger UI URL that includes the configUrl query parameter.
+ * This ensures Swagger UI loads the correct API documentation configuration
+ * instead of the default PetStore example.
  */
 @Component
 public class SwaggerUiWebFilter implements WebFilter {
 
     private static final String SWAGGER_PREFIX = "/swagger-ui";
-    private static final String WEBJARS_PREFIX = "/webjars/swagger-ui";
+    private static final String REDIRECT_URL = "/webjars/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        if (path.equals(SWAGGER_PREFIX) || path.equals(SWAGGER_PREFIX + "/")) {
-            ServerHttpRequest mutated = exchange.getRequest().mutate()
-                    .path(WEBJARS_PREFIX + "/index.html")
-                    .build();
-            return chain.filter(exchange.mutate().request(mutated).build());
-        }
-
-        if (path.startsWith(SWAGGER_PREFIX + "/")) {
-            // Strip trailing slash (e.g. /swagger-ui/index.html/ -> /swagger-ui/index.html)
-            if (path.endsWith("/") && path.length() > (SWAGGER_PREFIX + "/").length()) {
-                path = path.substring(0, path.length() - 1);
-            }
-            String newPath = "/webjars" + path;
-            ServerHttpRequest mutated = exchange.getRequest().mutate()
-                    .path(newPath)
-                    .build();
-            return chain.filter(exchange.mutate().request(mutated).build());
+        // Redirect /swagger-ui, /swagger-ui/, and /swagger-ui/index.html to
+        // the springdoc-configured Swagger UI (with configUrl parameter)
+        if (path.equals(SWAGGER_PREFIX)
+                || path.equals(SWAGGER_PREFIX + "/")
+                || path.equals(SWAGGER_PREFIX + "/index.html")) {
+            exchange.getResponse().setStatusCode(HttpStatus.FOUND);
+            exchange.getResponse().getHeaders().setLocation(URI.create(REDIRECT_URL));
+            return exchange.getResponse().setComplete();
         }
 
         return chain.filter(exchange);
