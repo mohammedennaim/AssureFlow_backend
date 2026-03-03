@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,7 +28,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public AddressDto addAddress(String clientId, AddressDto addressDto) {
+    public AddressDto addAddress(UUID clientId, AddressDto addressDto) {
         clientRepository.findById(clientId)
                 .orElseThrow(() -> new ClientNotFoundException(clientId));
 
@@ -41,7 +42,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AddressDto> getAddressesByClientId(String clientId) {
+    public List<AddressDto> getAddressesByClientId(UUID clientId) {
         return addressRepository.findByClientId(clientId).stream()
                 .map(mapper::toAddressDto)
                 .collect(Collectors.toList());
@@ -49,7 +50,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional(readOnly = true)
-    public AddressDto getAddressById(String id) {
+    public AddressDto getAddressById(UUID id) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Address", "id", id));
         return mapper.toAddressDto(address);
@@ -57,7 +58,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public AddressDto updateAddress(String id, AddressDto addressDto) {
+    public AddressDto updateAddress(UUID id, AddressDto addressDto) {
         Address existing = addressRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Address", "id", id));
 
@@ -74,7 +75,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public void deleteAddress(String id) {
+    public void deleteAddress(UUID id) {
         addressRepository.deleteById(id);
         log.info("Deleted address {}", id);
     }

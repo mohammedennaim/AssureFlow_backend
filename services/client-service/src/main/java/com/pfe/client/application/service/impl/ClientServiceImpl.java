@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -76,21 +77,22 @@ public class ClientServiceImpl implements ClientService {
 
         // publish event
         publisher.publishEvent(ClientCreatedEvent.builder()
-            .clientId(savedClient.getId())
-            .client(savedClient)
-            .source("client-service")
-            .build());
+                .clientId(savedClient.getId())
+                .client(savedClient)
+                .source("client-service")
+                .build());
 
         // record history
         historyService.recordHistory(savedClient.getId(), "CLIENT_CREATED", "system");
 
-        log.info("Client created successfully with ID: {} and number: {}", savedClient.getId(), savedClient.getClientNumber());
+        log.info("Client created successfully with ID: {} and number: {}", savedClient.getId(),
+                savedClient.getClientNumber());
         return mapper.toResponse(savedClient);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ClientResponse getClientById(String id) {
+    public ClientResponse getClientById(UUID id) {
         log.debug("Fetching client by ID: {}", id);
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ClientNotFoundException(id));
@@ -130,7 +132,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
-    public ClientResponse updateClient(String id, ClientRequest request) {
+    public ClientResponse updateClient(UUID id, ClientRequest request) {
         log.info("Updating client with ID: {}", id);
 
         Client existingClient = clientRepository.findById(id)
@@ -167,10 +169,10 @@ public class ClientServiceImpl implements ClientService {
         }
 
         publisher.publishEvent(ClientUpdatedEvent.builder()
-            .clientId(savedClient.getId())
-            .client(savedClient)
-            .source("client-service")
-            .build());
+                .clientId(savedClient.getId())
+                .client(savedClient)
+                .source("client-service")
+                .build());
 
         historyService.recordHistory(id, "CLIENT_UPDATED", "system");
 
@@ -180,7 +182,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
-    public void deleteClient(String id) {
+    public void deleteClient(UUID id) {
         log.info("Deleting client with ID: {}", id);
 
         if (clientRepository.findById(id).isEmpty()) {
@@ -211,13 +213,17 @@ public class ClientServiceImpl implements ClientService {
     public List<ClientResponse> search(ClientSearchCriteria criteria, int page, int size) {
         return clientRepository.findAll(page, size).stream()
                 .filter(c -> {
-                    if (criteria.getFirstName() != null && (c.getFirstName() == null || !c.getFirstName().toLowerCase().contains(criteria.getFirstName().toLowerCase())))
+                    if (criteria.getFirstName() != null && (c.getFirstName() == null
+                            || !c.getFirstName().toLowerCase().contains(criteria.getFirstName().toLowerCase())))
                         return false;
-                    if (criteria.getLastName() != null && (c.getLastName() == null || !c.getLastName().toLowerCase().contains(criteria.getLastName().toLowerCase())))
+                    if (criteria.getLastName() != null && (c.getLastName() == null
+                            || !c.getLastName().toLowerCase().contains(criteria.getLastName().toLowerCase())))
                         return false;
-                    if (criteria.getEmail() != null && (c.getEmail() == null || !c.getEmail().equalsIgnoreCase(criteria.getEmail())))
+                    if (criteria.getEmail() != null
+                            && (c.getEmail() == null || !c.getEmail().equalsIgnoreCase(criteria.getEmail())))
                         return false;
-                    if (criteria.getCin() != null && (c.getCin() == null || !c.getCin().equalsIgnoreCase(criteria.getCin())))
+                    if (criteria.getCin() != null
+                            && (c.getCin() == null || !c.getCin().equalsIgnoreCase(criteria.getCin())))
                         return false;
                     if (criteria.getStatus() != null && c.getStatus() != criteria.getStatus())
                         return false;
@@ -232,7 +238,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
-    public void activateClient(String id) {
+    public void activateClient(UUID id) {
         var client = clientRepository.findById(id).orElseThrow(() -> new ClientNotFoundException(id));
         client.setActive(true);
         client.setStatus(ClientStatus.ACTIVE);
@@ -242,7 +248,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
-    public void deactivateClient(String id) {
+    public void deactivateClient(UUID id) {
         var client = clientRepository.findById(id).orElseThrow(() -> new ClientNotFoundException(id));
         client.setActive(false);
         client.setStatus(ClientStatus.INACTIVE);

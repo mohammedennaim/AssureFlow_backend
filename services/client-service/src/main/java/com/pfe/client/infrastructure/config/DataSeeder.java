@@ -47,7 +47,7 @@ public class DataSeeder implements CommandLineRunner {
                     .dateOfBirth(LocalDate.of(1990, 1, i))
                     .status(ClientStatus.ACTIVE)
                     .type(ClientType.INDIVIDUAL)
-                    .userId(UUID.randomUUID().toString())
+                    .userId(UUID.randomUUID())
                     .build();
 
             var saved = clientRepository.save(c);

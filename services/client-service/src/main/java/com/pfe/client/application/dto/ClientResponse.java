@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import com.pfe.client.domain.model.ClientStatus;
 import com.pfe.client.domain.model.ClientType;
 
@@ -16,7 +17,7 @@ import com.pfe.client.domain.model.ClientType;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ClientResponse {
-    private String id;
+    private UUID id;
     private String clientNumber;
     private String firstName;
     private String lastName;
@@ -29,5 +30,5 @@ public class ClientResponse {
     private LocalDateTime updatedAt;
     private ClientStatus status;
     private ClientType type;
-    private String userId;
+    private UUID userId;
 }

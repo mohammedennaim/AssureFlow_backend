@@ -9,13 +9,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Client {
-    private String id;
+    private UUID id;
     private String clientNumber;
     private String firstName;
     private String lastName;
@@ -25,7 +26,7 @@ public class Client {
     private String cin;
     private ClientStatus status;
     private ClientType type;
-    private String userId;
+    private UUID userId;
     @Builder.Default
     private boolean active = true;
     private LocalDateTime createdAt;
@@ -60,6 +61,10 @@ public class Client {
         if (newClientData.isActive() != this.active)
             this.active = newClientData.isActive();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateProfile(Client dto) {
+        update(dto);
     }
 
     public boolean isActive() {

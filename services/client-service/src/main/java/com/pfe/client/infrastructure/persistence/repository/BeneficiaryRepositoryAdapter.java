@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Repository
@@ -25,24 +26,24 @@ public class BeneficiaryRepositoryAdapter implements BeneficiaryRepository {
     }
 
     @Override
-    public Optional<Beneficiary> findById(String id) {
+    public Optional<Beneficiary> findById(UUID id) {
         return jpaBeneficiaryRepository.findById(id).map(mapper::toDomain);
     }
 
     @Override
-    public List<Beneficiary> findByClientId(String clientId) {
+    public List<Beneficiary> findByClientId(UUID clientId) {
         return jpaBeneficiaryRepository.findByClientId(clientId).stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteById(String id) {
+    public void deleteById(UUID id) {
         jpaBeneficiaryRepository.deleteById(id);
     }
 
     @Override
-    public void deleteByClientId(String clientId) {
+    public void deleteByClientId(UUID clientId) {
         var list = jpaBeneficiaryRepository.findByClientId(clientId);
         jpaBeneficiaryRepository.deleteAll(list);
     }

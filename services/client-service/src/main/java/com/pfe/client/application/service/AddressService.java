@@ -3,15 +3,16 @@ package com.pfe.client.application.service;
 import com.pfe.client.application.dto.AddressDto;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface AddressService {
-    AddressDto addAddress(String clientId, AddressDto addressDto);
+    AddressDto addAddress(UUID clientId, AddressDto addressDto);
 
-    List<AddressDto> getAddressesByClientId(String clientId);
+    List<AddressDto> getAddressesByClientId(UUID clientId);
 
-    AddressDto getAddressById(String id);
+    AddressDto getAddressById(UUID id);
 
-    AddressDto updateAddress(String id, AddressDto addressDto);
+    AddressDto updateAddress(UUID id, AddressDto addressDto);
 
-    void deleteAddress(String id);
+    void deleteAddress(UUID id);
 }

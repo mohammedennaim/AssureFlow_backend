@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,12 +24,11 @@ public class ClientHistoryServiceImpl implements ClientHistoryService {
 
     @Override
     @Transactional
-    public void recordHistory(String clientId, String action, String performedBy) {
+    public void recordHistory(UUID clientId, String action, String performedBy) {
         ClientHistory history = ClientHistory.builder()
                 .clientId(clientId)
                 .action(action)
                 .performedAt(LocalDateTime.now())
-                .performedBy(performedBy)
                 .build();
         clientHistoryRepository.save(history);
         log.debug("Recorded history for client {}: {}", clientId, action);
@@ -36,7 +36,7 @@ public class ClientHistoryServiceImpl implements ClientHistoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ClientHistoryResponse> getHistoryByClientId(String clientId) {
+    public List<ClientHistoryResponse> getHistoryByClientId(UUID clientId) {
         return mapper.toResponseList(clientHistoryRepository.findByClientId(clientId));
     }
 }

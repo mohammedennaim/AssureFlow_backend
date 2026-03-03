@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Repository
@@ -27,25 +28,25 @@ public class AddressRepositoryAdapter implements AddressRepository {
     }
 
     @Override
-    public Optional<Address> findById(String id) {
+    public Optional<Address> findById(UUID id) {
         return jpaAddressRepository.findById(id).map(mapper::toAddressDomain);
     }
 
     @Override
-    public List<Address> findByClientId(String clientId) {
+    public List<Address> findByClientId(UUID clientId) {
         return jpaAddressRepository.findByClientId(clientId).stream()
                 .map(mapper::toAddressDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteById(String id) {
+    public void deleteById(UUID id) {
         jpaAddressRepository.deleteById(id);
     }
 
     @Override
     @Transactional
-    public void deleteByClientId(String clientId) {
+    public void deleteByClientId(UUID clientId) {
         jpaAddressRepository.deleteByClientId(clientId);
     }
 }

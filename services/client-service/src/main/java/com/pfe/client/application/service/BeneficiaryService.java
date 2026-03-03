@@ -4,13 +4,14 @@ import com.pfe.client.application.dto.BeneficiaryRequest;
 import com.pfe.client.application.dto.BeneficiaryResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface BeneficiaryService {
-    BeneficiaryResponse createBeneficiary(String clientId, BeneficiaryRequest request);
+    BeneficiaryResponse createBeneficiary(UUID clientId, BeneficiaryRequest request);
 
-    BeneficiaryResponse getBeneficiaryById(String id);
+    BeneficiaryResponse getBeneficiaryById(UUID id);
 
-    List<BeneficiaryResponse> getBeneficiariesByClientId(String clientId);
+    List<BeneficiaryResponse> getBeneficiariesByClientId(UUID clientId);
 
-    void deleteBeneficiary(String id);
+    void deleteBeneficiary(UUID id);
 }

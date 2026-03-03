@@ -4,15 +4,16 @@ import com.pfe.client.domain.model.Address;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface AddressRepository {
     Address save(Address address);
 
-    Optional<Address> findById(String id);
+    Optional<Address> findById(UUID id);
 
-    List<Address> findByClientId(String clientId);
+    List<Address> findByClientId(UUID clientId);
 
-    void deleteById(String id);
+    void deleteById(UUID id);
 
-    void deleteByClientId(String clientId);
+    void deleteByClientId(UUID clientId);
 }

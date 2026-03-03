@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import com.pfe.client.domain.model.ClientStatus;
 import com.pfe.client.domain.model.ClientType;
 
@@ -23,7 +24,7 @@ public class ClientEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String clientNumber;
@@ -54,7 +55,7 @@ public class ClientEntity {
     @Enumerated(EnumType.STRING)
     private ClientType type;
 
-    private String userId;
+    private UUID userId;
 
     @Column(nullable = false)
     @Builder.Default

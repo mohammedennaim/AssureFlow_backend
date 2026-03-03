@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/clients/{clientId}/documents")
@@ -31,23 +32,24 @@ public class DocumentController {
 
     @PostMapping
     @Operation(summary = "Upload document metadata for client")
-    public ResponseEntity<BaseResponse<DocumentResponse>> upload(@PathVariable String clientId, @Valid @RequestBody DocumentUploadRequest request) {
+    public ResponseEntity<BaseResponse<DocumentResponse>> upload(@PathVariable UUID clientId,
+            @Valid @RequestBody DocumentUploadRequest request) {
         var r = documentService.saveDocument(clientId, request.getFileName(), request.getFilePath());
         return ResponseEntity.ok(BaseResponse.success(r));
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<List<DocumentResponse>>> list(@PathVariable String clientId) {
+    public ResponseEntity<BaseResponse<List<DocumentResponse>>> list(@PathVariable UUID clientId) {
         return ResponseEntity.ok(BaseResponse.success(documentService.getDocumentsByClientId(clientId)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BaseResponse<DocumentResponse>> getById(@PathVariable String clientId, @PathVariable String id) {
+    public ResponseEntity<BaseResponse<DocumentResponse>> getById(@PathVariable UUID clientId, @PathVariable UUID id) {
         return ResponseEntity.ok(BaseResponse.success(documentService.getDocumentById(id)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable String clientId, @PathVariable String id) {
+    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable UUID clientId, @PathVariable UUID id) {
         documentService.deleteDocument(id);
         return ResponseEntity.ok(BaseResponse.success(null, "Deleted"));
     }

@@ -5,13 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Address {
-    private String id;
-    private String clientId;
+    private UUID id;
+    private UUID clientId;
     private String street;
     private String city;
     private String postalCode;

@@ -4,15 +4,16 @@ import com.pfe.client.domain.model.Beneficiary;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface BeneficiaryRepository {
     Beneficiary save(Beneficiary beneficiary);
 
-    Optional<Beneficiary> findById(String id);
+    Optional<Beneficiary> findById(UUID id);
 
-    List<Beneficiary> findByClientId(String clientId);
+    List<Beneficiary> findByClientId(UUID clientId);
 
-    void deleteById(String id);
+    void deleteById(UUID id);
 
-    void deleteByClientId(String clientId);
+    void deleteByClientId(UUID clientId);
 }

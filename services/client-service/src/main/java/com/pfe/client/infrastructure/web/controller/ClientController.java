@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/clients")
@@ -43,7 +44,7 @@ public class ClientController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a client by ID")
-    public ResponseEntity<BaseResponse<ClientResponse>> getClientById(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<ClientResponse>> getClientById(@PathVariable UUID id) {
         return ResponseEntity.ok(BaseResponse.success(clientService.getClientById(id)));
     }
 
@@ -62,14 +63,14 @@ public class ClientController {
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing client")
     public ResponseEntity<BaseResponse<ClientResponse>> updateClient(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @Valid @RequestBody ClientRequest request) {
         return ResponseEntity.ok(BaseResponse.success(clientService.updateClient(id, request)));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a client")
-    public ResponseEntity<Void> deleteClient(@PathVariable String id) {
+    public ResponseEntity<Void> deleteClient(@PathVariable UUID id) {
         clientService.deleteClient(id);
         return ResponseEntity.noContent().build();
     }
@@ -94,21 +95,21 @@ public class ClientController {
 
     @PatchMapping("/{id}/activate")
     @Operation(summary = "Activate a client")
-    public ResponseEntity<BaseResponse<Void>> activateClient(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<Void>> activateClient(@PathVariable UUID id) {
         clientService.activateClient(id);
         return ResponseEntity.ok(BaseResponse.success(null, "Client activated"));
     }
 
     @PatchMapping("/{id}/deactivate")
     @Operation(summary = "Deactivate a client")
-    public ResponseEntity<BaseResponse<Void>> deactivateClient(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<Void>> deactivateClient(@PathVariable UUID id) {
         clientService.deactivateClient(id);
         return ResponseEntity.ok(BaseResponse.success(null, "Client deactivated"));
     }
 
     @GetMapping("/{id}/history")
     @Operation(summary = "Get client history")
-    public ResponseEntity<BaseResponse<List<ClientHistoryResponse>>> getClientHistory(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<List<ClientHistoryResponse>>> getClientHistory(@PathVariable UUID id) {
         return ResponseEntity.ok(BaseResponse.success(historyService.getHistoryByClientId(id)));
     }
 }

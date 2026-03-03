@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "client_history")
@@ -18,10 +19,10 @@ public class ClientHistoryEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false)
-    private String clientId;
+    private UUID clientId;
 
     @Column(nullable = false)
     private String action;
@@ -29,7 +30,7 @@ public class ClientHistoryEntity {
     @Column(nullable = false)
     private LocalDateTime performedAt;
 
-    private String performedBy;
+    private UUID performedBy;
 
     @PrePersist
     protected void onCreate() {

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Repository
@@ -25,19 +26,19 @@ public class DocumentRepositoryAdapter implements DocumentRepository {
     }
 
     @Override
-    public Optional<Document> findById(String id) {
+    public Optional<Document> findById(UUID id) {
         return jpaDocumentRepository.findById(id).map(mapper::toDomain);
     }
 
     @Override
-    public List<Document> findByClientId(String clientId) {
+    public List<Document> findByClientId(UUID clientId) {
         return jpaDocumentRepository.findByClientId(clientId).stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteById(String id) {
+    public void deleteById(UUID id) {
         jpaDocumentRepository.deleteById(id);
     }
 }

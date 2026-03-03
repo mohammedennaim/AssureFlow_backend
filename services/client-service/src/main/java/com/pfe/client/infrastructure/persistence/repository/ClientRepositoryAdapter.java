@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Repository
@@ -26,7 +27,7 @@ public class ClientRepositoryAdapter implements ClientRepository {
     }
 
     @Override
-    public Optional<Client> findById(String id) {
+    public Optional<Client> findById(UUID id) {
         return jpaClientRepository.findById(id)
                 .filter(ClientEntity::isActive)
                 .map(mapper::toDomain);
@@ -45,22 +46,22 @@ public class ClientRepositoryAdapter implements ClientRepository {
     @Override
     public List<Client> findAll() {
         return jpaClientRepository.findAll().stream()
-            .filter(ClientEntity::isActive)
-            .map(mapper::toDomain)
-            .collect(Collectors.toList());
-    }
-
-        @Override
-        public List<Client> findAll(int page, int size) {
-        var p = org.springframework.data.domain.PageRequest.of(page, size);
-            return jpaClientRepository.findAll(p).stream()
-                .filter(com.pfe.client.infrastructure.persistence.entity.ClientEntity::isActive)
+                .filter(ClientEntity::isActive)
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
-        }
+    }
 
     @Override
-    public void deleteById(String id) {
+    public List<Client> findAll(int page, int size) {
+        var p = org.springframework.data.domain.PageRequest.of(page, size);
+        return jpaClientRepository.findAll(p).stream()
+                .filter(ClientEntity::isActive)
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteById(UUID id) {
         jpaClientRepository.findById(id).ifPresent(entity -> {
             entity.setActive(false);
             jpaClientRepository.save(entity);

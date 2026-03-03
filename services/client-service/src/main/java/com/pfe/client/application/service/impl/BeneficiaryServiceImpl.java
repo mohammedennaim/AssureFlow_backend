@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,7 +23,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     @Transactional
-    public BeneficiaryResponse createBeneficiary(String clientId, BeneficiaryRequest request) {
+    public BeneficiaryResponse createBeneficiary(UUID clientId, BeneficiaryRequest request) {
         Beneficiary b = mapper.toDomain(request);
         b.setClientId(clientId);
         var saved = beneficiaryRepository.save(b);
@@ -31,14 +32,14 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     @Transactional(readOnly = true)
-    public BeneficiaryResponse getBeneficiaryById(String id) {
+    public BeneficiaryResponse getBeneficiaryById(UUID id) {
         var b = beneficiaryRepository.findById(id).orElseThrow(() -> new RuntimeException("Beneficiary not found"));
         return mapper.toResponse(b);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<BeneficiaryResponse> getBeneficiariesByClientId(String clientId) {
+    public List<BeneficiaryResponse> getBeneficiariesByClientId(UUID clientId) {
         return beneficiaryRepository.findByClientId(clientId).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
@@ -46,7 +47,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     @Transactional
-    public void deleteBeneficiary(String id) {
+    public void deleteBeneficiary(UUID id) {
         beneficiaryRepository.deleteById(id);
     }
 }

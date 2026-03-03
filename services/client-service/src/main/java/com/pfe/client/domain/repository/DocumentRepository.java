@@ -4,13 +4,14 @@ import com.pfe.client.domain.model.Document;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface DocumentRepository {
     Document save(Document document);
 
-    Optional<Document> findById(String id);
+    Optional<Document> findById(UUID id);
 
-    List<Document> findByClientId(String clientId);
+    List<Document> findByClientId(UUID clientId);
 
-    void deleteById(String id);
+    void deleteById(UUID id);
 }

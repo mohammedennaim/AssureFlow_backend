@@ -7,11 +7,13 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.util.UUID;
+
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class ClientCreatedEvent extends BaseEvent {
-    private String clientId;
+    private UUID clientId;
     private Client client;
 }

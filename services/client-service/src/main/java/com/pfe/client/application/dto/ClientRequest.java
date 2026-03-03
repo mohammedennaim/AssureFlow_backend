@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import com.pfe.client.domain.model.ClientType;
 
 @Data
@@ -42,5 +43,5 @@ public class ClientRequest {
 
     private ClientType type;
 
-    private String userId;
+    private UUID userId;
 }

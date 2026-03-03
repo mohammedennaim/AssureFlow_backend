@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/clients/{clientId}/addresses")
@@ -24,7 +25,7 @@ public class AddressController {
     @PostMapping
     @Operation(summary = "Add an address for a client")
     public ResponseEntity<BaseResponse<AddressDto>> addAddress(
-            @PathVariable String clientId,
+            @PathVariable UUID clientId,
             @Valid @RequestBody AddressDto addressDto) {
         AddressDto response = addressService.addAddress(clientId, addressDto);
         return new ResponseEntity<>(BaseResponse.success(response), HttpStatus.CREATED);
@@ -32,27 +33,27 @@ public class AddressController {
 
     @GetMapping
     @Operation(summary = "Get all addresses for a client")
-    public ResponseEntity<BaseResponse<List<AddressDto>>> getAddresses(@PathVariable String clientId) {
+    public ResponseEntity<BaseResponse<List<AddressDto>>> getAddresses(@PathVariable UUID clientId) {
         return ResponseEntity.ok(BaseResponse.success(addressService.getAddressesByClientId(clientId)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get an address by ID")
-    public ResponseEntity<BaseResponse<AddressDto>> getAddress(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<AddressDto>> getAddress(@PathVariable UUID id) {
         return ResponseEntity.ok(BaseResponse.success(addressService.getAddressById(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update an address")
     public ResponseEntity<BaseResponse<AddressDto>> updateAddress(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @Valid @RequestBody AddressDto addressDto) {
         return ResponseEntity.ok(BaseResponse.success(addressService.updateAddress(id, addressDto)));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete an address")
-    public ResponseEntity<Void> deleteAddress(@PathVariable String id) {
+    public ResponseEntity<Void> deleteAddress(@PathVariable UUID id) {
         addressService.deleteAddress(id);
         return ResponseEntity.noContent().build();
     }

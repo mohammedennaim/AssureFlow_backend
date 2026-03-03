@@ -5,13 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Beneficiary {
-    private String id;
-    private String clientId;
+    private UUID id;
+    private UUID clientId;
     private String firstName;
     private String lastName;
     private String relationship;

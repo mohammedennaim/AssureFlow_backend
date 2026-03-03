@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,7 +24,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public DocumentResponse saveDocument(String clientId, String fileName, String filePath) {
+    public DocumentResponse saveDocument(UUID clientId, String fileName, String filePath) {
         Document d = Document.builder()
                 .clientId(clientId)
                 .fileName(fileName)
@@ -37,14 +38,14 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional(readOnly = true)
-    public DocumentResponse getDocumentById(String id) {
+    public DocumentResponse getDocumentById(UUID id) {
         var d = documentRepository.findById(id).orElseThrow(() -> new RuntimeException("Document not found"));
         return mapper.toResponse(d);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<DocumentResponse> getDocumentsByClientId(String clientId) {
+    public List<DocumentResponse> getDocumentsByClientId(UUID clientId) {
         return documentRepository.findByClientId(clientId).stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
@@ -52,7 +53,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public void deleteDocument(String id) {
+    public void deleteDocument(UUID id) {
         documentRepository.deleteById(id);
     }
 }

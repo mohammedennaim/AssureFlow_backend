@@ -6,10 +6,12 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.util.UUID;
+
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class ClientDeletedEvent extends BaseEvent {
-    private String clientId;
+    private UUID clientId;
 }

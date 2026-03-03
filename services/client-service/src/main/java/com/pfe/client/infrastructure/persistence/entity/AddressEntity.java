@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "addresses")
 @Data
@@ -16,10 +18,10 @@ public class AddressEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(nullable = false)
-    private String clientId;
+    private UUID clientId;
 
     @Column(nullable = false)
     private String street;
