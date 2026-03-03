@@ -97,6 +97,13 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/policy-service, /v3/api-docs
 
+        - id: claims-api-docs
+          uri: http://claims-service:8080
+          predicates:
+            - Path=/v3/api-docs/claims-service
+          filters:
+            - RewritePath=/v3/api-docs/claims-service, /v3/api-docs
+
 springdoc:
   api-docs:
     enabled: true
@@ -112,6 +119,8 @@ springdoc:
         url: /v3/api-docs/client-service
       - name: Policy Service
         url: /v3/api-docs/policy-service
+      - name: Claims Service
+        url: /v3/api-docs/claims-service
     urls-primary-name: All Services (Aggregated)
 
 # Actuator

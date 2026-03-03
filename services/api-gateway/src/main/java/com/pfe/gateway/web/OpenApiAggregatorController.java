@@ -24,8 +24,8 @@ public class OpenApiAggregatorController {
     private final List<String> services = List.of(
             "http://iam-service:8080/v3/api-docs",
             "http://client-service:8080/v3/api-docs",
-            "http://policy-service:8080/v3/api-docs"
-    );
+            "http://policy-service:8080/v3/api-docs",
+            "http://claims-service:8080/v3/api-docs");
 
     public OpenApiAggregatorController(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.webClient = webClientBuilder.build();
@@ -39,15 +39,15 @@ public class OpenApiAggregatorController {
                         .uri(url)
                         .retrieve()
                         .bodyToMono(JsonNode.class)
-                        .onErrorResume(e -> Mono.empty())
-                )
+                        .onErrorResume(e -> Mono.empty()))
                 .collectList()
                 .map(this::mergeJsonNodes);
     }
 
     private JsonNode mergeJsonNodes(List<JsonNode> nodes) {
         ObjectNode result = objectMapper.createObjectNode();
-        if (nodes.isEmpty()) return result;
+        if (nodes.isEmpty())
+            return result;
 
         result.put("openapi", "3.0.1");
 
@@ -65,7 +65,6 @@ public class OpenApiAggregatorController {
         ArrayNode mergedTags = result.putArray("tags");
 
         for (JsonNode node : nodes) {
-            // Merge paths
             if (node.hasNonNull("paths")) {
                 ObjectNode paths = (ObjectNode) node.get("paths");
                 Iterator<Map.Entry<String, JsonNode>> fields = paths.fields();
@@ -75,18 +74,15 @@ public class OpenApiAggregatorController {
                 }
             }
 
-            // Merge schemas
             if (node.hasNonNull("components") && node.get("components").hasNonNull("schemas")) {
                 ObjectNode schemas = (ObjectNode) node.get("components").get("schemas");
                 Iterator<Map.Entry<String, JsonNode>> fields = schemas.fields();
                 while (fields.hasNext()) {
                     Map.Entry<String, JsonNode> field = fields.next();
-                    // Just overwrite on conflict. Typically models are mostly unique or same name = same model.
                     mergedSchemas.set(field.getKey(), field.getValue());
                 }
             }
 
-            // Merge tags
             if (node.hasNonNull("tags")) {
                 ArrayNode tags = (ArrayNode) node.get("tags");
                 for (JsonNode tag : tags) {

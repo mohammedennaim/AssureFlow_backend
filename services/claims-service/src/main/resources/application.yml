@@ -1,6 +1,16 @@
 server:
   port: 8083
 
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+  show-actuator: false
+  packages-to-scan: com.pfe.claims.web.controller
+  paths-to-match: /api/v1/**
+
 spring:
   application:
     name: claims-service
