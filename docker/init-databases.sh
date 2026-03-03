@@ -1,16 +1,7 @@
-#!/bin/bash
-# ============================================================
-# 🗄️ Script d'initialisation PostgreSQL
-# ============================================================
-# Ce script crée automatiquement une base de données par service
-# Il est exécuté une seule fois au premier démarrage du conteneur PostgreSQL
-# ============================================================
-
 set -e
 
 echo "🚀 Initialisation des bases de données pour l'Insurance Platform..."
 
-# Fonction pour créer une base de données si elle n'existe pas
 create_database() {
     local database=$1
     echo "📦 Création de la base de données : $database"
@@ -22,7 +13,6 @@ EOSQL
     echo "✅ Base de données '$database' créée avec succès."
 }
 
-# Créer une DB par microservice (Database-per-Service pattern)
 create_database "policy_db"
 create_database "client_db"
 create_database "billing_db"

@@ -1,0 +1,100 @@
+package com.pfe.claims.domain.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Claim {
+    private UUID id;
+    private String claimNumber;
+    private UUID policyId;
+    private UUID clientId;
+    private ClaimStatus status;
+    private LocalDate incidentDate;
+    private String description;
+    private BigDecimal estimatedAmount;
+    private BigDecimal approvedAmount;
+    private UUID submittedBy;
+    private UUID approvedBy;
+    private UUID assignedTo;
+    private LocalDateTime createdAt;
+
+    @Builder.Default
+    private List<ClaimDocument> documents = new ArrayList<>();
+
+    @Builder.Default
+    private List<ClaimAssessment> assessments = new ArrayList<>();
+
+    private ClaimPayout payout;
+
+    public void submit() {
+        if (this.status != null && this.status != ClaimStatus.SUBMITTED) {
+            throw new IllegalStateException("Claim has already been submitted. Current status: " + this.status);
+        }
+        this.status = ClaimStatus.SUBMITTED;
+    }
+
+    public void markAsUnderReview() {
+        if (this.status != ClaimStatus.SUBMITTED) {
+            throw new IllegalStateException("Only SUBMITTED claims can be reviewed. Current status: " + this.status);
+        }
+        this.status = ClaimStatus.UNDER_REVIEW;
+    }
+
+    public void approve(BigDecimal amount) {
+        if (this.status != ClaimStatus.UNDER_REVIEW) {
+            throw new IllegalStateException("Only claims UNDER_REVIEW can be approved. Current status: " + this.status);
+        }
+        this.approvedAmount = amount;
+        this.status = ClaimStatus.APPROVED;
+    }
+
+    public void reject(String reason) {
+        if (this.status != ClaimStatus.UNDER_REVIEW) {
+            throw new IllegalStateException("Only claims UNDER_REVIEW can be rejected. Current status: " + this.status);
+        }
+        this.status = ClaimStatus.REJECTED;
+    }
+
+    public void requestInfo() {
+        if (this.status != ClaimStatus.SUBMITTED && this.status != ClaimStatus.UNDER_REVIEW) {
+            throw new IllegalStateException("Cannot request info for a claim with status: " + this.status);
+        }
+    }
+
+    public void markAsPaid() {
+        if (this.status != ClaimStatus.APPROVED) {
+            throw new IllegalStateException(
+                    "Only APPROVED claims can be marked as paid. Current status: " + this.status);
+        }
+        this.status = ClaimStatus.PAID;
+    }
+
+    public void refund() {
+        if (this.status != ClaimStatus.PAID) {
+            throw new IllegalStateException("Only PAID claims can be refunded. Current status: " + this.status);
+        }
+        this.status = ClaimStatus.REFUNDED;
+    }
+
+    public void close() {
+        if (this.status != ClaimStatus.PAID && this.status != ClaimStatus.REJECTED
+                && this.status != ClaimStatus.REFUNDED) {
+            throw new IllegalStateException(
+                    "Only PAID, REJECTED or REFUNDED claims can be closed. Current status: " + this.status);
+        }
+        this.status = ClaimStatus.CLOSED;
+    }
+}
