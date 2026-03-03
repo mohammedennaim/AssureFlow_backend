@@ -43,4 +43,8 @@ public class Invoice {
                 && dueDate.isBefore(LocalDate.now())
                 && status != InvoiceStatus.ACTIVE;
     }
+
+    public void cancel() {
+        this.status = InvoiceStatus.CANCELLED;
+    }
 }
