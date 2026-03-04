@@ -36,6 +36,29 @@ public class Policy {
     @Builder.Default
     private List<PolicyDocument> documents = new ArrayList<>();
 
+    @Builder.Default
+    private transient List<Object> domainEvents = new ArrayList<>();
+
+    public void registerEvent(Object event) {
+        if (this.domainEvents == null) {
+            this.domainEvents = new ArrayList<>();
+        }
+        this.domainEvents.add(event);
+    }
+
+    public List<Object> getDomainEvents() {
+        if (this.domainEvents == null) {
+            return new ArrayList<>();
+        }
+        return java.util.Collections.unmodifiableList(this.domainEvents);
+    }
+
+    public void clearDomainEvents() {
+        if (this.domainEvents != null) {
+            this.domainEvents.clear();
+        }
+    }
+
     public BigDecimal calculatePremium() {
         if (coverageAmount != null && coverageAmount.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal rate = switch (type) {
@@ -75,14 +98,12 @@ public class Policy {
         this.status = PolicyStatus.CANCELLED;
     }
 
-
     public void cancel(String reason) {
         if (this.status == PolicyStatus.CANCELLED) {
             throw new IllegalStateException("Policy is already cancelled.");
         }
         this.status = PolicyStatus.CANCELLED;
     }
-
 
     public void expire(String reason) {
         if (this.status != PolicyStatus.ACTIVE) {
@@ -93,7 +114,8 @@ public class Policy {
 
     public void renewPolicy(Policy newPolicy) {
         if (this.status != PolicyStatus.ACTIVE && this.status != PolicyStatus.EXPIRED) {
-            throw new IllegalStateException("Only ACTIVE or EXPIRED policies can be renewed. Current status: " + this.status);
+            throw new IllegalStateException(
+                    "Only ACTIVE or EXPIRED policies can be renewed. Current status: " + this.status);
         }
     }
 }
