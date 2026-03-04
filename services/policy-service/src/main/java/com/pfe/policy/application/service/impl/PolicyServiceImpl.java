@@ -5,11 +5,13 @@ import com.pfe.policy.application.dto.PolicyDto;
 import com.pfe.policy.application.dto.UpdatePolicyRequest;
 import com.pfe.policy.application.mapper.PolicyMapper;
 import com.pfe.policy.application.service.PolicyService;
+import com.pfe.policy.domain.event.PolicyCreatedEvent;
 import com.pfe.policy.domain.exception.PolicyNotFoundException;
 import com.pfe.policy.domain.model.Policy;
 import com.pfe.policy.domain.model.PolicyStatus;
 import com.pfe.policy.domain.repository.PolicyRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PolicyServiceImpl implements PolicyService {
@@ -45,6 +48,26 @@ public class PolicyServiceImpl implements PolicyService {
         }
 
         Policy savedPolicy = policyRepository.save(policy);
+
+        // Publish domain event
+        PolicyCreatedEvent event = PolicyCreatedEvent.builder()
+                .policyId(savedPolicy.getId())
+                .policyNumber(savedPolicy.getPolicyNumber())
+                .clientId(savedPolicy.getClientId())
+                .type(savedPolicy.getType() != null ? savedPolicy.getType().name() : null)
+                .status(savedPolicy.getStatus() != null ? savedPolicy.getStatus().name() : null)
+                .premiumAmount(savedPolicy.getPremiumAmount())
+                .coverageAmount(savedPolicy.getCoverageAmount())
+                .startDate(savedPolicy.getStartDate())
+                .endDate(savedPolicy.getEndDate())
+                .source("policy-service")
+                .build();
+
+        savedPolicy.registerEvent(event);
+        log.info("PolicyCreatedEvent published for policy: {}", savedPolicy.getPolicyNumber());
+
+        savedPolicy.clearDomainEvents();
+
         return policyMapper.toDto(savedPolicy);
     }
 
