@@ -1,5 +1,6 @@
 package com.pfe.billing.domain.model;
 
+import com.pfe.commons.annotations.AggregateRoot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+@AggregateRoot
 @Data
 @Builder
 @NoArgsConstructor

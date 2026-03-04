@@ -1,5 +1,6 @@
 package com.pfe.client.domain.model;
 
+import com.pfe.commons.annotations.AggregateRoot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@AggregateRoot
 @Data
 @Builder
 @NoArgsConstructor

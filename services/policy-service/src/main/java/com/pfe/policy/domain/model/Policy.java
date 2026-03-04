@@ -1,5 +1,6 @@
 package com.pfe.policy.domain.model;
 
+import com.pfe.commons.annotations.AggregateRoot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@AggregateRoot
 @Data
 @Builder
 @NoArgsConstructor
