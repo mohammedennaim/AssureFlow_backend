@@ -1,4 +1,4 @@
-package com.pfe.iam.presentation.exception;
+package com.pfe.iam.infrastructure.web.exception;
 
 import com.pfe.commons.exceptions.BusinessException;
 import com.pfe.commons.exceptions.ErrorResponse;
