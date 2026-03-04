@@ -14,7 +14,6 @@ import java.util.List;
 public interface ClientEntityMapper {
     ClientEntityMapper INSTANCE = Mappers.getMapper(ClientEntityMapper.class);
 
-    @Mapping(target = "addresses", ignore = true)
     ClientEntity toEntity(Client client);
 
     @Mapping(target = "addresses", ignore = true)

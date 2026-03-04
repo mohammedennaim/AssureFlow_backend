@@ -25,7 +25,8 @@ public class OpenApiAggregatorController {
             "http://iam-service:8080/v3/api-docs",
             "http://client-service:8080/v3/api-docs",
             "http://policy-service:8080/v3/api-docs",
-            "http://claims-service:8080/v3/api-docs");
+            "http://claims-service:8080/v3/api-docs",
+            "http://notification-service:8080/v3/api-docs");
 
     public OpenApiAggregatorController(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.webClient = webClientBuilder.build();

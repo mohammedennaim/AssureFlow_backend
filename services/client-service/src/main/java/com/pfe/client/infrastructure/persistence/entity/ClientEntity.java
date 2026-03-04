@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import com.pfe.client.domain.model.ClientStatus;
 import com.pfe.client.domain.model.ClientType;
@@ -44,10 +42,6 @@ public class ClientEntity {
 
     @Column(unique = true)
     private String cin;
-
-    @OneToMany(mappedBy = "clientId", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<AddressEntity> addresses = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private ClientStatus status;

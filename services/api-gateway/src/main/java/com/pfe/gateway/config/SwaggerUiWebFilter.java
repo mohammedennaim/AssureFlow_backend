@@ -19,14 +19,12 @@ import java.net.URI;
 public class SwaggerUiWebFilter implements WebFilter {
 
     private static final String SWAGGER_PREFIX = "/swagger-ui";
-    private static final String REDIRECT_URL = "/webjars/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config";
+    private static final String REDIRECT_URL = "/swagger-ui/index.html";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        // Redirect /swagger-ui, /swagger-ui/, and /swagger-ui/index.html to
-        // the springdoc-configured Swagger UI (with configUrl parameter)
         if (path.equals(SWAGGER_PREFIX)
                 || path.equals(SWAGGER_PREFIX + "/")
                 || path.equals(SWAGGER_PREFIX + "/index.html")) {

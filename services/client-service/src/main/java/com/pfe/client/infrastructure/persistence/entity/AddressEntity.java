@@ -20,7 +20,7 @@ public class AddressEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "client_id", nullable = false)
     private UUID clientId;
 
     @Column(nullable = false)
@@ -35,7 +35,7 @@ public class AddressEntity {
     @Column(nullable = false)
     private String country;
 
-    @Column(nullable = false)
+    @Column(name = "is_primary", nullable = false)
     @Builder.Default
     private boolean primary = false;
 }
