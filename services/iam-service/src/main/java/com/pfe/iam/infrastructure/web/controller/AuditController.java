@@ -1,4 +1,4 @@
-package com.pfe.iam.presentation.controller;
+package com.pfe.iam.infrastructure.web.controller;
 
 import com.pfe.commons.dto.BaseResponse;
 import com.pfe.iam.application.dto.AuditLogDto;
