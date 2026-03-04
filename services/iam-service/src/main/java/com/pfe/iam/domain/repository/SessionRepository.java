@@ -4,19 +4,20 @@ import com.pfe.iam.domain.model.Session;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface SessionRepository {
     Session save(Session session);
 
-    Optional<Session> findById(String id);
+    Optional<Session> findById(UUID id);
 
     Optional<Session> findByToken(String token);
 
-    List<Session> findByUserId(String userId);
+    List<Session> findByUserId(UUID userId);
 
-    void deleteById(String id);
+    void deleteById(UUID id);
 
-    void deleteByUserId(String userId);
+    void deleteByUserId(UUID userId);
 
     void deleteExpiredSessions();
 }

@@ -7,13 +7,14 @@ import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Role {
-    private String id;
+    private UUID id;
     private UserRole name;
     private String description;
     @Builder.Default

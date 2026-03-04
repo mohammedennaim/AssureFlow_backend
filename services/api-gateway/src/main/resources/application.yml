@@ -118,7 +118,7 @@ springdoc:
     enabled: true
     path: /swagger-ui.html
     urls:
-      - name: All Services (Aggregated)
+      - name: All Services
         url: /v3/api-docs/all
       - name: IAM Service
         url: /v3/api-docs/iam-service
@@ -130,9 +130,8 @@ springdoc:
         url: /v3/api-docs/claims-service
       - name: Notification Service
         url: /v3/api-docs/notification-service
-    urls-primary-name: All Services (Aggregated)
+    urls-primary-name: All Services
 
-# Actuator
 management:
   endpoints:
     web:
