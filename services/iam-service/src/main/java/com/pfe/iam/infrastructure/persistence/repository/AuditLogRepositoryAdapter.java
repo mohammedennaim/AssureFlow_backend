@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -23,8 +24,8 @@ public class AuditLogRepositoryAdapter implements AuditLogRepository {
     }
 
     @Override
-    public List<AuditLog> findByUserId(String userId) {
-        return jpaAuditLogRepository.findByUserIdOrderByTimestampDesc(userId).stream()
+    public List<AuditLog> findByUserId(UUID userId) {
+        return jpaAuditLogRepository.findByUserIdOrderByTimestampDesc(userId.toString()).stream()
                 .map(this::toDomain).collect(Collectors.toList());
     }
 
@@ -36,8 +37,8 @@ public class AuditLogRepositoryAdapter implements AuditLogRepository {
 
     private AuditLog toDomain(AuditLogEntity entity) {
         return AuditLog.builder()
-                .id(entity.getId())
-                .userId(entity.getUserId())
+                .id(UUID.fromString(entity.getId()))
+                .userId(UUID.fromString(entity.getUserId()))
                 .action(entity.getAction())
                 .timestamp(entity.getTimestamp())
                 .build();
@@ -45,8 +46,8 @@ public class AuditLogRepositoryAdapter implements AuditLogRepository {
 
     private AuditLogEntity toEntity(AuditLog auditLog) {
         return AuditLogEntity.builder()
-                .id(auditLog.getId())
-                .userId(auditLog.getUserId())
+                .id(auditLog.getId() != null ? auditLog.getId().toString() : null)
+                .userId(auditLog.getUserId() != null ? auditLog.getUserId().toString() : null)
                 .action(auditLog.getAction())
                 .timestamp(auditLog.getTimestamp())
                 .build();

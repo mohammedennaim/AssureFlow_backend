@@ -20,8 +20,8 @@ public class UserRepositoryAdapter implements UserRepository {
     private final JpaRoleRepository jpaRoleRepository;
 
     @Override
-    public Optional<User> findById(String id) {
-        return jpaUserRepository.findById(id).map(this::toDomain);
+    public Optional<User> findById(UUID id) {
+        return jpaUserRepository.findById(id.toString()).map(this::toDomain);
     }
 
     @Override
@@ -49,15 +49,15 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
-    public void deleteById(String id) {
-        jpaUserRepository.deleteById(id);
+    public void deleteById(UUID id) {
+        jpaUserRepository.deleteById(id.toString());
     }
 
     private User toDomain(UserEntity entity) {
         Role role = entity.getRole() != null ? roleToDomain(entity.getRole()) : null;
 
         return User.builder()
-                .id(entity.getId())
+                .id(UUID.fromString(entity.getId()))
                 .username(entity.getUsername())
                 .email(entity.getEmail())
                 .passwordHash(entity.getPasswordHash())
@@ -72,7 +72,7 @@ public class UserRepositoryAdapter implements UserRepository {
         Set<Permission> permissions = re.getPermissions() != null
                 ? re.getPermissions().stream()
                         .map(pe -> Permission.builder()
-                                .id(pe.getId())
+                                .id(UUID.fromString(pe.getId()))
                                 .resource(pe.getResource())
                                 .action(pe.getAction())
                                 .build())
@@ -80,7 +80,7 @@ public class UserRepositoryAdapter implements UserRepository {
                 : new HashSet<>();
 
         return Role.builder()
-                .id(re.getId())
+                .id(UUID.fromString(re.getId()))
                 .name(re.getName())
                 .description(re.getDescription())
                 .permissions(permissions)
@@ -92,14 +92,14 @@ public class UserRepositoryAdapter implements UserRepository {
         if (domain.getRole() != null) {
             Role role = domain.getRole();
             if (role.getId() != null) {
-                roleEntity = jpaRoleRepository.findById(role.getId()).orElse(null);
+                roleEntity = jpaRoleRepository.findById(role.getId().toString()).orElse(null);
             } else if (role.getName() != null) {
                 roleEntity = jpaRoleRepository.findByName(role.getName()).orElse(null);
             }
         }
 
         return UserEntity.builder()
-                .id(domain.getId())
+                .id(domain.getId() != null ? domain.getId().toString() : null)
                 .username(domain.getUsername())
                 .email(domain.getEmail())
                 .passwordHash(domain.getPasswordHash())

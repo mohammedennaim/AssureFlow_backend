@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,7 +23,7 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public void log(String userId, String action) {
         AuditLog auditLog = AuditLog.builder()
-                .userId(userId)
+                .userId(UUID.fromString(userId))
                 .action(action)
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -32,7 +33,7 @@ public class AuditServiceImpl implements AuditService {
 
     @Override
     public List<AuditLogDto> getAuditLogsByUserId(String userId) {
-        return auditLogRepository.findByUserId(userId).stream()
+        return auditLogRepository.findByUserId(UUID.fromString(userId)).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -46,8 +47,8 @@ public class AuditServiceImpl implements AuditService {
 
     private AuditLogDto toDto(AuditLog auditLog) {
         return AuditLogDto.builder()
-                .id(auditLog.getId())
-                .userId(auditLog.getUserId())
+                .id(auditLog.getId() != null ? auditLog.getId().toString() : null)
+                .userId(auditLog.getUserId() != null ? auditLog.getUserId().toString() : null)
                 .action(auditLog.getAction())
                 .timestamp(auditLog.getTimestamp())
                 .build();

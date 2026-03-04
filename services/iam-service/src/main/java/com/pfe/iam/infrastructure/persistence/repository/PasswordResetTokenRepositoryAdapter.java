@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,14 +30,14 @@ public class PasswordResetTokenRepositoryAdapter implements PasswordResetTokenRe
 
     @Override
     @Transactional
-    public void deleteByUserId(String userId) {
-        jpaRepository.deleteByUserId(userId);
+    public void deleteByUserId(UUID userId) {
+        jpaRepository.deleteByUserId(userId.toString());
     }
 
     private PasswordResetTokenEntity toEntity(PasswordResetToken domain) {
         return PasswordResetTokenEntity.builder()
-                .id(domain.getId())
-                .userId(domain.getUserId())
+                .id(domain.getId() != null ? domain.getId().toString() : null)
+                .userId(domain.getUserId() != null ? domain.getUserId().toString() : null)
                 .token(domain.getToken())
                 .expiresAt(domain.getExpiresAt())
                 .used(domain.isUsed())
@@ -46,8 +47,8 @@ public class PasswordResetTokenRepositoryAdapter implements PasswordResetTokenRe
 
     private PasswordResetToken toDomain(PasswordResetTokenEntity entity) {
         return PasswordResetToken.builder()
-                .id(entity.getId())
-                .userId(entity.getUserId())
+                .id(UUID.fromString(entity.getId()))
+                .userId(UUID.fromString(entity.getUserId()))
                 .token(entity.getToken())
                 .expiresAt(entity.getExpiresAt())
                 .used(entity.isUsed())
