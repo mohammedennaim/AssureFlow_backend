@@ -3,11 +3,11 @@ package com.pfe.claims.infrastructure.persistence.mapper;
 import com.pfe.claims.domain.model.Claim;
 import com.pfe.claims.domain.model.ClaimAssessment;
 import com.pfe.claims.domain.model.ClaimDocument;
-import com.pfe.claims.domain.model.ClaimPayout;
+import com.pfe.claims.domain.model.Payout;
 import com.pfe.claims.infrastructure.persistence.entity.ClaimAssessmentEntity;
 import com.pfe.claims.infrastructure.persistence.entity.ClaimDocumentEntity;
 import com.pfe.claims.infrastructure.persistence.entity.ClaimEntity;
-import com.pfe.claims.infrastructure.persistence.entity.ClaimPayoutEntity;
+import com.pfe.claims.infrastructure.persistence.entity.PayoutEntity;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -25,7 +25,7 @@ public interface ClaimEntityMapper {
     ClaimAssessment toDomain(ClaimAssessmentEntity entity);
 
     @Mapping(target = "claimId", source = "claim.id")
-    ClaimPayout toDomain(ClaimPayoutEntity entity);
+    Payout toDomain(PayoutEntity entity);
 
     @Mapping(target = "updatedAt", ignore = true)
     ClaimEntity toEntity(Claim domain);
@@ -37,7 +37,7 @@ public interface ClaimEntityMapper {
     ClaimAssessmentEntity toEntity(ClaimAssessment domain);
 
     @Mapping(target = "claim", ignore = true)
-    ClaimPayoutEntity toEntity(ClaimPayout domain);
+    PayoutEntity toEntity(Payout domain);
 
     @AfterMapping
     default void linkClaimToChildren(@MappingTarget ClaimEntity claimEntity) {

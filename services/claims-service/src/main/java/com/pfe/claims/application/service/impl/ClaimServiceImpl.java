@@ -5,11 +5,13 @@ import com.pfe.claims.application.dto.CreateClaimRequest;
 import com.pfe.claims.application.dto.UpdateClaimRequest;
 import com.pfe.claims.application.mapper.ClaimMapper;
 import com.pfe.claims.application.service.ClaimService;
+import com.pfe.claims.domain.event.ClaimSubmittedEvent;
 import com.pfe.claims.domain.exception.ClaimNotFoundException;
 import com.pfe.claims.domain.model.Claim;
 import com.pfe.claims.domain.model.ClaimStatus;
 import com.pfe.claims.domain.repository.ClaimRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClaimServiceImpl implements ClaimService {
@@ -35,6 +38,25 @@ public class ClaimServiceImpl implements ClaimService {
         claim.setCreatedAt(LocalDateTime.now());
 
         Claim savedClaim = claimRepository.save(claim);
+
+        // Publish domain event
+        ClaimSubmittedEvent event = ClaimSubmittedEvent.builder()
+                .claimId(savedClaim.getId())
+                .claimNumber(savedClaim.getClaimNumber())
+                .policyId(savedClaim.getPolicyId())
+                .clientId(savedClaim.getClientId())
+                .status(savedClaim.getStatus() != null ? savedClaim.getStatus().name() : null)
+                .incidentDate(savedClaim.getIncidentDate())
+                .estimatedAmount(savedClaim.getEstimatedAmount())
+                .description(savedClaim.getDescription())
+                .source("claims-service")
+                .build();
+
+        savedClaim.registerEvent(event);
+        log.info("ClaimSubmittedEvent published for claim: {}", savedClaim.getClaimNumber());
+
+        savedClaim.clearDomainEvents();
+
         return claimMapper.toDto(savedClaim);
     }
 

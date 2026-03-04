@@ -3,7 +3,7 @@ package com.pfe.claims.domain.service;
 import com.pfe.claims.domain.exception.ClaimNotFoundException;
 import com.pfe.claims.domain.model.*;
 import com.pfe.claims.domain.repository.ClaimAssessmentRepository;
-import com.pfe.claims.domain.repository.ClaimPayoutRepository;
+import com.pfe.claims.domain.repository.PayoutRepository;
 import com.pfe.claims.domain.repository.ClaimRepository;
 
 import java.math.BigDecimal;
@@ -13,11 +13,11 @@ public class ClaimDomainService {
 
         private final ClaimRepository claimRepository;
         private final ClaimAssessmentRepository assessmentRepository;
-        private final ClaimPayoutRepository payoutRepository;
+        private final PayoutRepository payoutRepository;
 
         public ClaimDomainService(ClaimRepository claimRepository,
                         ClaimAssessmentRepository assessmentRepository,
-                        ClaimPayoutRepository payoutRepository) {
+                        PayoutRepository payoutRepository) {
                 this.claimRepository = claimRepository;
                 this.assessmentRepository = assessmentRepository;
                 this.payoutRepository = payoutRepository;
@@ -74,7 +74,7 @@ public class ClaimDomainService {
                 Claim claim = claimRepository.findById(claimId)
                                 .orElseThrow(() -> new ClaimNotFoundException(claimId));
 
-                ClaimPayout payout = ClaimPayout.builder()
+                Payout payout = Payout.builder()
                                 .claimId(claimId)
                                 .amount(claim.getApprovedAmount())
                                 .paymentMethod(paymentMethod)

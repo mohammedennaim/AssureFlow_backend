@@ -15,7 +15,7 @@ public interface ClaimMapper {
 
     ClaimAssessmentDto toDto(ClaimAssessment assessment);
 
-    ClaimPayoutDto toDto(ClaimPayout payout);
+    PayoutDto toDto(Payout payout);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "claimNumber", ignore = true)
@@ -27,5 +27,6 @@ public interface ClaimMapper {
     @Mapping(target = "documents", ignore = true)
     @Mapping(target = "assessments", ignore = true)
     @Mapping(target = "payout", ignore = true)
+    @Mapping(target = "domainEvents", ignore = true)
     Claim toDomain(CreateClaimRequest request);
 }

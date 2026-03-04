@@ -32,5 +32,5 @@ public class ClaimDto {
     private LocalDateTime createdAt;
     private List<ClaimDocumentDto> documents;
     private List<ClaimAssessmentDto> assessments;
-    private ClaimPayoutDto payout;
+    private PayoutDto payout;
 }

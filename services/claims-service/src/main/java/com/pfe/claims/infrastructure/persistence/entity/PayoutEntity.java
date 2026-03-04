@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClaimPayoutEntity {
+public class PayoutEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

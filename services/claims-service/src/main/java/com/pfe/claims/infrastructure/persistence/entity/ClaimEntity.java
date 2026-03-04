@@ -64,7 +64,7 @@ public class ClaimEntity {
     private List<ClaimAssessmentEntity> assessments = new ArrayList<>();
 
     @OneToOne(mappedBy = "claim", cascade = CascadeType.ALL, orphanRemoval = true)
-    private ClaimPayoutEntity payout;
+    private PayoutEntity payout;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

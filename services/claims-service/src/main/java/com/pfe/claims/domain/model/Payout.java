@@ -1,6 +1,5 @@
-package com.pfe.claims.application.dto;
+package com.pfe.claims.domain.model;
 
-import com.pfe.claims.domain.model.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,8 +12,9 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClaimPayoutDto {
+public class Payout {
     private UUID id;
+    private UUID claimId;
     private BigDecimal amount;
     private String paymentMethod;
     private PaymentStatus status;
