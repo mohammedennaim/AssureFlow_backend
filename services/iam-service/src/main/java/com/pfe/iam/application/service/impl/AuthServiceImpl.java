@@ -52,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
                 user.setActive(true);
 
                 User savedUser = userRepository.save(user);
-                auditService.log(savedUser.getId(), "USER_REGISTERED");
+                auditService.log(savedUser.getId().toString(), "USER_REGISTERED");
                 log.info("User registered: {}", savedUser.getEmail());
                 return userMapper.toDto(savedUser);
         }
@@ -78,8 +78,8 @@ public class AuthServiceImpl implements AuthService {
                                 .build();
 
                 String token = jwtService.generateToken(userDetails, roles);
-                sessionService.createSession(user.getId(), token, 86400000L);
-                auditService.log(user.getId(), "USER_LOGIN");
+                sessionService.createSession(user.getId().toString(), token, 86400000L);
+                auditService.log(user.getId().toString(), "USER_LOGIN");
                 log.info("User logged in: {}", user.getEmail());
                 return new TokenResponse(token, userMapper.toDto(user));
         }
@@ -99,8 +99,8 @@ public class AuthServiceImpl implements AuthService {
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
                 // Invalidate all sessions for this user
-                sessionService.invalidateAllUserSessions(user.getId());
-                auditService.log(user.getId(), "USER_LOGOUT");
+                sessionService.invalidateAllUserSessions(user.getId().toString());
+                auditService.log(user.getId().toString(), "USER_LOGOUT");
                 log.info("User logged out: {}", user.getEmail());
         }
 
@@ -127,7 +127,7 @@ public class AuthServiceImpl implements AuthService {
                                 .build();
 
                 passwordResetTokenRepository.save(tokenEntity);
-                auditService.log(user.getId(), "PASSWORD_RESET_REQUESTED");
+                auditService.log(user.getId().toString(), "PASSWORD_RESET_REQUESTED");
                 log.info("Password reset token generated for user: {}", user.getEmail());
 
                 // In production, this token would be sent via email (NotificationService)
@@ -158,9 +158,9 @@ public class AuthServiceImpl implements AuthService {
                 passwordResetTokenRepository.save(resetToken);
 
                 // Invalidate all sessions (force re-login)
-                sessionService.invalidateAllUserSessions(user.getId());
+                sessionService.invalidateAllUserSessions(user.getId().toString());
 
-                auditService.log(user.getId(), "PASSWORD_RESET_COMPLETED");
+                auditService.log(user.getId().toString(), "PASSWORD_RESET_COMPLETED");
                 log.info("Password reset completed for user: {}", user.getEmail());
         }
 
@@ -180,7 +180,7 @@ public class AuthServiceImpl implements AuthService {
                 user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
                 userRepository.save(user);
 
-                auditService.log(user.getId(), "PASSWORD_CHANGED");
+                auditService.log(user.getId().toString(), "PASSWORD_CHANGED");
                 log.info("Password changed for user: {}", user.getEmail());
         }
 }

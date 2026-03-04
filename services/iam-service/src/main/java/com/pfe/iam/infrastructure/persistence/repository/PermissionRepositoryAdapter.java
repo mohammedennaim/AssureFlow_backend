@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -24,8 +25,8 @@ public class PermissionRepositoryAdapter implements PermissionRepository {
     }
 
     @Override
-    public Optional<Permission> findById(String id) {
-        return jpaPermissionRepository.findById(id).map(this::toDomain);
+    public Optional<Permission> findById(UUID id) {
+        return jpaPermissionRepository.findById(id.toString()).map(this::toDomain);
     }
 
     @Override
@@ -39,13 +40,13 @@ public class PermissionRepositoryAdapter implements PermissionRepository {
     }
 
     @Override
-    public void deleteById(String id) {
-        jpaPermissionRepository.deleteById(id);
+    public void deleteById(UUID id) {
+        jpaPermissionRepository.deleteById(id.toString());
     }
 
     private Permission toDomain(PermissionEntity entity) {
         return Permission.builder()
-                .id(entity.getId())
+                .id(UUID.fromString(entity.getId()))
                 .resource(entity.getResource())
                 .action(entity.getAction())
                 .build();
@@ -53,7 +54,7 @@ public class PermissionRepositoryAdapter implements PermissionRepository {
 
     private PermissionEntity toEntity(Permission permission) {
         return PermissionEntity.builder()
-                .id(permission.getId())
+                .id(permission.getId() != null ? permission.getId().toString() : null)
                 .resource(permission.getResource())
                 .action(permission.getAction())
                 .build();

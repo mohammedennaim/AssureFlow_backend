@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -26,8 +27,8 @@ public class SessionRepositoryAdapter implements SessionRepository {
     }
 
     @Override
-    public Optional<Session> findById(String id) {
-        return jpaSessionRepository.findById(id).map(this::toDomain);
+    public Optional<Session> findById(UUID id) {
+        return jpaSessionRepository.findById(id.toString()).map(this::toDomain);
     }
 
     @Override
@@ -36,20 +37,20 @@ public class SessionRepositoryAdapter implements SessionRepository {
     }
 
     @Override
-    public List<Session> findByUserId(String userId) {
-        return jpaSessionRepository.findByUserId(userId).stream()
+    public List<Session> findByUserId(UUID userId) {
+        return jpaSessionRepository.findByUserId(userId.toString()).stream()
                 .map(this::toDomain).collect(Collectors.toList());
     }
 
     @Override
-    public void deleteById(String id) {
-        jpaSessionRepository.deleteById(id);
+    public void deleteById(UUID id) {
+        jpaSessionRepository.deleteById(id.toString());
     }
 
     @Override
     @Transactional
-    public void deleteByUserId(String userId) {
-        jpaSessionRepository.deleteByUserId(userId);
+    public void deleteByUserId(UUID userId) {
+        jpaSessionRepository.deleteByUserId(userId.toString());
     }
 
     @Override
@@ -60,8 +61,8 @@ public class SessionRepositoryAdapter implements SessionRepository {
 
     private Session toDomain(SessionEntity entity) {
         return Session.builder()
-                .id(entity.getId())
-                .userId(entity.getUserId())
+                .id(UUID.fromString(entity.getId()))
+                .userId(UUID.fromString(entity.getUserId()))
                 .token(entity.getToken())
                 .expiresAt(entity.getExpiresAt())
                 .createdAt(entity.getCreatedAt())
@@ -70,8 +71,8 @@ public class SessionRepositoryAdapter implements SessionRepository {
 
     private SessionEntity toEntity(Session session) {
         return SessionEntity.builder()
-                .id(session.getId())
-                .userId(session.getUserId())
+                .id(session.getId() != null ? session.getId().toString() : null)
+                .userId(session.getUserId() != null ? session.getUserId().toString() : null)
                 .token(session.getToken())
                 .expiresAt(session.getExpiresAt())
                 .createdAt(session.getCreatedAt())

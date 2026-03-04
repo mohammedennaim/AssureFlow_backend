@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,7 +64,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleDto getRoleById(String id) {
-        Role role = roleRepository.findById(id)
+        Role role = roleRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new RoleNotFoundException(id));
         return toDto(role);
     }
@@ -71,19 +72,19 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public void deleteRole(String id) {
-        if (roleRepository.findById(id).isEmpty()) {
+        if (roleRepository.findById(UUID.fromString(id)).isEmpty()) {
             throw new RoleNotFoundException(id);
         }
-        roleRepository.deleteById(id);
+        roleRepository.deleteById(UUID.fromString(id));
         log.info("Role deleted: {}", id);
     }
 
     @Override
     @Transactional
     public RoleDto assignPermission(String roleId, String permissionId) {
-        Role role = roleRepository.findById(roleId)
+        Role role = roleRepository.findById(UUID.fromString(roleId))
                 .orElseThrow(() -> new RoleNotFoundException(roleId));
-        Permission permission = permissionRepository.findById(permissionId)
+        Permission permission = permissionRepository.findById(UUID.fromString(permissionId))
                 .orElseThrow(() -> new ResourceNotFoundException("Permission", "id", permissionId));
 
         role.grantPermission(permission);
@@ -95,10 +96,10 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public RoleDto removePermission(String roleId, String permissionId) {
-        Role role = roleRepository.findById(roleId)
+        Role role = roleRepository.findById(UUID.fromString(roleId))
                 .orElseThrow(() -> new RoleNotFoundException(roleId));
 
-        role.getPermissions().removeIf(p -> p.getId().equals(permissionId));
+        role.getPermissions().removeIf(p -> p.getId().toString().equals(permissionId));
         Role saved = roleRepository.save(role);
         log.info("Permission {} removed from role {}", permissionId, role.getName());
         return toDto(saved);
@@ -131,13 +132,13 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public void deletePermission(String id) {
-        permissionRepository.deleteById(id);
+        permissionRepository.deleteById(UUID.fromString(id));
         log.info("Permission deleted: {}", id);
     }
 
     private RoleDto toDto(Role role) {
         return RoleDto.builder()
-                .id(role.getId())
+                .id(role.getId() != null ? role.getId().toString() : null)
                 .name(role.getName().name())
                 .description(role.getDescription())
                 .permissions(role.getPermissions().stream()
@@ -148,7 +149,7 @@ public class RoleServiceImpl implements RoleService {
 
     private PermissionDto toPermissionDto(Permission p) {
         return PermissionDto.builder()
-                .id(p.getId())
+                .id(p.getId() != null ? p.getId().toString() : null)
                 .resource(p.getResource())
                 .action(p.getAction())
                 .build();

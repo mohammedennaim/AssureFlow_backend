@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +37,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(String id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         return toDto(user);
     }
@@ -51,7 +52,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto updateUser(String id, UpdateUserRequest request) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
 
         if (request.getUsername() != null)
@@ -70,10 +71,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(String id) {
-        if (userRepository.findById(id).isEmpty()) {
+        if (userRepository.findById(UUID.fromString(id)).isEmpty()) {
             throw new ResourceNotFoundException("User", "id", id);
         }
-        userRepository.deleteById(id);
+        userRepository.deleteById(UUID.fromString(id));
         auditService.log(id, "USER_DELETED");
         log.info("User deleted: {}", id);
     }
@@ -81,9 +82,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto assignRole(String userId, String roleId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
-        Role role = roleRepository.findById(roleId)
+        Role role = roleRepository.findById(UUID.fromString(roleId))
                 .orElseThrow(() -> new RoleNotFoundException(roleId));
 
         user.setRole(role);
@@ -96,12 +97,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto removeRole(String userId, String roleId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(UUID.fromString(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
-        Role role = roleRepository.findById(roleId)
+        Role role = roleRepository.findById(UUID.fromString(roleId))
                 .orElseThrow(() -> new RoleNotFoundException(roleId));
 
-        if (user.getRole() != null && user.getRole().getId().equals(roleId)) {
+        if (user.getRole() != null && user.getRole().getId().toString().equals(roleId)) {
             user.setRole(null);
         }
         User saved = userRepository.save(user);
@@ -114,7 +115,7 @@ public class UserServiceImpl implements UserService {
         String roleStr = user.getRole() != null ? user.getRole().getName().name() : null;
 
         return UserDto.builder()
-                .id(user.getId())
+                .id(user.getId() != null ? user.getId().toString() : null)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .active(user.isActive())

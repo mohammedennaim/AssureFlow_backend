@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,8 +28,8 @@ public class RoleRepositoryAdapter implements RoleRepository {
     }
 
     @Override
-    public Optional<Role> findById(String id) {
-        return jpaRoleRepository.findById(id).map(this::toDomain);
+    public Optional<Role> findById(UUID id) {
+        return jpaRoleRepository.findById(id.toString()).map(this::toDomain);
     }
 
     @Override
@@ -42,8 +43,8 @@ public class RoleRepositoryAdapter implements RoleRepository {
     }
 
     @Override
-    public void deleteById(String id) {
-        jpaRoleRepository.deleteById(id);
+    public void deleteById(UUID id) {
+        jpaRoleRepository.deleteById(id.toString());
     }
 
     @Override
@@ -53,7 +54,7 @@ public class RoleRepositoryAdapter implements RoleRepository {
 
     public Role toDomain(RoleEntity entity) {
         return Role.builder()
-                .id(entity.getId())
+                .id(UUID.fromString(entity.getId()))
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .permissions(entity.getPermissions().stream()
@@ -64,7 +65,7 @@ public class RoleRepositoryAdapter implements RoleRepository {
 
     public RoleEntity toEntity(Role role) {
         return RoleEntity.builder()
-                .id(role.getId())
+                .id(role.getId() != null ? role.getId().toString() : null)
                 .name(role.getName())
                 .description(role.getDescription())
                 .permissions(role.getPermissions().stream()
@@ -75,7 +76,7 @@ public class RoleRepositoryAdapter implements RoleRepository {
 
     private Permission permissionToDomain(PermissionEntity entity) {
         return Permission.builder()
-                .id(entity.getId())
+                .id(UUID.fromString(entity.getId()))
                 .resource(entity.getResource())
                 .action(entity.getAction())
                 .build();
@@ -83,7 +84,7 @@ public class RoleRepositoryAdapter implements RoleRepository {
 
     private PermissionEntity permissionToEntity(Permission permission) {
         return PermissionEntity.builder()
-                .id(permission.getId())
+                .id(permission.getId() != null ? permission.getId().toString() : null)
                 .resource(permission.getResource())
                 .action(permission.getAction())
                 .build();

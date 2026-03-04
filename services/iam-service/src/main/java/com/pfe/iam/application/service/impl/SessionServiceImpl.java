@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,7 +25,7 @@ public class SessionServiceImpl implements SessionService {
     @Transactional
     public SessionDto createSession(String userId, String token, long expirationMs) {
         Session session = Session.builder()
-                .userId(userId)
+                .userId(UUID.fromString(userId))
                 .token(token)
                 .expiresAt(LocalDateTime.now().plusNanos(expirationMs * 1_000_000))
                 .createdAt(LocalDateTime.now())
@@ -37,7 +38,7 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public List<SessionDto> getSessionsByUserId(String userId) {
-        return sessionRepository.findByUserId(userId).stream()
+        return sessionRepository.findByUserId(UUID.fromString(userId)).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -45,14 +46,14 @@ public class SessionServiceImpl implements SessionService {
     @Override
     @Transactional
     public void invalidateSession(String sessionId) {
-        sessionRepository.deleteById(sessionId);
+        sessionRepository.deleteById(UUID.fromString(sessionId));
         log.info("Session invalidated: {}", sessionId);
     }
 
     @Override
     @Transactional
     public void invalidateAllUserSessions(String userId) {
-        sessionRepository.deleteByUserId(userId);
+        sessionRepository.deleteByUserId(UUID.fromString(userId));
         log.info("All sessions invalidated for user: {}", userId);
     }
 
@@ -72,8 +73,8 @@ public class SessionServiceImpl implements SessionService {
 
     private SessionDto toDto(Session session) {
         return SessionDto.builder()
-                .id(session.getId())
-                .userId(session.getUserId())
+                .id(session.getId() != null ? session.getId().toString() : null)
+                .userId(session.getUserId() != null ? session.getUserId().toString() : null)
                 .expiresAt(session.getExpiresAt())
                 .createdAt(session.getCreatedAt())
                 .expired(session.isExpired())

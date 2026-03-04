@@ -80,7 +80,7 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Seeding Admin user...");
             Role adminRole = roleRepository.findByName(UserRole.ADMIN).orElseThrow();
             User admin = User.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID())
                     .username("admin")
                     .email("admin@assureflow.com")
                     .passwordHash(passwordEncoder.encode("admin123"))
@@ -94,7 +94,7 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Seeding Agent user...");
             Role agentRole = roleRepository.findByName(UserRole.AGENT).orElseThrow();
             User agent = User.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID())
                     .username("agent")
                     .email("agent@assureflow.com")
                     .passwordHash(passwordEncoder.encode("agent123"))
@@ -108,7 +108,7 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Seeding Client user...");
             Role clientRole = roleRepository.findByName(UserRole.CLIENT).orElseThrow();
             User client = User.builder()
-                    .id(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID())
                     .username("client")
                     .email("client@assureflow.com")
                     .passwordHash(passwordEncoder.encode("client123"))
