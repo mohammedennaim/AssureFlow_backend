@@ -3,7 +3,10 @@ package com.pfe.billing.domain.model;
 import com.pfe.commons.annotations.AggregateRoot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -11,12 +14,16 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @AggregateRoot
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Invoice {
 
+    @EqualsAndHashCode.Include
     private UUID id;
     private String invoiceNumber;
     private UUID policyId;

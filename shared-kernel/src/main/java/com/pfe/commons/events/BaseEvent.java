@@ -13,7 +13,7 @@ import java.util.UUID;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class BaseEvent {
+public abstract class BaseEvent implements DomainEvent {
     @Builder.Default
     private String eventId = UUID.randomUUID().toString();
 

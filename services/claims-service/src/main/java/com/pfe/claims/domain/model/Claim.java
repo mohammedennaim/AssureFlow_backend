@@ -3,8 +3,12 @@ package com.pfe.claims.domain.model;
 import com.pfe.commons.annotations.AggregateRoot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
+import com.pfe.commons.events.DomainEvent;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,11 +18,15 @@ import java.util.List;
 import java.util.UUID;
 
 @AggregateRoot
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Claim {
+    @EqualsAndHashCode.Include
     private UUID id;
     private String claimNumber;
     private UUID policyId;
@@ -42,16 +50,16 @@ public class Claim {
     private Payout payout;
 
     @Builder.Default
-    private transient List<Object> domainEvents = new ArrayList<>();
+    private transient List<DomainEvent> domainEvents = new ArrayList<>();
 
-    public void registerEvent(Object event) {
+    public void registerEvent(DomainEvent event) {
         if (this.domainEvents == null) {
             this.domainEvents = new ArrayList<>();
         }
         this.domainEvents.add(event);
     }
 
-    public List<Object> getDomainEvents() {
+    public List<DomainEvent> getDomainEvents() {
         if (this.domainEvents == null) {
             return new ArrayList<>();
         }

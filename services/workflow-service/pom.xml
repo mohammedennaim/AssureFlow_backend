@@ -112,6 +112,9 @@
                         <goals>
                             <goal>repackage</goal>
                         </goals>
+                        <configuration>
+                            <mainClass>com.pfe.workflow.WorkflowApplication</mainClass>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

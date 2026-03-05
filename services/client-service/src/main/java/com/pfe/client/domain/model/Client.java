@@ -3,7 +3,10 @@ package com.pfe.client.domain.model;
 import com.pfe.commons.annotations.AggregateRoot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
@@ -13,11 +16,15 @@ import java.util.List;
 import java.util.UUID;
 
 @AggregateRoot
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Client {
+    @EqualsAndHashCode.Include
     private UUID id;
     private String clientNumber;
     private String firstName;
