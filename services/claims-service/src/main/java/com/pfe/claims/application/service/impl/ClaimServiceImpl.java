@@ -10,6 +10,9 @@ import com.pfe.claims.domain.exception.ClaimNotFoundException;
 import com.pfe.claims.domain.model.Claim;
 import com.pfe.claims.domain.model.ClaimStatus;
 import com.pfe.claims.domain.repository.ClaimRepository;
+import com.pfe.claims.infrastructure.client.PolicyDto;
+import com.pfe.claims.infrastructure.client.PolicyServiceClient;
+import com.pfe.commons.exceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,10 +31,14 @@ public class ClaimServiceImpl implements ClaimService {
 
     private final ClaimRepository claimRepository;
     private final ClaimMapper claimMapper;
+    private final PolicyServiceClient policyServiceClient;
 
     @Override
     @Transactional
     public ClaimDto createClaim(CreateClaimRequest request) {
+        // Validate policy exists and is active via policy-service (OpenFeign)
+        validatePolicyExists(request.getPolicyId());
+
         Claim claim = claimMapper.toDomain(request);
         claim.setClaimNumber("CLM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         claim.setStatus(ClaimStatus.SUBMITTED);
@@ -58,6 +65,27 @@ public class ClaimServiceImpl implements ClaimService {
         savedClaim.clearDomainEvents();
 
         return claimMapper.toDto(savedClaim);
+    }
+
+    private void validatePolicyExists(UUID policyId) {
+        if (policyId == null) {
+            throw new BusinessException("Policy ID is required");
+        }
+        try {
+            PolicyDto policy = policyServiceClient.getPolicyById(policyId.toString());
+            if (policy == null) {
+                throw new BusinessException("Policy not found with ID: " + policyId);
+            }
+            if ("CANCELLED".equals(policy.getStatus()) || "EXPIRED".equals(policy.getStatus())) {
+                throw new BusinessException("Cannot create claim for policy with status: " + policy.getStatus());
+            }
+            log.info("Policy validated: {} (status: {})", policy.getPolicyNumber(), policy.getStatus());
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to validate policy {}: {}", policyId, e.getMessage());
+            throw new BusinessException("Unable to validate policy: " + e.getMessage());
+        }
     }
 
     @Override

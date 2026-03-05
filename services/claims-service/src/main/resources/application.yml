@@ -26,6 +26,12 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+feign:
+  client:
+    config:
+      policy-service:
+        url: http://localhost:8086
+
 ---
 spring:
   config:
@@ -33,6 +39,12 @@ spring:
       on-profile: docker
   datasource:
     url: jdbc:postgresql://postgres-db:5432/assureflow_db
+
+feign:
+  client:
+    config:
+      policy-service:
+        url: http://policy-service:8080
 
 # Actuator & Prometheus
 management:
