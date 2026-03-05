@@ -17,6 +17,8 @@ import com.pfe.client.application.dto.ClientSearchCriteria;
 import com.pfe.client.domain.event.ClientCreatedEvent;
 import com.pfe.client.domain.event.ClientUpdatedEvent;
 import com.pfe.client.domain.event.ClientDeletedEvent;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -92,8 +94,9 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "clients", key = "#id")
     public ClientResponse getClientById(UUID id) {
-        log.debug("Fetching client by ID: {}", id);
+        log.debug("Fetching client from database by ID: {}", id);
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new ClientNotFoundException(id));
         client.setAddresses(addressRepository.findByClientId(id));
@@ -132,6 +135,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "clients", allEntries = true)
     public ClientResponse updateClient(UUID id, ClientRequest request) {
         log.info("Updating client with ID: {}", id);
 
