@@ -1,22 +1,16 @@
 package com.pfe.billing.infrastructure.client;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.UUID;
+@FeignClient(
+        name = "policy-service",
+        url = "${feign.client.config.policy-service.url}",
+        fallback = PolicyServiceClientFallback.class
+)
+public interface PolicyServiceClient {
 
-@Slf4j
-@Component
-public class PolicyServiceClient {
-    private static final String POLICY_SERVICE_URL = "http://policy-service:8080/api/policies";
-
-    public Object getPolicyDetails(UUID policyId) {
-        log.info("[POLICY] Fetching policy details for {} (RestTemplate integration pending)", policyId);
-        return null;
-    }
-
-    public boolean policyExists(UUID policyId) {
-        log.info("[POLICY] Checking if policy {} exists (RestTemplate integration pending)", policyId);
-        return true;
-    }
+    @GetMapping("/api/v1/policies/{id}")
+    PolicyDto getPolicyById(@PathVariable("id") String id);
 }

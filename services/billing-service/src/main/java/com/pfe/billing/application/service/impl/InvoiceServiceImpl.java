@@ -9,7 +9,11 @@ import com.pfe.billing.domain.model.Invoice;
 import com.pfe.billing.domain.model.InvoiceStatus;
 import com.pfe.billing.domain.repository.InvoiceRepository;
 import com.pfe.billing.domain.repository.PaymentRepository;
+import com.pfe.billing.infrastructure.client.PolicyDto;
+import com.pfe.billing.infrastructure.client.PolicyServiceClient;
+import com.pfe.commons.exceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InvoiceServiceImpl implements InvoiceService {
@@ -25,10 +30,14 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
     private final InvoiceMapper invoiceMapper;
+    private final PolicyServiceClient policyServiceClient;
 
     @Override
     @Transactional
     public InvoiceDto createInvoice(CreateInvoiceRequest request) {
+        // Validate policy exists via policy-service (OpenFeign)
+        validatePolicyExists(request.getPolicyId());
+
         Invoice invoice = invoiceMapper.toDomain(request);
         invoice.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         invoice.setStatus(InvoiceStatus.DRAFT);
@@ -39,6 +48,24 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         Invoice saved = invoiceRepository.save(invoice);
         return invoiceMapper.toDto(saved);
+    }
+
+    private void validatePolicyExists(UUID policyId) {
+        if (policyId == null) {
+            throw new BusinessException("Policy ID is required");
+        }
+        try {
+            PolicyDto policy = policyServiceClient.getPolicyById(policyId.toString());
+            if (policy == null) {
+                throw new BusinessException("Policy not found with ID: " + policyId);
+            }
+            log.info("Policy validated for invoice: {} (status: {})", policy.getPolicyNumber(), policy.getStatus());
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to validate policy {}: {}", policyId, e.getMessage());
+            throw new BusinessException("Unable to validate policy: " + e.getMessage());
+        }
     }
 
     @Override
