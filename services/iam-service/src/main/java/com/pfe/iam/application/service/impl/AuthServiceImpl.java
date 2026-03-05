@@ -5,6 +5,8 @@ import com.pfe.iam.application.mapper.UserMapper;
 import com.pfe.iam.application.service.AuditService;
 import com.pfe.iam.application.service.AuthService;
 import com.pfe.iam.application.service.SessionService;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import com.pfe.iam.domain.exception.EmailAlreadyExistsException;
 import com.pfe.iam.domain.model.PasswordResetToken;
 import com.pfe.iam.domain.model.User;
@@ -58,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
+        @Cacheable(value = "users", key = "#request.email")
         public TokenResponse login(LoginRequest request) {
                 authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
@@ -88,6 +91,7 @@ public class AuthServiceImpl implements AuthService {
 
         @Override
         @Transactional
+        @CacheEvict(value = "users", key = "#username")
         public void logout(String token) {
                 // Remove "Bearer " prefix if present
                 if (token != null && token.startsWith("Bearer ")) {
@@ -139,6 +143,7 @@ public class AuthServiceImpl implements AuthService {
 
         @Override
         @Transactional
+        @CacheEvict(value = "users", key = "#user.email")
         public void resetPassword(ResetPasswordRequest request) {
                 PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
                                 .orElseThrow(() -> new IllegalArgumentException("Invalid reset token"));
@@ -168,6 +173,7 @@ public class AuthServiceImpl implements AuthService {
 
         @Override
         @Transactional
+        @CacheEvict(value = "users", key = "#userEmail")
         public void changePassword(String userEmail, ChangePasswordRequest request) {
                 User user = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
