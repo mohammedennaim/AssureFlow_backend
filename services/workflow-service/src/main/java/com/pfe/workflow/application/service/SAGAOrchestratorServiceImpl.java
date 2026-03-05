@@ -12,6 +12,8 @@ import com.pfe.workflow.domain.model.StepStatus;
 import com.pfe.workflow.domain.repository.SAGATransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     private final SAGATransactionRepository sagaTransactionRepository;
 
     @Override
+    @Cacheable(value = "sagas", key = "#sagaId")
     public SAGATransactionDto getSagaStatus(UUID sagaId) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
                 .orElseThrow(() -> new SAGANotFoundException(sagaId));
@@ -63,6 +66,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportStepSuccess(UUID sagaId, UUID stepId) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
                 .orElseThrow(() -> new SAGANotFoundException(sagaId));
@@ -94,6 +98,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportStepFailure(UUID sagaId, UUID stepId, String errorDetails) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
                 .orElseThrow(() -> new SAGANotFoundException(sagaId));
@@ -125,6 +130,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportCompensationSuccess(UUID sagaId, UUID stepId) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
                 .orElseThrow(() -> new SAGANotFoundException(sagaId));
