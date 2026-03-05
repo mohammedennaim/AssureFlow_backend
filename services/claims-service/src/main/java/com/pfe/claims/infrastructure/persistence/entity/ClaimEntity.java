@@ -15,7 +15,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "claims")
+@Table(name = "claims", indexes = {
+        @Index(name = "idx_claim_number", columnList = "claimNumber"),
+        @Index(name = "idx_claim_policy_id", columnList = "policyId"),
+        @Index(name = "idx_claim_client_id", columnList = "clientId"),
+        @Index(name = "idx_claim_status", columnList = "status")
+})
 @Data
 @Builder
 @NoArgsConstructor

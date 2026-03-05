@@ -5,6 +5,8 @@ import com.pfe.policy.domain.repository.PolicyRepository;
 import com.pfe.policy.infrastructure.persistence.entity.PolicyEntity;
 import com.pfe.policy.infrastructure.persistence.mapper.PolicyEntityMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -35,6 +37,12 @@ public class PolicyRepositoryAdapter implements PolicyRepository {
         return jpaPolicyRepository.findAll().stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<Policy> findAll(Pageable pageable) {
+        return jpaPolicyRepository.findAll(pageable)
+                .map(mapper::toDomain);
     }
 
     @Override

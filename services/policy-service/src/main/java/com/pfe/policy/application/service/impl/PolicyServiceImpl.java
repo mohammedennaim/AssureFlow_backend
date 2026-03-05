@@ -17,6 +17,8 @@ import com.pfe.policy.infrastructure.client.ClientServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -93,13 +95,14 @@ public class PolicyServiceImpl implements PolicyService {
                     response.getData().getLastName(), clientId);
         } catch (BusinessException e) {
             throw e;
-        } catch (Exception e) {
-            log.error("Failed to validate client {}: {}", clientId, e.getMessage());
-            throw new BusinessException("Unable to validate client: " + e.getMessage());
+        } catch (feign.FeignException e) {
+            log.error("Feign call failed to validate client {}: {}", clientId, e.getMessage());
+            throw new BusinessException("Unable to reach client-service: " + e.getMessage());
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PolicyDto getPolicyById(String id) {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
@@ -107,6 +110,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PolicyDto> getPoliciesByClientId(String clientId) {
         return policyRepository.findByClientId(clientId).stream()
                 .map(policyMapper::toDto)
@@ -114,10 +118,18 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PolicyDto> getAllPolicies() {
         return policyRepository.findAll().stream()
                 .map(policyMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PolicyDto> getAllPolicies(Pageable pageable) {
+        return policyRepository.findAll(pageable)
+                .map(policyMapper::toDto);
     }
 
     @Override

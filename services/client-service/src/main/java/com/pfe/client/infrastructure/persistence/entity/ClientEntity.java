@@ -13,7 +13,11 @@ import com.pfe.client.domain.model.ClientStatus;
 import com.pfe.client.domain.model.ClientType;
 
 @Entity
-@Table(name = "clients")
+@Table(name = "clients", indexes = {
+        @Index(name = "idx_client_email", columnList = "email"),
+        @Index(name = "idx_client_cin", columnList = "cin"),
+        @Index(name = "idx_client_number", columnList = "clientNumber")
+})
 @Data
 @Builder
 @NoArgsConstructor

@@ -15,7 +15,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "policies")
+@Table(name = "policies", indexes = {
+        @Index(name = "idx_policy_number", columnList = "policyNumber"),
+        @Index(name = "idx_policy_client_id", columnList = "clientId"),
+        @Index(name = "idx_policy_status", columnList = "status")
+})
 @Data
 @Builder
 @NoArgsConstructor

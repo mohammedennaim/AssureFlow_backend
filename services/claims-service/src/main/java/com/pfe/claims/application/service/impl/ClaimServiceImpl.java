@@ -82,13 +82,14 @@ public class ClaimServiceImpl implements ClaimService {
             log.info("Policy validated: {} (status: {})", policy.getPolicyNumber(), policy.getStatus());
         } catch (BusinessException e) {
             throw e;
-        } catch (Exception e) {
-            log.error("Failed to validate policy {}: {}", policyId, e.getMessage());
-            throw new BusinessException("Unable to validate policy: " + e.getMessage());
+        } catch (feign.FeignException e) {
+            log.error("Feign call failed to validate policy {}: {}", policyId, e.getMessage());
+            throw new BusinessException("Unable to reach policy-service: " + e.getMessage());
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ClaimDto getClaimById(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -96,6 +97,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ClaimDto> getClaimsByClientId(UUID clientId) {
         return claimRepository.findByClientId(clientId).stream()
                 .map(claimMapper::toDto)
@@ -103,6 +105,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ClaimDto> getClaimsByPolicyId(UUID policyId) {
         return claimRepository.findByPolicyId(policyId).stream()
                 .map(claimMapper::toDto)
@@ -110,6 +113,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ClaimDto> getAllClaims() {
         return claimRepository.findAll().stream()
                 .map(claimMapper::toDto)

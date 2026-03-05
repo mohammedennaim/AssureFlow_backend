@@ -62,13 +62,14 @@ public class InvoiceServiceImpl implements InvoiceService {
             log.info("Policy validated for invoice: {} (status: {})", policy.getPolicyNumber(), policy.getStatus());
         } catch (BusinessException e) {
             throw e;
-        } catch (Exception e) {
-            log.error("Failed to validate policy {}: {}", policyId, e.getMessage());
-            throw new BusinessException("Unable to validate policy: " + e.getMessage());
+        } catch (feign.FeignException e) {
+            log.error("Feign call failed to validate policy {}: {}", policyId, e.getMessage());
+            throw new BusinessException("Unable to reach policy-service: " + e.getMessage());
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public InvoiceDto getInvoiceById(UUID id) {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new InvoiceNotFoundException(id));
@@ -76,6 +77,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public InvoiceDto getInvoiceByNumber(String invoiceNumber) {
         Invoice invoice = invoiceRepository.findByInvoiceNumber(invoiceNumber)
                 .orElseThrow(() -> new InvoiceNotFoundException(invoiceNumber));
@@ -83,6 +85,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<InvoiceDto> getInvoicesByClientId(UUID clientId) {
         return invoiceRepository.findByClientId(clientId).stream()
                 .map(invoiceMapper::toDto)
@@ -90,6 +93,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<InvoiceDto> getInvoicesByPolicyId(UUID policyId) {
         return invoiceRepository.findByPolicyId(policyId).stream()
                 .map(invoiceMapper::toDto)
@@ -97,6 +101,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<InvoiceDto> getAllInvoices() {
         return invoiceRepository.findAll().stream()
                 .map(invoiceMapper::toDto)
