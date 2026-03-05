@@ -26,6 +26,12 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+feign:
+  client:
+    config:
+      client-service:
+        url: http://localhost:8084
+
 ---
 spring:
   config:
@@ -35,6 +41,12 @@ spring:
     url: jdbc:postgresql://postgres-db:5432/policy_db
 server:
   port: 8080
+
+feign:
+  client:
+    config:
+      client-service:
+        url: http://client-service:8080
 
 management:
   endpoints:

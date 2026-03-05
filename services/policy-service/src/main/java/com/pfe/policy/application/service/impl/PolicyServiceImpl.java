@@ -1,5 +1,7 @@
 package com.pfe.policy.application.service.impl;
 
+import com.pfe.commons.dto.BaseResponse;
+import com.pfe.commons.exceptions.BusinessException;
 import com.pfe.policy.application.dto.CreatePolicyRequest;
 import com.pfe.policy.application.dto.PolicyDto;
 import com.pfe.policy.application.dto.UpdatePolicyRequest;
@@ -10,6 +12,8 @@ import com.pfe.policy.domain.exception.PolicyNotFoundException;
 import com.pfe.policy.domain.model.Policy;
 import com.pfe.policy.domain.model.PolicyStatus;
 import com.pfe.policy.domain.repository.PolicyRepository;
+import com.pfe.policy.infrastructure.client.ClientDto;
+import com.pfe.policy.infrastructure.client.ClientServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,10 +31,14 @@ public class PolicyServiceImpl implements PolicyService {
 
     private final PolicyRepository policyRepository;
     private final PolicyMapper policyMapper;
+    private final ClientServiceClient clientServiceClient;
 
     @Override
     @Transactional
     public PolicyDto createPolicy(CreatePolicyRequest request) {
+        // Validate client exists via client-service (OpenFeign)
+        validateClientExists(request.getClientId());
+
         Policy policy = policyMapper.toDomain(request);
         policy.setPolicyNumber("POL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         policy.setStatus(PolicyStatus.DRAFT);
@@ -69,6 +77,26 @@ public class PolicyServiceImpl implements PolicyService {
         savedPolicy.clearDomainEvents();
 
         return policyMapper.toDto(savedPolicy);
+    }
+
+    private void validateClientExists(String clientId) {
+        if (clientId == null || clientId.isBlank()) {
+            throw new BusinessException("Client ID is required");
+        }
+        try {
+            UUID clientUuid = UUID.fromString(clientId);
+            BaseResponse<ClientDto> response = clientServiceClient.getClientById(clientUuid);
+            if (response == null || !response.isSuccess() || response.getData() == null) {
+                throw new BusinessException("Client not found with ID: " + clientId);
+            }
+            log.info("Client validated: {} {} ({})", response.getData().getFirstName(),
+                    response.getData().getLastName(), clientId);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to validate client {}: {}", clientId, e.getMessage());
+            throw new BusinessException("Unable to validate client: " + e.getMessage());
+        }
     }
 
     @Override

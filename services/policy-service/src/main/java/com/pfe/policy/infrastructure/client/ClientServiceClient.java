@@ -1,20 +1,19 @@
 package com.pfe.policy.infrastructure.client;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import com.pfe.commons.dto.BaseResponse;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
-@Slf4j
-@Component
-public class ClientServiceClient {
-    private static final String CLIENT_SERVICE_URL = "http://client-service:8080/api/clients";
+import java.util.UUID;
 
-    public boolean clientExists(String clientId) {
-        log.info("[CLIENT] Checking if client {} exists (RestTemplate integration pending)", clientId);
-        return true;
-    }
+@FeignClient(
+        name = "client-service",
+        url = "${feign.client.config.client-service.url}",
+        fallback = ClientServiceClientFallback.class
+)
+public interface ClientServiceClient {
 
-    public Object getClientDetails(String clientId) {
-        log.info("[CLIENT] Fetching details for client {} (RestTemplate integration pending)", clientId);
-        return null;
-    }
+    @GetMapping("/api/v1/clients/{id}")
+    BaseResponse<ClientDto> getClientById(@PathVariable("id") UUID id);
 }
