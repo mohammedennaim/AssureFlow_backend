@@ -15,9 +15,9 @@ spring:
   application:
     name: client-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/assureflow_db
-    username: postgres
-    password: postgres
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:client_db}
+    username: ${DB_USER:assureflow}
+    password: ${DB_PASSWORD:assureflow123}
   jpa:
     hibernate:
       ddl-auto: update
@@ -32,7 +32,10 @@ spring:
     activate:
       on-profile: docker
   datasource:
-    url: jdbc:postgresql://postgres-db:5432/assureflow_db
+    url: jdbc:postgresql://postgres-db:5432/client_db
+  jpa:
+    hibernate:
+      ddl-auto: none
 server:
   port: 8080
 
