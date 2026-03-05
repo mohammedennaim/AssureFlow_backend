@@ -15,6 +15,8 @@ import com.pfe.claims.infrastructure.client.PolicyServiceClient;
 import com.pfe.commons.exceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,6 +92,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "claims", key = "#id")
     public ClaimDto getClaimById(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -98,6 +101,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "claims", key = "'client:' + #clientId")
     public List<ClaimDto> getClaimsByClientId(UUID clientId) {
         return claimRepository.findByClientId(clientId).stream()
                 .map(claimMapper::toDto)
@@ -106,6 +110,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "claims", key = "'policy:' + #policyId")
     public List<ClaimDto> getClaimsByPolicyId(UUID policyId) {
         return claimRepository.findByPolicyId(policyId).stream()
                 .map(claimMapper::toDto)
@@ -122,6 +127,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "claims", allEntries = true)
     public ClaimDto updateClaim(UUID id, UpdateClaimRequest request) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -145,6 +151,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "claims", key = "#id")
     public void submitClaim(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -154,6 +161,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "claims", key = "#id")
     public void reviewClaim(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -163,6 +171,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "claims", key = "#id")
     public void approveClaim(UUID id, BigDecimal approvedAmount, UUID approvedBy) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -173,6 +182,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "claims", key = "#id")
     public void rejectClaim(UUID id, String reason) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -182,6 +192,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "claims", key = "#id")
     public void requestInfo(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -191,6 +202,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "claims", key = "#id")
     public void closeClaim(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
@@ -200,6 +212,7 @@ public class ClaimServiceImpl implements ClaimService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "claims", allEntries = true)
     public void deleteClaim(UUID id) {
         if (claimRepository.findById(id).isEmpty()) {
             throw new ClaimNotFoundException(id);
