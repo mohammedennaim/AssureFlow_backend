@@ -14,6 +14,8 @@ import com.pfe.billing.infrastructure.client.PolicyServiceClient;
 import com.pfe.commons.exceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +72,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "invoices", key = "#id")
     public InvoiceDto getInvoiceById(UUID id) {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new InvoiceNotFoundException(id));
@@ -78,6 +81,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "invoices", key = "'number:' + #invoiceNumber")
     public InvoiceDto getInvoiceByNumber(String invoiceNumber) {
         Invoice invoice = invoiceRepository.findByInvoiceNumber(invoiceNumber)
                 .orElseThrow(() -> new InvoiceNotFoundException(invoiceNumber));
@@ -86,6 +90,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "invoices", key = "'client:' + #clientId")
     public List<InvoiceDto> getInvoicesByClientId(UUID clientId) {
         return invoiceRepository.findByClientId(clientId).stream()
                 .map(invoiceMapper::toDto)
@@ -94,6 +99,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "invoices", key = "'policy:' + #policyId")
     public List<InvoiceDto> getInvoicesByPolicyId(UUID policyId) {
         return invoiceRepository.findByPolicyId(policyId).stream()
                 .map(invoiceMapper::toDto)
@@ -110,6 +116,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "invoices", key = "#id")
     public void cancelInvoice(UUID id) {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new InvoiceNotFoundException(id));
@@ -119,6 +126,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "invoices", key = "#invoiceId")
     public void markAsPaid(UUID invoiceId, UUID paymentId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new InvoiceNotFoundException(invoiceId));
@@ -130,6 +138,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "invoices", allEntries = true)
     public void deleteInvoice(UUID id) {
         if (invoiceRepository.findById(id).isEmpty()) {
             throw new InvoiceNotFoundException(id);
