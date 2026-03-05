@@ -16,6 +16,8 @@ import com.pfe.policy.infrastructure.client.ClientDto;
 import com.pfe.policy.infrastructure.client.ClientServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -103,7 +105,9 @@ public class PolicyServiceImpl implements PolicyService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "policies", key = "#id")
     public PolicyDto getPolicyById(String id) {
+        log.info("Fetching policy from database: {}", id);
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
         return policyMapper.toDto(policy);
@@ -111,7 +115,9 @@ public class PolicyServiceImpl implements PolicyService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "policies", key = "'client:' + #clientId")
     public List<PolicyDto> getPoliciesByClientId(String clientId) {
+        log.info("Fetching policies from database for client: {}", clientId);
         return policyRepository.findByClientId(clientId).stream()
                 .map(policyMapper::toDto)
                 .collect(Collectors.toList());
@@ -134,6 +140,7 @@ public class PolicyServiceImpl implements PolicyService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "policies", allEntries = true)
     public PolicyDto updatePolicy(String id, UpdatePolicyRequest request) {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
