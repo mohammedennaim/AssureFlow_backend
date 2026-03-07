@@ -7,19 +7,26 @@ import com.pfe.billing.application.service.InvoiceService;
 import com.pfe.billing.domain.exception.InvoiceNotFoundException;
 import com.pfe.billing.domain.model.Invoice;
 import com.pfe.billing.domain.model.InvoiceStatus;
+import com.pfe.billing.domain.event.InvoiceGeneratedEvent;
+import com.pfe.billing.domain.event.PaymentReceivedEvent;
 import com.pfe.billing.domain.repository.InvoiceRepository;
 import com.pfe.billing.domain.repository.PaymentRepository;
 import com.pfe.billing.infrastructure.client.PolicyDto;
 import com.pfe.billing.infrastructure.client.PolicyServiceClient;
+import com.pfe.billing.infrastructure.messaging.BillingEventPublisher;
 import com.pfe.commons.exceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,11 +40,11 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final PaymentRepository paymentRepository;
     private final InvoiceMapper invoiceMapper;
     private final PolicyServiceClient policyServiceClient;
+    private final BillingEventPublisher billingEventPublisher;
 
     @Override
     @Transactional
     public InvoiceDto createInvoice(CreateInvoiceRequest request) {
-        // Validate policy exists via policy-service (OpenFeign)
         validatePolicyExists(request.getPolicyId());
 
         Invoice invoice = invoiceMapper.toDomain(request);
@@ -49,6 +56,14 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setTotalAmount(request.getAmount().add(tax));
 
         Invoice saved = invoiceRepository.save(invoice);
+
+        billingEventPublisher.publishInvoiceGenerated(InvoiceGeneratedEvent.builder()
+                .invoiceId(saved.getId())
+                .policyId(saved.getPolicyId())
+                .correlationId(UUID.randomUUID())
+                .eventTimestamp(LocalDateTime.now())
+                .build());
+
         return invoiceMapper.toDto(saved);
     }
 
@@ -115,6 +130,14 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<InvoiceDto> getAllInvoicesPaged(int page, int size) {
+        return invoiceRepository.findAllPaged(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+                .map(invoiceMapper::toDto);
+    }
+
+    @Override
     @Transactional
     @CacheEvict(value = "invoices", key = "#id")
     public void cancelInvoice(UUID id) {
@@ -134,6 +157,13 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElseThrow(() -> new com.pfe.billing.domain.exception.PaymentNotFoundException(paymentId));
         invoice.markAsPaid(payment);
         invoiceRepository.save(invoice);
+
+        billingEventPublisher.publishPaymentReceived(PaymentReceivedEvent.builder()
+                .paymentId(paymentId)
+                .invoiceId(invoiceId)
+                .correlationId(UUID.randomUUID())
+                .eventTimestamp(LocalDateTime.now())
+                .build());
     }
 
     @Override

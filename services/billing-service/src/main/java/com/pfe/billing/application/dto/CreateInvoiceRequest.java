@@ -1,6 +1,9 @@
 package com.pfe.billing.application.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.FutureOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,18 +19,21 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CreateInvoiceRequest {
 
-    @NotNull
+    @NotNull(message = "Policy ID is required")
     private UUID policyId;
 
-    @NotNull
+    @NotNull(message = "Client ID is required")
     private UUID clientId;
 
-    @NotNull
+    @NotNull(message = "Amount is required")
+    @Positive(message = "Amount must be positive")
     private BigDecimal amount;
 
+    @PositiveOrZero(message = "Tax amount must be zero or positive")
     private BigDecimal taxAmount;
 
-    @NotNull
+    @NotNull(message = "Due date is required")
+    @FutureOrPresent(message = "Due date must be today or in the future")
     private LocalDate dueDate;
 
     private UUID generatedBy;

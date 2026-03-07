@@ -1,6 +1,16 @@
 server:
   port: 8082
 
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+  show-actuator: false
+  packages-to-scan: com.pfe.billing.infrastructure.web.controller
+  paths-to-match: /api/v1/**
+
 spring:
   application:
     name: billing-service
@@ -57,6 +67,11 @@ resilience4j:
         max-attempts: 3
         wait-duration: 500ms
 
+# JWT
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000
+
 # Actuator & Prometheus
 management:
   endpoints:
@@ -78,9 +93,17 @@ spring:
       on-profile: docker
   datasource:
     url: jdbc:postgresql://postgres-db:5432/billing_db
+  redis:
+    host: redis
+    port: 6379
+    password: assureflow_sec_991
+  kafka:
+    bootstrap-servers: kafka:29092
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
+server:
+  port: 8080
 
 feign:
   client:

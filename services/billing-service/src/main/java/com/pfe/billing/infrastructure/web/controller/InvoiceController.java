@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,9 +32,11 @@ public class InvoiceController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all invoices")
-    public ResponseEntity<BaseResponse<List<InvoiceDto>>> getAllInvoices() {
-        return ResponseEntity.ok(BaseResponse.success(invoiceService.getAllInvoices()));
+    @Operation(summary = "Get all invoices (paginated)")
+    public ResponseEntity<BaseResponse<Page<InvoiceDto>>> getAllInvoices(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(BaseResponse.success(invoiceService.getAllInvoicesPaged(page, size)));
     }
 
     @GetMapping("/{id}")

@@ -7,6 +7,9 @@ import com.pfe.billing.infrastructure.persistence.mapper.InvoiceEntityMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -55,6 +58,11 @@ public class InvoiceRepositoryAdapter implements InvoiceRepository {
         return jpaInvoiceRepository.findAll().stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<Invoice> findAllPaged(Pageable pageable) {
+        return jpaInvoiceRepository.findAll(pageable).map(mapper::toDomain);
     }
 
     @Override

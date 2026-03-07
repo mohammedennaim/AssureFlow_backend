@@ -2,6 +2,7 @@ package com.pfe.billing.application.service;
 
 import com.pfe.billing.application.dto.CreateInvoiceRequest;
 import com.pfe.billing.application.dto.InvoiceDto;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,8 @@ public interface InvoiceService {
     List<InvoiceDto> getInvoicesByPolicyId(UUID policyId);
 
     List<InvoiceDto> getAllInvoices();
+
+    Page<InvoiceDto> getAllInvoicesPaged(int page, int size);
 
     void cancelInvoice(UUID id);
 

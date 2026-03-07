@@ -37,23 +37,58 @@ public class Invoice {
     @Builder.Default
     private boolean paidDirect = false;
 
-    // Diagram methods
+    /**
+     * Marks this invoice as paid following a successful payment.
+     *
+     * @param payment the payment that settled the invoice
+     * @throws IllegalStateException if the invoice is already PAID or CANCELLED
+     */
     public void markAsPaid(Payment payment) {
-        this.status = InvoiceStatus.ACTIVE;
+        if (this.status == InvoiceStatus.PAID) {
+            throw new IllegalStateException("Invoice is already paid.");
+        }
+        if (this.status == InvoiceStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot pay a cancelled invoice.");
+        }
+        this.status = InvoiceStatus.PAID;
     }
 
+    /**
+     * Marks this invoice as paid via direct payment channel.
+     *
+     * @param payment the payment record
+     * @throws IllegalStateException if the invoice is already PAID or CANCELLED
+     */
     public void markAsPaidDirect(Payment payment) {
+        if (this.status == InvoiceStatus.PAID) {
+            throw new IllegalStateException("Invoice is already paid.");
+        }
+        if (this.status == InvoiceStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot pay a cancelled invoice.");
+        }
         this.paidDirect = true;
-        this.status = InvoiceStatus.ACTIVE;
+        this.status = InvoiceStatus.PAID;
     }
 
+    /**
+     * Returns true if this invoice is past its due date and not yet paid.
+     */
     public boolean isOverDue() {
         return dueDate != null
                 && dueDate.isBefore(LocalDate.now())
-                && status != InvoiceStatus.ACTIVE;
+                && status != InvoiceStatus.PAID
+                && status != InvoiceStatus.CANCELLED;
     }
 
+    /**
+     * Cancels this invoice.
+     *
+     * @throws IllegalStateException if the invoice is already PAID
+     */
     public void cancel() {
+        if (this.status == InvoiceStatus.PAID) {
+            throw new IllegalStateException("Cannot cancel a paid invoice.");
+        }
         this.status = InvoiceStatus.CANCELLED;
     }
 }

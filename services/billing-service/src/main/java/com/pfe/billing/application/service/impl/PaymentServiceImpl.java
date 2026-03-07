@@ -6,12 +6,15 @@ import com.pfe.billing.application.mapper.PaymentMapper;
 import com.pfe.billing.application.service.PaymentService;
 import com.pfe.billing.domain.exception.PaymentNotFoundException;
 import com.pfe.billing.domain.model.Payment;
+import com.pfe.billing.domain.event.PaymentReceivedEvent;
 import com.pfe.billing.domain.model.PaymentStatus;
 import com.pfe.billing.domain.repository.PaymentRepository;
+import com.pfe.billing.infrastructure.messaging.BillingEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -22,6 +25,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
+    private final BillingEventPublisher billingEventPublisher;
 
     @Override
     @Transactional
@@ -29,6 +33,14 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentMapper.toDomain(request);
         payment.setStatus(PaymentStatus.PENDING);
         Payment saved = paymentRepository.save(payment);
+
+        billingEventPublisher.publishPaymentReceived(PaymentReceivedEvent.builder()
+                .paymentId(saved.getId())
+                .invoiceId(saved.getInvoiceId())
+                .correlationId(UUID.randomUUID())
+                .eventTimestamp(LocalDateTime.now())
+                .build());
+
         return paymentMapper.toDto(saved);
     }
 
