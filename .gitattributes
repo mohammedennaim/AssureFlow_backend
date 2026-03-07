@@ -1,0 +1,30 @@
+# Set default behaviour, in case users don't have core.autocrlf set.
+* text=auto
+
+# Source code
+*.java text diff=java
+*.xml text
+*.yml text
+*.yaml text
+*.properties text
+*.md text
+*.txt text
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Linux/Docker scripts (CRITICAL: Must always have LF line endings to work in containers)
+*.sh text eol=lf
+*.bash text eol=lf
+Dockerfile* text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.jar binary
+*.class binary

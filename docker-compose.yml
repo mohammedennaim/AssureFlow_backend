@@ -35,10 +35,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
-          cpus: '1.0'
+          memory: 512M
+          cpus: '0.5'
         reservations:
-          memory: 256M
+          memory: 128M
           cpus: '0.25'
 
   # ==========================================================
@@ -105,10 +105,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
-          cpus: '1.0'
+          memory: 768M
+          cpus: '0.5'
         reservations:
-          memory: 512M
+          memory: 384M
           cpus: '0.25'
 
   # ==========================================================
@@ -133,8 +133,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
-          cpus: '0.5'
+          memory: 128M
+          cpus: '0.25'
         reservations:
           memory: 64M
           cpus: '0.1'
@@ -148,6 +148,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: api-gateway
+      cache_from:
+        - assureflow-api-gateway:latest
+    image: assureflow-api-gateway:latest
     container_name: assureflow-api-gateway
     restart: unless-stopped
     depends_on:
@@ -157,6 +160,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT}
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "8080:8080"
     networks:
@@ -164,7 +172,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
           cpus: '0.5'
         reservations:
           memory: 256M
@@ -181,6 +189,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: policy-service
+      cache_from:
+        - assureflow-policy-service:latest
+    image: assureflow-policy-service:latest
     container_name: assureflow-policy-service
     restart: unless-stopped
     depends_on:
@@ -194,12 +205,16 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT}
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
           cpus: '0.5'
         reservations:
           memory: 256M
@@ -212,6 +227,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: client-service
+      cache_from:
+        - assureflow-client-service:latest
+    image: assureflow-client-service:latest
     container_name: assureflow-client-service
     restart: unless-stopped
     depends_on:
@@ -225,12 +243,16 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT}
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
           cpus: '0.5'
         reservations:
           memory: 256M
@@ -243,6 +265,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: billing-service
+      cache_from:
+        - assureflow-billing-service:latest
+    image: assureflow-billing-service:latest
     container_name: assureflow-billing-service
     restart: unless-stopped
     depends_on:
@@ -256,12 +281,16 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT}
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
           cpus: '0.5'
         reservations:
           memory: 256M
@@ -274,6 +303,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: claims-service
+      cache_from:
+        - assureflow-claims-service:latest
+    image: assureflow-claims-service:latest
     container_name: assureflow-claims-service
     restart: unless-stopped
     depends_on:
@@ -287,12 +319,16 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT}
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
           cpus: '0.5'
         reservations:
           memory: 256M
@@ -305,6 +341,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: notification-service
+      cache_from:
+        - assureflow-notification-service:latest
+    image: assureflow-notification-service:latest
     container_name: assureflow-notification-service
     restart: unless-stopped
     depends_on:
@@ -318,12 +357,20 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT}
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-assureflow@gmail.com}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-changeme}
     networks:
       - insurance-net
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
           cpus: '0.5'
         reservations:
           memory: 256M
@@ -336,6 +383,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: iam-service
+      cache_from:
+        - assureflow-iam-service:latest
+    image: assureflow-iam-service:latest
     container_name: assureflow-iam-service
     restart: unless-stopped
     depends_on:
@@ -360,7 +410,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
           cpus: '0.5'
         reservations:
           memory: 256M
@@ -373,6 +423,9 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: workflow-service
+      cache_from:
+        - assureflow-workflow-service:latest
+    image: assureflow-workflow-service:latest
     container_name: assureflow-workflow-service
     restart: unless-stopped
     depends_on:
@@ -386,12 +439,16 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT}
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
           cpus: '0.5'
         reservations:
           memory: 256M

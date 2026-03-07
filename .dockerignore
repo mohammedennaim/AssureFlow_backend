@@ -1,28 +1,50 @@
-# === IDE & OS ===
-.idea/
-.vscode/
-*.iml
+# ============================================================
+# .dockerignore - Réduire le contexte de build
+# ============================================================
+
+# Fichiers de build
+**/target/
+**/build/
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+
+# IDE
+**/.idea/
+**/.vscode/
+**/.eclipse/
+**/*.iml
+**/.classpath
+**/.project
+**/.settings/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+docker-compose*.yml
+**/Dockerfile*
+.dockerignore
+
+# Documentation
+**/*.md
+**/docs/
+
+# Tests
+**/src/test/
+
+# Logs
+**/*.log
+**/logs/
+
+# OS
 .DS_Store
 Thumbs.db
 
-# === Git ===
-.git/
-.gitignore
-
-# === Build output ===
-**/target/
-**/build/
-**/*.class
-
-# === Docker ===
-docker-compose.yml
+# Autres
 .env
-docker/prometheus/
-docker/grafana/
-
-# === Docs ===
-*.md
-LICENSE
-
-# === Logs ===
-**/*.log
+.env.*
+**/.cache/
+**/node_modules/

@@ -46,7 +46,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             userEmail = jwtService.extractUsername(jwt);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // If token is valid, configure Spring Security to manually set authentication
                 if (jwtService.isTokenValid(jwt)) {
                     List<String> roles = jwtService.extractRoles(jwt);
 
@@ -56,7 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     UserDetails userDetails = User.builder()
                             .username(userEmail)
-                            .password("") // Password is not needed for JWT validation
+                            .password("")
                             .authorities(authorities)
                             .build();
 
@@ -72,8 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // Token is invalid/expired - do nothing, SecurityContextHolder remains empty
-            // and the request will be denied if protected.
+            
         }
 
         filterChain.doFilter(request, response);
