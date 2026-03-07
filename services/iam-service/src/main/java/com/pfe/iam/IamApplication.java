@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.pfe")
 @EnableCaching
 @ComponentScan(basePackages = { "com.pfe.iam", "com.pfe.commons" })
 public class IamApplication {

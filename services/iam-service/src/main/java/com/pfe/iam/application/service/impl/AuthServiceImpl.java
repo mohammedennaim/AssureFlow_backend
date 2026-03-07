@@ -87,13 +87,10 @@ public class AuthServiceImpl implements AuthService {
                 return new TokenResponse(token, userMapper.toDto(user));
         }
 
-        // ===================== LOGOUT =====================
-
         @Override
         @Transactional
         @CacheEvict(value = "users", key = "#username")
         public void logout(String token) {
-                // Remove "Bearer " prefix if present
                 if (token != null && token.startsWith("Bearer ")) {
                         token = token.substring(7);
                 }
@@ -102,13 +99,10 @@ public class AuthServiceImpl implements AuthService {
                 User user = userRepository.findByEmail(username)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-                // Invalidate all sessions for this user
                 sessionService.invalidateAllUserSessions(user.getId().toString());
                 auditService.log(user.getId().toString(), "USER_LOGOUT");
                 log.info("User logged out: {}", user.getEmail());
         }
-
-        // ===================== FORGOT PASSWORD =====================
 
         @Override
         @Transactional
@@ -117,10 +111,7 @@ public class AuthServiceImpl implements AuthService {
                                 .orElseThrow(() -> new IllegalArgumentException(
                                                 "No account found with email: " + request.getEmail()));
 
-                // Delete any existing reset tokens for this user
                 passwordResetTokenRepository.deleteByUserId(user.getId());
-
-                // Generate a new reset token (valid for 30 minutes)
                 String resetToken = UUID.randomUUID().toString();
                 PasswordResetToken tokenEntity = PasswordResetToken.builder()
                                 .userId(user.getId())
@@ -133,13 +124,8 @@ public class AuthServiceImpl implements AuthService {
                 passwordResetTokenRepository.save(tokenEntity);
                 auditService.log(user.getId().toString(), "PASSWORD_RESET_REQUESTED");
                 log.info("Password reset token generated for user: {}", user.getEmail());
-
-                // In production, this token would be sent via email (NotificationService)
-                // For now, we return it in the response
                 return resetToken;
         }
-
-        // ===================== RESET PASSWORD =====================
 
         @Override
         @Transactional
@@ -158,18 +144,14 @@ public class AuthServiceImpl implements AuthService {
                 user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
                 userRepository.save(user);
 
-                // Mark token as used
                 resetToken.setUsed(true);
                 passwordResetTokenRepository.save(resetToken);
 
-                // Invalidate all sessions (force re-login)
                 sessionService.invalidateAllUserSessions(user.getId().toString());
 
                 auditService.log(user.getId().toString(), "PASSWORD_RESET_COMPLETED");
                 log.info("Password reset completed for user: {}", user.getEmail());
         }
-
-        // ===================== CHANGE PASSWORD =====================
 
         @Override
         @Transactional
@@ -178,7 +160,6 @@ public class AuthServiceImpl implements AuthService {
                 User user = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-                // Verify old password
                 if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
                         throw new IllegalArgumentException("Old password is incorrect");
                 }

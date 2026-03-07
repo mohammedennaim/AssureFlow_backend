@@ -39,7 +39,7 @@ springdoc:
   swagger-ui:
     enabled: true
   show-actuator: false
-  packages-to-scan: com.pfe.iam.presentation.controller
+  packages-to-scan: com.pfe.iam.infrastructure.web.controller
   paths-to-match: /api/v1/**
 
 jwt:
@@ -65,8 +65,16 @@ spring:
   config:
     activate:
       on-profile: docker
+  datasource:
+    url: jdbc:postgresql://postgres-db:5432/iam_db
+  redis:
+    host: redis
+    port: 6379
+    password: assureflow_sec_991
+  kafka:
+    bootstrap-servers: kafka:29092
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
 server:
   port: 8080

@@ -64,7 +64,6 @@ public class DataSeeder implements CommandLineRunner {
             }
         }
 
-        // Assign all permissions to ADMIN role
         roleRepository.findByName(UserRole.ADMIN).ifPresent(adminRole -> {
             if (adminRole.getPermissions().isEmpty()) {
                 List<Permission> allPerms = permissionRepository.findAll();

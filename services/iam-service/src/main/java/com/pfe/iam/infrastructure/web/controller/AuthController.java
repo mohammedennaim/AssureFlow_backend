@@ -62,7 +62,6 @@ public class AuthController {
     public ResponseEntity<BaseResponse<Void>> changePassword(@RequestBody ChangePasswordRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = auth.getName();
-        // We need the user ID — get it via the email from the token subject
         authService.changePassword(userEmail, request);
         return ResponseEntity.ok(BaseResponse.success(null, "Password changed successfully"));
     }
