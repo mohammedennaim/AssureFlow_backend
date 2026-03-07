@@ -8,7 +8,7 @@ springdoc:
   swagger-ui:
     enabled: true
   show-actuator: false
-  packages-to-scan: com.pfe.claims.web.controller
+  packages-to-scan: com.pfe.claims.infrastructure.web.controller
   paths-to-match: /api/v1/**
 
 spring:
@@ -67,6 +67,11 @@ resilience4j:
         max-attempts: 3
         wait-duration: 500ms
 
+# JWT
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000
+
 # Actuator & Prometheus
 management:
   endpoints:
@@ -88,12 +93,20 @@ spring:
       on-profile: docker
   datasource:
     url: jdbc:postgresql://postgres-db:5432/claims_db
+  redis:
+    host: redis
+    port: 6379
+    password: assureflow_sec_991
+  kafka:
+    bootstrap-servers: kafka:29092
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
 
 feign:
   client:
     config:
       policy-service:
         url: http://policy-service:8080
+server:
+  port: 8080

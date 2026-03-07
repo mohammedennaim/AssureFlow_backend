@@ -72,9 +72,17 @@ public class Claim {
         }
     }
 
+    /**
+     * Submits a new claim for processing.
+     * A claim can only be submitted once (from a null or fresh status).
+     *
+     * @throws IllegalStateException if the claim has already been submitted or is
+     *                               in any other active state
+     */
     public void submit() {
-        if (this.status != null && this.status != ClaimStatus.SUBMITTED) {
-            throw new IllegalStateException("Claim has already been submitted. Current status: " + this.status);
+        if (this.status != null) {
+            throw new IllegalStateException(
+                    "Claim has already been submitted. Current status: " + this.status);
         }
         this.status = ClaimStatus.SUBMITTED;
     }
@@ -107,10 +115,18 @@ public class Claim {
         }
     }
 
-    public void markAsPaid() {
+    public void initiatePayout() {
         if (this.status != ClaimStatus.APPROVED) {
             throw new IllegalStateException(
-                    "Only APPROVED claims can be marked as paid. Current status: " + this.status);
+                    "Only APPROVED claims can initiate payout. Current status: " + this.status);
+        }
+        this.status = ClaimStatus.PAYOUT_INITIATED;
+    }
+
+    public void markAsPaid() {
+        if (this.status != ClaimStatus.APPROVED && this.status != ClaimStatus.PAYOUT_INITIATED) {
+            throw new IllegalStateException(
+                    "Only APPROVED or PAYOUT_INITIATED claims can be marked as paid. Current status: " + this.status);
         }
         this.status = ClaimStatus.PAID;
     }

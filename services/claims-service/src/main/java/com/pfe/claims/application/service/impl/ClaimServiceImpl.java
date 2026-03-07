@@ -38,7 +38,6 @@ public class ClaimServiceImpl implements ClaimService {
     @Override
     @Transactional
     public ClaimDto createClaim(CreateClaimRequest request) {
-        // Validate policy exists and is active via policy-service (OpenFeign)
         validatePolicyExists(request.getPolicyId());
 
         Claim claim = claimMapper.toDomain(request);
@@ -48,7 +47,6 @@ public class ClaimServiceImpl implements ClaimService {
 
         Claim savedClaim = claimRepository.save(claim);
 
-        // Publish domain event
         ClaimSubmittedEvent event = ClaimSubmittedEvent.builder()
                 .claimId(savedClaim.getId())
                 .claimNumber(savedClaim.getClaimNumber())

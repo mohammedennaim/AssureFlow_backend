@@ -1,12 +1,14 @@
 package com.pfe.claims.infrastructure.persistence.repository;
 
 import com.pfe.claims.domain.model.Claim;
+import com.pfe.claims.domain.model.ClaimStatus;
 import com.pfe.claims.domain.repository.ClaimRepository;
 import com.pfe.claims.infrastructure.persistence.entity.ClaimEntity;
 import com.pfe.claims.infrastructure.persistence.mapper.ClaimEntityMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -60,5 +62,12 @@ public class ClaimRepositoryAdapter implements ClaimRepository {
     @Override
     public boolean existsByClaimNumber(String claimNumber) {
         return jpaClaimRepository.existsByClaimNumber(claimNumber);
+    }
+
+    @Override
+    public List<Claim> findByStatusInAndCreatedAtBefore(List<ClaimStatus> statuses, LocalDateTime deadline) {
+        return jpaClaimRepository.findByStatusInAndCreatedAtBefore(statuses, deadline).stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
     }
 }
