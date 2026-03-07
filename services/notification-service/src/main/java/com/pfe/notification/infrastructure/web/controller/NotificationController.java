@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,9 +53,11 @@ public class NotificationController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all notifications")
-    public ResponseEntity<BaseResponse<List<NotificationDto>>> getAllNotifications() {
-        List<NotificationDto> list = notificationService.getAllNotifications();
+    @Operation(summary = "Get all notifications (paginated)")
+    public ResponseEntity<BaseResponse<Page<NotificationDto>>> getAllNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<NotificationDto> list = notificationService.getAllNotificationsPaged(page, size);
         return ResponseEntity.ok(BaseResponse.success(list));
     }
 
