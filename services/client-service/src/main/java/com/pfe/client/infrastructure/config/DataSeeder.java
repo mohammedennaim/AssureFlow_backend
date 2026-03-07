@@ -52,7 +52,6 @@ public class DataSeeder implements CommandLineRunner {
 
             var saved = clientRepository.save(c);
 
-            // Create primary address
             Address address = Address.builder()
                     .clientId(saved.getId())
                     .street("Street " + i)

@@ -13,6 +13,8 @@ public interface AddressRepository {
 
     List<Address> findByClientId(UUID clientId);
 
+    List<Address> findByClientIdIn(List<UUID> clientIds);
+
     void deleteById(UUID id);
 
     void deleteByClientId(UUID clientId);

@@ -9,5 +9,7 @@ import java.util.UUID;
 public interface JpaAddressRepository extends JpaRepository<AddressEntity, UUID> {
     List<AddressEntity> findByClientId(UUID clientId);
 
+    List<AddressEntity> findByClientIdIn(List<UUID> clientIds);
+
     void deleteByClientId(UUID clientId);
 }

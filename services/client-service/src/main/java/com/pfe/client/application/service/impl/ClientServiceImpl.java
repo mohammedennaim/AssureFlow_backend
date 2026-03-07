@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -65,7 +66,6 @@ public class ClientServiceImpl implements ClientService {
 
         Client savedClient = clientRepository.save(clientToSave);
 
-        // Save addresses if provided
         if (request.getAddresses() != null) {
             List<Address> addresses = request.getAddresses().stream()
                     .map(dto -> {
@@ -77,14 +77,12 @@ public class ClientServiceImpl implements ClientService {
             savedClient.setAddresses(addresses);
         }
 
-        // publish event
         publisher.publishEvent(ClientCreatedEvent.builder()
                 .clientId(savedClient.getId())
                 .client(savedClient)
                 .source("client-service")
                 .build());
 
-        // record history
         historyService.recordHistory(savedClient.getId(), "CLIENT_CREATED", "system");
 
         log.info("Client created successfully with ID: {} and number: {}", savedClient.getId(),
@@ -127,10 +125,16 @@ public class ClientServiceImpl implements ClientService {
     @Transactional(readOnly = true)
     public List<ClientResponse> getAllClients() {
         log.debug("Fetching all clients");
-        return clientRepository.findAll().stream()
-                .peek(c -> c.setAddresses(addressRepository.findByClientId(c.getId())))
-                .map(mapper::toResponse)
-                .collect(Collectors.toList());
+        List<Client> clients = clientRepository.findAll();
+        if (clients.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> clientIds = clients.stream().map(Client::getId).collect(Collectors.toList());
+        Map<UUID, List<Address>> addressesByClientId = addressRepository.findByClientIdIn(clientIds)
+                .stream()
+                .collect(Collectors.groupingBy(Address::getClientId));
+        clients.forEach(c -> c.setAddresses(addressesByClientId.getOrDefault(c.getId(), List.of())));
+        return clients.stream().map(mapper::toResponse).collect(Collectors.toList());
     }
 
     @Override
@@ -142,13 +146,10 @@ public class ClientServiceImpl implements ClientService {
         Client existingClient = clientRepository.findById(id)
                 .orElseThrow(() -> new ClientNotFoundException(id));
 
-        // Check email conflict if changing email
         if (!existingClient.getEmail().equals(request.getEmail())
                 && clientRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException(request.getEmail());
         }
-
-        // Check CIN conflict if changing CIN
         if (!existingClient.getCin().equals(request.getCin())
                 && clientRepository.existsByCin(request.getCin())) {
             throw new CinAlreadyExistsException(request.getCin());
@@ -159,7 +160,6 @@ public class ClientServiceImpl implements ClientService {
 
         Client savedClient = clientRepository.save(existingClient);
 
-        // Update addresses if provided
         if (request.getAddresses() != null) {
             addressRepository.deleteByClientId(id);
             List<Address> addresses = request.getAddresses().stream()

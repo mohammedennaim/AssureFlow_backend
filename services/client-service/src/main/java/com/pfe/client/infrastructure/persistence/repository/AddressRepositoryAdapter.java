@@ -40,6 +40,13 @@ public class AddressRepositoryAdapter implements AddressRepository {
     }
 
     @Override
+    public List<Address> findByClientIdIn(List<UUID> clientIds) {
+        return jpaAddressRepository.findByClientIdIn(clientIds).stream()
+                .map(mapper::toAddressDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteById(UUID id) {
         jpaAddressRepository.deleteById(id);
     }

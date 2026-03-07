@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.pfe")
 @ComponentScan(basePackages = { "com.pfe.client", "com.pfe.commons" })
 @EnableCaching
 public class ClientApplication {
