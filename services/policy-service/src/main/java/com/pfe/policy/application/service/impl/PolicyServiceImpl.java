@@ -40,7 +40,6 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @Transactional
     public PolicyDto createPolicy(CreatePolicyRequest request) {
-        // Validate client exists via client-service (OpenFeign)
         validateClientExists(request.getClientId());
 
         Policy policy = policyMapper.toDomain(request);
@@ -61,7 +60,6 @@ public class PolicyServiceImpl implements PolicyService {
 
         Policy savedPolicy = policyRepository.save(policy);
 
-        // Publish domain event
         PolicyCreatedEvent event = PolicyCreatedEvent.builder()
                 .policyId(savedPolicy.getId())
                 .policyNumber(savedPolicy.getPolicyNumber())
@@ -93,8 +91,7 @@ public class PolicyServiceImpl implements PolicyService {
             if (response == null || !response.isSuccess() || response.getData() == null) {
                 throw new BusinessException("Client not found with ID: " + clientId);
             }
-            log.info("Client validated: {} {} ({})", response.getData().getFirstName(),
-                    response.getData().getLastName(), clientId);
+            log.info("Client validated successfully for ID: {}", clientId);
         } catch (BusinessException e) {
             throw e;
         } catch (feign.FeignException e) {

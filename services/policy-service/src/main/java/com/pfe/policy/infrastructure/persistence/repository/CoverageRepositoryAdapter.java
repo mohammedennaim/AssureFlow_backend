@@ -23,7 +23,6 @@ public class CoverageRepositoryAdapter implements CoverageRepository {
     @Override
     public Coverage save(Coverage coverage) {
         CoverageEntity entity = mapper.toEntity(coverage);
-        // Explicitly set the policy reference to avoid detachment issues
         PolicyEntity policy = jpaPolicyRepository.findById(coverage.getPolicyId())
                 .orElseThrow(() -> new IllegalArgumentException("Policy not found"));
         entity.setPolicy(policy);

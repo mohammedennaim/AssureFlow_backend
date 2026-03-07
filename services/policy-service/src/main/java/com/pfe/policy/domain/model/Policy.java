@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @AggregateRoot
 @Getter
 @Setter
@@ -25,6 +26,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Policy {
+
+    public static final BigDecimal HEALTH_RATE = new BigDecimal("0.05");
+    public static final BigDecimal LIFE_RATE = new BigDecimal("0.03");
+    public static final BigDecimal VEHICLE_RATE = new BigDecimal("0.07");
+    public static final BigDecimal HOME_RATE = new BigDecimal("0.04");
+    public static final BigDecimal BUSINESS_RATE = new BigDecimal("0.06");
+    public static final BigDecimal MIN_COVERAGE_AMOUNT = new BigDecimal("100");
+    public static final BigDecimal MAX_COVERAGE_AMOUNT = new BigDecimal("10000000");
+
     @EqualsAndHashCode.Include
     private String id;
     private String policyNumber;
@@ -69,14 +79,41 @@ public class Policy {
         }
     }
 
+    public void validateCoverageAmount() {
+        if (coverageAmount == null) {
+            throw new IllegalArgumentException("Coverage amount is required.");
+        }
+        if (coverageAmount.compareTo(MIN_COVERAGE_AMOUNT) < 0) {
+            throw new IllegalArgumentException(
+                    "Coverage amount must be at least " + MIN_COVERAGE_AMOUNT + ". Got: " + coverageAmount);
+        }
+        if (coverageAmount.compareTo(MAX_COVERAGE_AMOUNT) > 0) {
+            throw new IllegalArgumentException(
+                    "Coverage amount cannot exceed " + MAX_COVERAGE_AMOUNT + ". Got: " + coverageAmount);
+        }
+    }
+
+    public void validateDates() {
+        if (startDate == null) {
+            throw new IllegalArgumentException("Start date is required.");
+        }
+        if (endDate == null) {
+            throw new IllegalArgumentException("End date is required.");
+        }
+        if (!endDate.isAfter(startDate)) {
+            throw new IllegalArgumentException(
+                    "End date must be after start date. startDate=" + startDate + ", endDate=" + endDate);
+        }
+    }
+
     public BigDecimal calculatePremium() {
         if (coverageAmount != null && coverageAmount.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal rate = switch (type) {
-                case HEALTH -> new BigDecimal("0.05");
-                case LIFE -> new BigDecimal("0.03");
-                case VEHICLE -> new BigDecimal("0.07");
-                case HOME -> new BigDecimal("0.04");
-                case BUSINESS -> new BigDecimal("0.06");
+                case HEALTH -> HEALTH_RATE;
+                case LIFE -> LIFE_RATE;
+                case VEHICLE -> VEHICLE_RATE;
+                case HOME -> HOME_RATE;
+                case BUSINESS -> BUSINESS_RATE;
             };
             this.premiumAmount = coverageAmount.multiply(rate);
         }
@@ -92,6 +129,8 @@ public class Policy {
         if (this.status != PolicyStatus.DRAFT) {
             throw new IllegalStateException("Only DRAFT policies can be submitted. Current status: " + this.status);
         }
+        validateCoverageAmount();
+        validateDates();
         this.status = PolicyStatus.ACTIVE;
     }
 
