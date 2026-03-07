@@ -6,6 +6,8 @@ import com.pfe.notification.domain.model.NotificationType;
 import com.pfe.notification.domain.repository.NotificationRepository;
 import com.pfe.notification.infrastructure.persistence.mapper.NotificationEntityMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -60,6 +62,11 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     public List<Notification> findAll() {
         return jpaRepository.findAll().stream()
                 .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<Notification> findAllPaged(Pageable pageable) {
+        return jpaRepository.findAll(pageable).map(mapper::toDomain);
     }
 
     @Override

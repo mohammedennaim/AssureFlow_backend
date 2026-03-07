@@ -6,11 +6,17 @@ import com.pfe.notification.application.mapper.NotificationMapper;
 import com.pfe.notification.application.service.NotificationService;
 import com.pfe.notification.domain.exception.NotificationNotFoundException;
 import com.pfe.notification.domain.model.Notification;
+import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationStatus;
 import com.pfe.notification.domain.repository.NotificationRepository;
+import com.pfe.notification.infrastructure.email.EmailNotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,12 +24,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
+    private final EmailNotificationService emailNotificationService;
 
     @Override
     @Transactional
@@ -67,6 +75,13 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    public Page<NotificationDto> getAllNotificationsPaged(int page, int size) {
+        return notificationRepository.findAllPaged(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+                .map(notificationMapper::toDto);
+    }
+
+    @Override
     @Transactional
     @CacheEvict(value = "notifications", key = "#id")
     public void sendNotification(UUID id) {
@@ -74,6 +89,17 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(() -> new NotificationNotFoundException(id));
         notification.send();
         notificationRepository.save(notification);
+
+        if (NotificationChannel.EMAIL.equals(notification.getChannel())
+                && notification.getRecipient() != null && notification.getRecipient().contains("@")) {
+            emailNotificationService.sendEmail(
+                    notification.getRecipient(),
+                    notification.getSubject(),
+                    notification.getContent());
+        } else {
+            log.info("[NOTIFICATION] Channel={} — recipient={} — non-email delivery not yet implemented",
+                    notification.getChannel(), notification.getRecipient());
+        }
     }
 
     @Override
