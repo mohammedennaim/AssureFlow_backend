@@ -23,7 +23,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./docker/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
     networks:
       - insurance-net
     healthcheck:
@@ -31,18 +31,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 128M
-          cpus: '0.25'
+      start_period: 30s
 
   # ==========================================================
-  # �️ INFRASTRUCTURE - pgAdmin (PostgreSQL GUI)
+  # 🗄️ INFRASTRUCTURE - pgAdmin (PostgreSQL GUI)
   # ==========================================================
   pgadmin:
     image: dpage/pgadmin4:8.4
@@ -59,14 +51,6 @@ services:
       - pgadmin-data:/var/lib/pgadmin
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
 
   # ==========================================================
   # 📨 INFRASTRUCTURE - Apache Kafka (KRaft Mode)
@@ -97,19 +81,11 @@ services:
     networks:
       - insurance-net
     healthcheck:
-      test: ["CMD-SHELL", "kafka-metadata.sh --snapshot /var/lib/kafka/data/__cluster_metadata-0/00000000000000000000.log --cluster-id JgOOpmOWQ1aB3cbgf6c6ZQ 2>/dev/null || nc -z localhost 9092"]
-      interval: 20s
-      timeout: 30s
-      retries: 10
-      start_period: 90s
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-          cpus: '0.5'
-        reservations:
-          memory: 384M
-          cpus: '0.25'
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # ==========================================================
   # 🔴 INFRASTRUCTURE - Redis (Cache & Sessions) - Sécurisé
@@ -126,18 +102,11 @@ services:
     networks:
       - insurance-net
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.25'
-        reservations:
-          memory: 64M
-          cpus: '0.1'
+      start_period: 10s
 
   # ==========================================================
   # 🌐 API GATEWAY - Point d'entrée unique
@@ -148,15 +117,11 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: api-gateway
-      cache_from:
-        - assureflow-api-gateway:latest
     image: assureflow-api-gateway:latest
     container_name: assureflow-api-gateway
     restart: unless-stopped
     depends_on:
       postgres-db:
-        condition: service_healthy
-      kafka:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -165,21 +130,14 @@ services:
       SPRING_REDIS_HOST: ${REDIS_HOST}
       SPRING_REDIS_PORT: ${REDIS_PORT}
       SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     ports:
       - "8080:8080"
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   # ==========================================================
-  # 🏢 MICROSERVICES APPLICATIFS (aucun port exposé)
+  # 🏢 MICROSERVICES APPLICATIFS
   # ==========================================================
 
   # ---- 📋 Policy Service ----
@@ -189,8 +147,6 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: policy-service
-      cache_from:
-        - assureflow-policy-service:latest
     image: assureflow-policy-service:latest
     container_name: assureflow-policy-service
     restart: unless-stopped
@@ -211,14 +167,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   # ---- 👤 Client Service ----
   client-service:
@@ -227,8 +175,6 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: client-service
-      cache_from:
-        - assureflow-client-service:latest
     image: assureflow-client-service:latest
     container_name: assureflow-client-service
     restart: unless-stopped
@@ -249,14 +195,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   # ---- 💰 Billing Service ----
   billing-service:
@@ -265,8 +203,6 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: billing-service
-      cache_from:
-        - assureflow-billing-service:latest
     image: assureflow-billing-service:latest
     container_name: assureflow-billing-service
     restart: unless-stopped
@@ -287,14 +223,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   # ---- 🚨 Claims Service ----
   claims-service:
@@ -303,8 +231,6 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: claims-service
-      cache_from:
-        - assureflow-claims-service:latest
     image: assureflow-claims-service:latest
     container_name: assureflow-claims-service
     restart: unless-stopped
@@ -325,14 +251,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   # ---- 🔔 Notification Service ----
   notification-service:
@@ -341,8 +259,6 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: notification-service
-      cache_from:
-        - assureflow-notification-service:latest
     image: assureflow-notification-service:latest
     container_name: assureflow-notification-service
     restart: unless-stopped
@@ -367,14 +283,6 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-changeme}
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   # ---- 🔐 IAM Service ----
   iam-service:
@@ -383,8 +291,6 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: iam-service
-      cache_from:
-        - assureflow-iam-service:latest
     image: assureflow-iam-service:latest
     container_name: assureflow-iam-service
     restart: unless-stopped
@@ -407,14 +313,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   # ---- ⚙️ Workflow Service ----
   workflow-service:
@@ -423,8 +321,6 @@ services:
       dockerfile: docker/Dockerfile
       args:
         SERVICE_NAME: workflow-service
-      cache_from:
-        - assureflow-workflow-service:latest
     image: assureflow-workflow-service:latest
     container_name: assureflow-workflow-service
     restart: unless-stopped
@@ -445,14 +341,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
 
   # ==========================================================
   # 📊 OBSERVABILITÉ - Prometheus
@@ -468,14 +356,8 @@ services:
       - "9090:9090"
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
+    depends_on:
+      - api-gateway
 
   # ==========================================================
   # 📊 OBSERVABILITÉ - Grafana
@@ -496,14 +378,6 @@ services:
       - "3000:3000"
     networks:
       - insurance-net
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
 
 # ==========================================================
 # 🌐 RÉSEAUX
