@@ -22,7 +22,6 @@ public class SAGATransactionRepositoryAdapter implements SAGATransactionReposito
     public SAGATransaction save(SAGATransaction transaction) {
         SAGATransactionEntity entity = mapper.toEntity(transaction);
 
-        // Ensure bidirectional relationship is set for JPA cascade
         if (entity.getSteps() != null) {
             for (SAGAStepEntity step : entity.getSteps()) {
                 step.setTransaction(entity);

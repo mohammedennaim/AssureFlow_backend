@@ -10,6 +10,7 @@ import com.pfe.workflow.domain.model.SAGAStep;
 import com.pfe.workflow.domain.model.SAGATransaction;
 import com.pfe.workflow.domain.model.StepStatus;
 import com.pfe.workflow.domain.repository.SAGATransactionRepository;
+import com.pfe.workflow.infrastructure.messaging.SAGAStepExecutorPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
     private final SAGATransactionRepository sagaTransactionRepository;
+    private final SAGAStepExecutorPublisher stepExecutorPublisher;
 
     @Override
     @Cacheable(value = "sagas", key = "#sagaId")
@@ -43,10 +45,6 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
                 .initiatedBy(initiatedBy)
                 .build();
 
-        // This is a placeholder for generating the specific steps based on sagaType.
-        // In a real scenario, you would have a SAGA factory or registry to attach the
-        // right steps.
-
         saga.start();
 
         SAGAStartedEvent event = SAGAStartedEvent.builder()
@@ -61,6 +59,9 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
         log.info("Started SAGA: {} of type {}", savedSaga.getId(), sagaType);
 
         saga.clearDomainEvents();
+
+        stepExecutorPublisher.executeNextPendingStep(savedSaga);
+
         return toDto(savedSaga);
     }
 
@@ -87,13 +88,15 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
             saga.registerEvent(event);
             log.info("SAGA completed successfully: {}", sagaId);
         } else {
-            // Logic to trigger the NEXT step could go here, or be handled by event
-            // listeners
             log.info("Step {} completed in SAGA {}", stepId, sagaId);
         }
 
         sagaTransactionRepository.save(saga);
         saga.clearDomainEvents();
+
+        if (!allStepsCompleted) {
+            stepExecutorPublisher.executeNextPendingStep(saga);
+        }
     }
 
     @Override
@@ -106,8 +109,8 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
         SAGAStep step = saga.getStep(stepId);
         step.markFailed(errorDetails);
 
-        saga.fail(); // Marks the whole SAGA as failed
-        saga.compensate(); // Moves the SAGA to COMPENSATING state
+        saga.fail();
+        saga.compensate();
 
         SAGAFailedEvent event = SAGAFailedEvent.builder()
                 .sagaId(saga.getId())
@@ -121,11 +124,10 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
         log.warn("SAGA pending compensation: {} due to failure in step {}", sagaId, stepId);
 
-        // Trigger compensation logic here (e.g., publish compensation commands via
-        // Kafka)
-
         sagaTransactionRepository.save(saga);
         saga.clearDomainEvents();
+
+        stepExecutorPublisher.executeCompensation(saga);
     }
 
     @Override
@@ -150,8 +152,6 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
         sagaTransactionRepository.save(saga);
     }
 
-    // Simple manual mapper for now to avoid MapStruct setup complexity until we
-    // reach the Infrastructure layer
     private SAGATransactionDto toDto(SAGATransaction saga) {
         if (saga == null)
             return null;

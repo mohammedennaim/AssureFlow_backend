@@ -44,7 +44,7 @@ public class SAGAStep {
         }
         this.status = StepStatus.FAILED;
         this.errorDetails = errorDetails;
-        this.completedAt = LocalDateTime.now(); // Failed completion
+        this.completedAt = LocalDateTime.now();
     }
 
     public void compensate() {
