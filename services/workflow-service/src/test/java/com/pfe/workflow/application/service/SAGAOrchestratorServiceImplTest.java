@@ -7,6 +7,7 @@ import com.pfe.workflow.domain.model.SAGATransaction;
 import com.pfe.workflow.domain.model.SAGAStatus;
 import com.pfe.workflow.domain.model.StepStatus;
 import com.pfe.workflow.domain.repository.SAGATransactionRepository;
+import com.pfe.workflow.infrastructure.messaging.SAGAStepExecutorPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,6 +30,9 @@ class SAGAOrchestratorServiceImplTest {
 
     @Mock
     private SAGATransactionRepository sagaTransactionRepository;
+
+    @Mock
+    private SAGAStepExecutorPublisher stepExecutorPublisher;
 
     @InjectMocks
     private SAGAOrchestratorServiceImpl orchestratorService;

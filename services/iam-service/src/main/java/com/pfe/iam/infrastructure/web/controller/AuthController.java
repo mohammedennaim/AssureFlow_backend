@@ -5,6 +5,7 @@ import com.pfe.iam.application.dto.*;
 import com.pfe.iam.application.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user")
-    public ResponseEntity<BaseResponse<UserDto>> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<BaseResponse<UserDto>> register(@Valid @RequestBody RegisterRequest request) {
         UserDto registeredUser = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BaseResponse.success(registeredUser, "User registered successfully"));
@@ -30,7 +31,7 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Login and get JWT token")
-    public ResponseEntity<BaseResponse<TokenResponse>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<BaseResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
         TokenResponse tokenResponse = authService.login(request);
         return ResponseEntity.ok(BaseResponse.success(tokenResponse, "Login successful"));
     }
@@ -44,7 +45,7 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     @Operation(summary = "Request a password reset token")
-    public ResponseEntity<BaseResponse<String>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<BaseResponse<String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         String resetToken = authService.forgotPassword(request);
         return ResponseEntity
                 .ok(BaseResponse.success(resetToken, "Password reset token generated. Use it to reset your password."));
@@ -52,14 +53,14 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     @Operation(summary = "Reset password using a reset token")
-    public ResponseEntity<BaseResponse<Void>> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<BaseResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
         return ResponseEntity.ok(BaseResponse.success(null, "Password reset successfully"));
     }
 
     @PostMapping("/change-password")
     @Operation(summary = "Change password for authenticated user")
-    public ResponseEntity<BaseResponse<Void>> changePassword(@RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<BaseResponse<Void>> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = auth.getName();
         authService.changePassword(userEmail, request);

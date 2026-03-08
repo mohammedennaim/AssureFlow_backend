@@ -5,6 +5,7 @@ import com.pfe.iam.application.dto.*;
 import com.pfe.iam.application.service.RoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class RoleController {
 
     @PostMapping
     @Operation(summary = "Create a new role")
-    public ResponseEntity<BaseResponse<RoleDto>> createRole(@RequestBody CreateRoleRequest request) {
+    public ResponseEntity<BaseResponse<RoleDto>> createRole(@Valid @RequestBody CreateRoleRequest request) {
         RoleDto role = roleService.createRole(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BaseResponse.success(role, "Role created successfully"));
@@ -70,7 +71,7 @@ public class RoleController {
     @PostMapping("/permissions")
     @Operation(summary = "Create a new permission")
     public ResponseEntity<BaseResponse<PermissionDto>> createPermission(
-            @RequestBody CreatePermissionRequest request) {
+            @Valid @RequestBody CreatePermissionRequest request) {
         PermissionDto permission = roleService.createPermission(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BaseResponse.success(permission, "Permission created successfully"));

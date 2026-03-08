@@ -7,6 +7,7 @@ import com.pfe.iam.application.service.SessionService;
 import com.pfe.iam.application.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,7 +42,7 @@ public class UserController {
     @PutMapping("/{id}")
     @Operation(summary = "Update user")
     public ResponseEntity<BaseResponse<UserDto>> updateUser(
-            @PathVariable String id, @RequestBody UpdateUserRequest request) {
+            @PathVariable String id, @Valid @RequestBody UpdateUserRequest request) {
         UserDto user = userService.updateUser(id, request);
         return ResponseEntity.ok(BaseResponse.success(user, "User updated successfully"));
     }
@@ -58,7 +59,7 @@ public class UserController {
     @Operation(summary = "Assign role to user")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<UserDto>> assignRole(
-            @PathVariable String id, @RequestBody AssignRoleRequest request) {
+            @PathVariable String id, @Valid @RequestBody AssignRoleRequest request) {
         UserDto user = userService.assignRole(id, request.getRoleId());
         return ResponseEntity.ok(BaseResponse.success(user, "Role assigned successfully"));
     }

@@ -7,13 +7,11 @@ import com.pfe.client.domain.model.Address;
 import com.pfe.client.domain.model.Client;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ClientMapper {
-    ClientMapper INSTANCE = Mappers.getMapper(ClientMapper.class);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "clientNumber", ignore = true)
