@@ -9,6 +9,12 @@ spring:
       # Configuration globale
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 10
+            redis-rate-limiter.burstCapacity: 20
+            redis-rate-limiter.requestedTokens: 1
+            key-resolver: "#{@ipKeyResolver}"
 
       globalcors:
         corsConfigurations:
@@ -113,6 +119,20 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/notification-service, /v3/api-docs
 
+        - id: workflow-api-docs
+          uri: http://workflow-service:8080
+          predicates:
+            - Path=/v3/api-docs/workflow-service
+          filters:
+            - RewritePath=/v3/api-docs/workflow-service, /v3/api-docs
+
+        - id: billing-api-docs
+          uri: http://billing-service:8080
+          predicates:
+            - Path=/v3/api-docs/billing-service
+          filters:
+            - RewritePath=/v3/api-docs/billing-service, /v3/api-docs
+
 springdoc:
   api-docs:
     enabled: true
@@ -132,7 +152,15 @@ springdoc:
         url: /v3/api-docs/claims-service
       - name: Notification Service
         url: /v3/api-docs/notification-service
+      - name: Workflow Service
+        url: /v3/api-docs/workflow-service
+      - name: Billing Service
+        url: /v3/api-docs/billing-service
     urls-primary-name: All Services
+
+# JWT
+jwt:
+  secret: ${JWT_SECRET:myDefaultSecretKeyForDevelopmentOnlyMinimum32Characters}
 
 management:
   endpoints:

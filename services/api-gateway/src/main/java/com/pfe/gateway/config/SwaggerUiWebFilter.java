@@ -9,12 +9,6 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 
-/**
- * Redirects /swagger-ui and /swagger-ui/index.html to the springdoc-managed
- * Swagger UI URL that includes the configUrl query parameter.
- * This ensures Swagger UI loads the correct API documentation configuration
- * instead of the default PetStore example.
- */
 @Component
 public class SwaggerUiWebFilter implements WebFilter {
 

@@ -20,12 +20,13 @@ public class OpenApiAggregatorController {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
-    // List of active microservices
     private final List<String> services = List.of(
             "http://iam-service:8080/v3/api-docs",
             "http://client-service:8080/v3/api-docs",
             "http://policy-service:8080/v3/api-docs",
             "http://claims-service:8080/v3/api-docs",
+            "http://workflow-service:8080/v3/api-docs",
+            "http://billing-service:8080/v3/api-docs",
             "http://notification-service:8080/v3/api-docs");
 
     public OpenApiAggregatorController(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
