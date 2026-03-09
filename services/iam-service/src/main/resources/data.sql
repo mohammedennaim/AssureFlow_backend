@@ -58,9 +58,9 @@ ON CONFLICT DO NOTHING;
 
 -- Users (password = 'Admin@123456')
 INSERT INTO users (id, username, email, password_hash, active, role_id, created_at, updated_at) VALUES
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'admin',        'admin@assureflow.com',        '$2a$10$XVwBJVDRz1JfYXgU9gS4fOScMQsEJa2Y9e8Xs8UWB/JPLB7lxkDGe', true, '11111111-0000-0000-0000-000000000001', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000002', 'agent.dupont', 'jean.dupont@assureflow.com',  '$2a$10$XVwBJVDRz1JfYXgU9gS4fOScMQsEJa2Y9e8Xs8UWB/JPLB7lxkDGe', true, '11111111-0000-0000-0000-000000000002', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000003', 'agent.martin', 'marie.martin@assureflow.com', '$2a$10$XVwBJVDRz1JfYXgU9gS4fOScMQsEJa2Y9e8Xs8UWB/JPLB7lxkDGe', true, '11111111-0000-0000-0000-000000000002', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000004', 'client.benali','ahmed.benali@gmail.com',      '$2a$10$XVwBJVDRz1JfYXgU9gS4fOScMQsEJa2Y9e8Xs8UWB/JPLB7lxkDGe', true, '11111111-0000-0000-0000-000000000003', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000005', 'client.alami', 'fatima.alami@gmail.com',      '$2a$10$XVwBJVDRz1JfYXgU9gS4fOScMQsEJa2Y9e8Xs8UWB/JPLB7lxkDGe', true, '11111111-0000-0000-0000-000000000003', NOW(), NOW())
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'admin',        'admin@assureflow.com',        '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000001', NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000002', 'agent.dupont', 'jean.dupont@assureflow.com',  '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000002', NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000003', 'agent.martin', 'marie.martin@assureflow.com', '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000002', NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000004', 'client.benali','ahmed.benali@gmail.com',      '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000003', NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000005', 'client.alami', 'fatima.alami@gmail.com',      '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000003', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;

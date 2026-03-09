@@ -21,7 +21,7 @@ import java.util.UUID;
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
-@Profile("!test")
+@Profile("disabled") // désactivé : données gérées par data.sql
 public class DataSeeder implements CommandLineRunner {
 
     private final ClientRepository clientRepository;

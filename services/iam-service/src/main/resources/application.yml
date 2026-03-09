@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8080
 
 spring:
   application:
@@ -12,13 +12,17 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    defer-datasource-initialization: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  sql:
+    init:
+      mode: always
   redis:
     host: ${REDIS_HOST:localhost}
     port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:assureflow_sec_991}
+    password: ${REDIS_PASSWORD:redis_secret_2024}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -70,7 +74,7 @@ spring:
   redis:
     host: redis
     port: 6379
-    password: assureflow_sec_991
+    password: redis_secret_2024
   kafka:
     bootstrap-servers: kafka:29092
   jpa:
