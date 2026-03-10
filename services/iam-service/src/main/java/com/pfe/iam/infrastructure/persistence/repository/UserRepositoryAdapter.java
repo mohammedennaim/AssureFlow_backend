@@ -99,7 +99,7 @@ public class UserRepositoryAdapter implements UserRepository {
         }
 
         return UserEntity.builder()
-                .id(domain.getId() != null ? domain.getId().toString() : null)
+                .id(domain.getId() != null ? domain.getId().toString() : UUID.randomUUID().toString())
                 .username(domain.getUsername())
                 .email(domain.getEmail())
                 .passwordHash(domain.getPasswordHash())

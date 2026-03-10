@@ -25,6 +25,14 @@ public class UserController {
     private final SessionService sessionService;
     private final AuditService auditService;
 
+    @PostMapping
+    @Operation(summary = "Create a new user (admin only)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<UserDto>> createUser(@Valid @RequestBody CreateUserRequest request) {
+        UserDto user = userService.createUser(request);
+        return ResponseEntity.status(201).body(BaseResponse.success(user, "User created successfully"));
+    }
+
     @GetMapping
     @Operation(summary = "Get all users")
     public ResponseEntity<BaseResponse<List<UserDto>>> getAllUsers() {

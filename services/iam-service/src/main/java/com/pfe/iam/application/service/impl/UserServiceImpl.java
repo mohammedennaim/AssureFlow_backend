@@ -1,15 +1,19 @@
 package com.pfe.iam.application.service.impl;
 
+import com.pfe.iam.application.dto.CreateUserRequest;
 import com.pfe.iam.application.dto.UpdateUserRequest;
 import com.pfe.iam.application.dto.UserDto;
 import com.pfe.iam.application.service.AuditService;
 import com.pfe.iam.application.service.UserService;
+import com.pfe.iam.domain.exception.EmailAlreadyExistsException;
 import com.pfe.iam.domain.exception.RoleNotFoundException;
 import com.pfe.iam.domain.model.Role;
 import com.pfe.iam.domain.model.User;
+import com.pfe.iam.domain.model.UserRole;
 import com.pfe.iam.domain.repository.RoleRepository;
 import com.pfe.iam.domain.repository.UserRepository;
 import com.pfe.commons.exceptions.ResourceNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +31,39 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final AuditService auditService;
+    private final PasswordEncoder passwordEncoder;
+
+    @Override
+    @Transactional
+    public UserDto createUser(CreateUserRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException("Email already taken: " + request.getEmail());
+        }
+
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setActive(true);
+
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            try {
+                UserRole roleEnum = UserRole.valueOf(request.getRole().toUpperCase());
+                Role role = roleRepository.findByName(roleEnum)
+                        .orElseThrow(() -> new RoleNotFoundException(request.getRole()));
+                user.setRole(role);
+            } catch (IllegalArgumentException e) {
+                throw new RoleNotFoundException(request.getRole());
+            }
+        } else {
+            roleRepository.findByName(UserRole.CLIENT).ifPresent(user::setRole);
+        }
+
+        User saved = userRepository.save(user);
+        auditService.log(saved.getId().toString(), "USER_CREATED_BY_ADMIN");
+        log.info("User created by admin: {}", saved.getEmail());
+        return toDto(saved);
+    }
 
     @Override
     public List<UserDto> getAllUsers() {
