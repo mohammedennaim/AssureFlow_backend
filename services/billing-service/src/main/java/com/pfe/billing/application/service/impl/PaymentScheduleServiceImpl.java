@@ -7,6 +7,7 @@ import com.pfe.billing.domain.model.PaymentSchedule;
 import com.pfe.billing.domain.repository.PaymentScheduleRepository;
 import com.pfe.commons.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
     private final PaymentScheduleMapper scheduleMapper;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public PaymentScheduleDto createSchedule(PaymentScheduleDto dto) {
         PaymentSchedule schedule = scheduleMapper.toDomain(dto);
@@ -30,6 +32,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     public PaymentScheduleDto getScheduleByPolicyId(UUID policyId) {
         PaymentSchedule schedule = scheduleRepository.findByPolicyId(policyId)
                 .orElseThrow(() -> new ResourceNotFoundException("PaymentSchedule", "policyId", policyId));
@@ -37,6 +40,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public List<PaymentScheduleDto> getAllSchedules() {
         return scheduleRepository.findAll().stream()
                 .map(scheduleMapper::toDto)
@@ -44,6 +48,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public PaymentScheduleDto updateSchedule(UUID id, PaymentScheduleDto dto) {
         PaymentSchedule schedule = scheduleRepository.findById(id)
@@ -61,6 +66,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteSchedule(UUID id) {
         if (scheduleRepository.findById(id).isEmpty()) {

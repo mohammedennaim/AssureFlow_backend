@@ -7,6 +7,7 @@ import com.pfe.client.domain.model.ClientHistory;
 import com.pfe.client.domain.repository.ClientHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class ClientHistoryServiceImpl implements ClientHistoryService {
     private final ClientHistoryMapper mapper;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public void recordHistory(UUID clientId, String action, String performedBy) {
         ClientHistory history = ClientHistory.builder()
@@ -35,6 +37,7 @@ public class ClientHistoryServiceImpl implements ClientHistoryService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public List<ClientHistoryResponse> getHistoryByClientId(UUID clientId) {
         return mapper.toResponseList(clientHistoryRepository.findByClientId(clientId));

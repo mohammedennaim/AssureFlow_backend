@@ -7,6 +7,7 @@ import com.pfe.client.application.service.BeneficiaryService;
 import com.pfe.client.domain.model.Beneficiary;
 import com.pfe.client.domain.repository.BeneficiaryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private final BeneficiaryMapper mapper;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public BeneficiaryResponse createBeneficiary(UUID clientId, BeneficiaryRequest request) {
         Beneficiary b = mapper.toDomain(request);
@@ -31,6 +33,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public BeneficiaryResponse getBeneficiaryById(UUID id) {
         var b = beneficiaryRepository.findById(id).orElseThrow(() -> new RuntimeException("Beneficiary not found"));
@@ -38,6 +41,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public List<BeneficiaryResponse> getBeneficiariesByClientId(UUID clientId) {
         return beneficiaryRepository.findByClientId(clientId).stream()
@@ -46,6 +50,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteBeneficiary(UUID id) {
         beneficiaryRepository.deleteById(id);

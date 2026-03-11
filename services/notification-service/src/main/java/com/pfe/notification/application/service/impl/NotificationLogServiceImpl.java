@@ -6,6 +6,7 @@ import com.pfe.notification.application.service.NotificationLogService;
 import com.pfe.notification.domain.repository.NotificationLogRepository;
 import com.pfe.commons.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class NotificationLogServiceImpl implements NotificationLogService {
     private final NotificationLogMapper logMapper;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public NotificationLogDto getLogById(UUID id) {
         return logRepository.findById(id)
                 .map(logMapper::toDto)
@@ -27,6 +29,7 @@ public class NotificationLogServiceImpl implements NotificationLogService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public List<NotificationLogDto> getLogsByNotificationId(UUID notificationId) {
         return logRepository.findByNotificationId(notificationId).stream()
                 .map(logMapper::toDto)
@@ -34,6 +37,7 @@ public class NotificationLogServiceImpl implements NotificationLogService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<NotificationLogDto> getAllLogs() {
         return logRepository.findAll().stream()
                 .map(logMapper::toDto)

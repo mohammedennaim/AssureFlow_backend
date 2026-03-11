@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final EmailNotificationService emailNotificationService;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "notifications", allEntries = true)
     public NotificationDto createNotification(CreateNotificationRequest request) {
@@ -44,6 +46,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Cacheable(value = "notifications", key = "#id")
     public NotificationDto getNotificationById(UUID id) {
         Notification notification = notificationRepository.findById(id)
@@ -52,6 +55,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Cacheable(value = "notifications", key = "'policy_' + #policyId")
     public List<NotificationDto> getNotificationsByPolicyId(UUID policyId) {
         return notificationRepository.findByPolicyId(policyId).stream()
@@ -60,6 +64,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Cacheable(value = "notifications", key = "'recipient_' + #recipient")
     public List<NotificationDto> getNotificationsByRecipient(String recipient) {
         return notificationRepository.findByRecipient(recipient).stream()
@@ -68,6 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public List<NotificationDto> getAllNotifications() {
         return notificationRepository.findAll().stream()
                 .map(notificationMapper::toDto)
@@ -75,6 +81,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public Page<NotificationDto> getAllNotificationsPaged(int page, int size) {
         return notificationRepository.findAllPaged(
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")))
@@ -82,6 +89,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "notifications", key = "#id")
     public void sendNotification(UUID id) {
@@ -103,6 +111,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @CacheEvict(value = "notifications", key = "#id")
     public void deleteNotification(UUID id) {

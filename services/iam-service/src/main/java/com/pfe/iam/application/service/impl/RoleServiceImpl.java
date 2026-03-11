@@ -15,6 +15,7 @@ import com.pfe.commons.exceptions.BusinessException;
 import com.pfe.commons.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class RoleServiceImpl implements RoleService {
     private final PermissionRepository permissionRepository;
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public RoleDto createRole(CreateRoleRequest request) {
         UserRole userRole;
@@ -56,6 +58,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<RoleDto> getAllRoles() {
         return roleRepository.findAll().stream()
                 .map(this::toDto)
@@ -63,6 +66,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public RoleDto getRoleById(String id) {
         Role role = roleRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new RoleNotFoundException(id));
@@ -70,6 +74,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteRole(String id) {
         if (roleRepository.findById(UUID.fromString(id)).isEmpty()) {
@@ -80,6 +85,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public RoleDto assignPermission(String roleId, String permissionId) {
         Role role = roleRepository.findById(UUID.fromString(roleId))
@@ -94,6 +100,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public RoleDto removePermission(String roleId, String permissionId) {
         Role role = roleRepository.findById(UUID.fromString(roleId))
@@ -106,6 +113,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public PermissionDto createPermission(CreatePermissionRequest request) {
         if (permissionRepository.findByResourceAndAction(request.getResource(), request.getAction()).isPresent()) {
@@ -123,6 +131,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<PermissionDto> getAllPermissions() {
         return permissionRepository.findAll().stream()
                 .map(this::toPermissionDto)
@@ -130,6 +139,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deletePermission(String id) {
         permissionRepository.deleteById(UUID.fromString(id));

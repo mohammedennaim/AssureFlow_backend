@@ -11,6 +11,7 @@ import com.pfe.billing.domain.model.PaymentStatus;
 import com.pfe.billing.domain.repository.PaymentRepository;
 import com.pfe.billing.infrastructure.messaging.BillingEventPublisher;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final BillingEventPublisher billingEventPublisher;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public PaymentDto createPayment(CreatePaymentRequest request) {
         Payment payment = paymentMapper.toDomain(request);
@@ -45,6 +47,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     public PaymentDto getPaymentById(UUID id) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFoundException(id));
@@ -52,6 +55,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     public List<PaymentDto> getPaymentsByInvoiceId(UUID invoiceId) {
         return paymentRepository.findByInvoiceId(invoiceId).stream()
                 .map(paymentMapper::toDto)
@@ -59,6 +63,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     public List<PaymentDto> getPaymentsByClientId(UUID clientId) {
         return paymentRepository.findByClientId(clientId).stream()
                 .map(paymentMapper::toDto)
@@ -66,6 +71,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public List<PaymentDto> getAllPayments() {
         return paymentRepository.findAll().stream()
                 .map(paymentMapper::toDto)
@@ -73,6 +79,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deletePayment(UUID id) {
         if (paymentRepository.findById(id).isEmpty()) {

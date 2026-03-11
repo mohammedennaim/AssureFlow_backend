@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ public class ClaimServiceImpl implements ClaimService {
     private final PolicyServiceClient policyServiceClient;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
     public ClaimDto createClaim(CreateClaimRequest request) {
         validatePolicyExists(request.getPolicyId());
@@ -89,6 +91,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "claims", key = "#id")
     public ClaimDto getClaimById(UUID id) {
@@ -98,6 +101,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "claims", key = "'client:' + #clientId")
     public List<ClaimDto> getClaimsByClientId(UUID clientId) {
@@ -107,6 +111,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "claims", key = "'policy:' + #policyId")
     public List<ClaimDto> getClaimsByPolicyId(UUID policyId) {
@@ -116,6 +121,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public List<ClaimDto> getAllClaims() {
         return claimRepository.findAll().stream()
@@ -124,6 +130,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "claims", allEntries = true)
     public ClaimDto updateClaim(UUID id, UpdateClaimRequest request) {
@@ -148,6 +155,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
     @CacheEvict(value = "claims", key = "#id")
     public void submitClaim(UUID id) {
@@ -158,6 +166,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "claims", key = "#id")
     public void reviewClaim(UUID id) {
@@ -168,6 +177,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @CacheEvict(value = "claims", key = "#id")
     public void approveClaim(UUID id, BigDecimal approvedAmount, UUID approvedBy) {
@@ -179,6 +189,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "claims", key = "#id")
     public void rejectClaim(UUID id, String reason) {
@@ -189,6 +200,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "claims", key = "#id")
     public void requestInfo(UUID id) {
@@ -199,6 +211,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "claims", key = "#id")
     public void closeClaim(UUID id) {
@@ -209,6 +222,7 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @CacheEvict(value = "claims", allEntries = true)
     public void deleteClaim(UUID id) {

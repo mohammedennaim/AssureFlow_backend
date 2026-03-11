@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class DocumentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @Operation(summary = "Upload document metadata for client")
     public ResponseEntity<BaseResponse<DocumentResponse>> upload(@PathVariable UUID clientId,
             @Valid @RequestBody DocumentUploadRequest request) {
@@ -39,16 +41,19 @@ public class DocumentController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<BaseResponse<List<DocumentResponse>>> list(@PathVariable UUID clientId) {
         return ResponseEntity.ok(BaseResponse.success(documentService.getDocumentsByClientId(clientId)));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     public ResponseEntity<BaseResponse<DocumentResponse>> getById(@PathVariable UUID clientId, @PathVariable UUID id) {
         return ResponseEntity.ok(BaseResponse.success(documentService.getDocumentById(id)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<Void>> delete(@PathVariable UUID clientId, @PathVariable UUID id) {
         documentService.deleteDocument(id);
         return ResponseEntity.ok(BaseResponse.success(null, "Deleted"));

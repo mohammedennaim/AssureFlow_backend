@@ -7,6 +7,7 @@ import com.pfe.client.domain.model.Document;
 import com.pfe.client.domain.model.DocumentType;
 import com.pfe.client.domain.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentMapper mapper;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public DocumentResponse saveDocument(UUID clientId, String fileName, String filePath) {
         Document d = Document.builder()
@@ -37,6 +39,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public DocumentResponse getDocumentById(UUID id) {
         var d = documentRepository.findById(id).orElseThrow(() -> new RuntimeException("Document not found"));
@@ -44,6 +47,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public List<DocumentResponse> getDocumentsByClientId(UUID clientId) {
         return documentRepository.findByClientId(clientId).stream()
@@ -52,6 +56,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteDocument(UUID id) {
         documentRepository.deleteById(id);

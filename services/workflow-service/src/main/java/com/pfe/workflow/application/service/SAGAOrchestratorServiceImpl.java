@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     private final SAGAStepExecutorPublisher stepExecutorPublisher;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Cacheable(value = "sagas", key = "#sagaId")
     public SAGATransactionDto getSagaStatus(UUID sagaId) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
@@ -38,6 +40,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public SAGATransactionDto startSaga(String sagaType, UUID initiatedBy) {
         SAGATransaction saga = SAGATransaction.builder()
@@ -66,6 +69,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportStepSuccess(UUID sagaId, UUID stepId) {
@@ -100,6 +104,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportStepFailure(UUID sagaId, UUID stepId, String errorDetails) {
@@ -131,6 +136,7 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportCompensationSuccess(UUID sagaId, UUID stepId) {

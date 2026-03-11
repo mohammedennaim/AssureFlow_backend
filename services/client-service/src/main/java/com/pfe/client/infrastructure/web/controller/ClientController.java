@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class ClientController {
     private final ClientHistoryService historyService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new client")
     public ResponseEntity<BaseResponse<ClientResponse>> createClient(@Valid @RequestBody ClientRequest request) {
         ClientResponse response = clientService.createClient(request);
@@ -35,6 +37,7 @@ public class ClientController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @Operation(summary = "Get all clients")
     public ResponseEntity<BaseResponse<List<ClientResponse>>> getAllClients(
             @RequestParam(defaultValue = "0") int page,
@@ -43,24 +46,28 @@ public class ClientController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @Operation(summary = "Get a client by ID")
     public ResponseEntity<BaseResponse<ClientResponse>> getClientById(@PathVariable UUID id) {
         return ResponseEntity.ok(BaseResponse.success(clientService.getClientById(id)));
     }
 
     @GetMapping("/email/{email}")
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @Operation(summary = "Get a client by Email")
     public ResponseEntity<BaseResponse<ClientResponse>> getClientByEmail(@PathVariable String email) {
         return ResponseEntity.ok(BaseResponse.success(clientService.getClientByEmail(email)));
     }
 
     @GetMapping("/cin/{cin}")
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @Operation(summary = "Get a client by CIN")
     public ResponseEntity<BaseResponse<ClientResponse>> getClientByCin(@PathVariable String cin) {
         return ResponseEntity.ok(BaseResponse.success(clientService.getClientByCin(cin)));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update an existing client")
     public ResponseEntity<BaseResponse<ClientResponse>> updateClient(
             @PathVariable UUID id,
@@ -69,6 +76,7 @@ public class ClientController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a client")
     public ResponseEntity<Void> deleteClient(@PathVariable UUID id) {
         clientService.deleteClient(id);
@@ -76,6 +84,7 @@ public class ClientController {
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @Operation(summary = "Search clients")
     public ResponseEntity<BaseResponse<List<ClientResponse>>> search(
             @RequestParam(required = false) String firstName,
@@ -94,6 +103,7 @@ public class ClientController {
     }
 
     @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Activate a client")
     public ResponseEntity<BaseResponse<Void>> activateClient(@PathVariable UUID id) {
         clientService.activateClient(id);
@@ -101,6 +111,7 @@ public class ClientController {
     }
 
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Deactivate a client")
     public ResponseEntity<BaseResponse<Void>> deactivateClient(@PathVariable UUID id) {
         clientService.deactivateClient(id);
@@ -108,6 +119,7 @@ public class ClientController {
     }
 
     @GetMapping("/{id}/history")
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @Operation(summary = "Get client history")
     public ResponseEntity<BaseResponse<List<ClientHistoryResponse>>> getClientHistory(@PathVariable UUID id) {
         return ResponseEntity.ok(BaseResponse.success(historyService.getHistoryByClientId(id)));

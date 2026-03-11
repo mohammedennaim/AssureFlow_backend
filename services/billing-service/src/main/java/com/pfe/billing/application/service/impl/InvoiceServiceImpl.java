@@ -22,6 +22,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +44,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final BillingEventPublisher billingEventPublisher;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public InvoiceDto createInvoice(CreateInvoiceRequest request) {
         validatePolicyExists(request.getPolicyId());
@@ -86,6 +88,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "invoices", key = "#id")
     public InvoiceDto getInvoiceById(UUID id) {
@@ -95,6 +98,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "invoices", key = "'number:' + #invoiceNumber")
     public InvoiceDto getInvoiceByNumber(String invoiceNumber) {
@@ -104,6 +108,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "invoices", key = "'client:' + #clientId")
     public List<InvoiceDto> getInvoicesByClientId(UUID clientId) {
@@ -113,6 +118,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "invoices", key = "'policy:' + #policyId")
     public List<InvoiceDto> getInvoicesByPolicyId(UUID policyId) {
@@ -122,6 +128,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public List<InvoiceDto> getAllInvoices() {
         return invoiceRepository.findAll().stream()
@@ -130,6 +137,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public Page<InvoiceDto> getAllInvoicesPaged(int page, int size) {
         return invoiceRepository.findAllPaged(
@@ -138,6 +146,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "invoices", key = "#id")
     public void cancelInvoice(UUID id) {
@@ -148,6 +157,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "invoices", key = "#invoiceId")
     public void markAsPaid(UUID invoiceId, UUID paymentId) {
@@ -167,6 +177,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @CacheEvict(value = "invoices", allEntries = true)
     public void deleteInvoice(UUID id) {

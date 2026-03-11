@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,7 @@ public class PolicyServiceImpl implements PolicyService {
     private final ClientServiceClient clientServiceClient;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public PolicyDto createPolicy(CreatePolicyRequest request) {
         validateClientExists(request.getClientId());
@@ -101,6 +103,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "policies", key = "#id")
     public PolicyDto getPolicyById(String id) {
@@ -111,6 +114,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "policies", key = "'client:' + #clientId")
     public List<PolicyDto> getPoliciesByClientId(String clientId) {
@@ -121,6 +125,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public List<PolicyDto> getAllPolicies() {
         return policyRepository.findAll().stream()
@@ -129,6 +134,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public Page<PolicyDto> getAllPolicies(Pageable pageable) {
         return policyRepository.findAll(pageable)
@@ -136,6 +142,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "policies", allEntries = true)
     public PolicyDto updatePolicy(String id, UpdatePolicyRequest request) {
@@ -160,6 +167,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
     public void cancelPolicy(String id, String reason) {
         Policy policy = policyRepository.findById(id)
@@ -169,6 +177,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
     public void submitPolicy(String id) {
         Policy policy = policyRepository.findById(id)
@@ -178,6 +187,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void approvePolicy(String id) {
         Policy policy = policyRepository.findById(id)
@@ -187,6 +197,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public void rejectPolicy(String id, String reason) {
         Policy policy = policyRepository.findById(id)
@@ -196,6 +207,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public void expirePolicy(String id, String reason) {
         Policy policy = policyRepository.findById(id)
@@ -205,6 +217,7 @@ public class PolicyServiceImpl implements PolicyService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public PolicyDto renewPolicy(String id) {
         Policy policy = policyRepository.findById(id)

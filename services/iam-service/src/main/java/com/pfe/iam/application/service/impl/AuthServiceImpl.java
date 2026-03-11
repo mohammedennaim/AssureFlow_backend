@@ -18,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,7 @@ public class AuthServiceImpl implements AuthService {
         private final PasswordResetTokenRepository passwordResetTokenRepository;
 
         @Override
+        @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
         @Transactional
         public UserDto register(RegisterRequest request) {
                 if (userRepository.existsByEmail(request.getEmail())) {
@@ -58,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
+        @PreAuthorize("permitAll")
         public TokenResponse login(LoginRequest request) {
                 authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
@@ -85,6 +88,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
+        @PreAuthorize("permitAll")
         @Transactional
         public void logout(String token) {
                 if (token != null && token.startsWith("Bearer ")) {
@@ -101,6 +105,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
+        @PreAuthorize("permitAll")
         @Transactional
         public String forgotPassword(ForgotPasswordRequest request) {
                 User user = userRepository.findByEmail(request.getEmail())
@@ -124,6 +129,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
+        @PreAuthorize("permitAll")
         @Transactional
         public void resetPassword(ResetPasswordRequest request) {
                 PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
@@ -149,6 +155,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
+        @PreAuthorize("permitAll")
         @Transactional
         public void changePassword(String userEmail, ChangePasswordRequest request) {
                 User user = userRepository.findByEmail(userEmail)

@@ -16,6 +16,7 @@ import com.pfe.commons.exceptions.ResourceNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public UserDto createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -66,6 +68,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::toDto)
@@ -73,6 +76,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public UserDto getUserById(String id) {
         User user = userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
@@ -80,6 +84,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public UserDto getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
@@ -87,6 +92,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public UserDto updateUser(String id, UpdateUserRequest request) {
         User user = userRepository.findById(UUID.fromString(id))
@@ -106,6 +112,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteUser(String id) {
         if (userRepository.findById(UUID.fromString(id)).isEmpty()) {
@@ -117,6 +124,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public UserDto assignRole(String userId, String roleId) {
         User user = userRepository.findById(UUID.fromString(userId))
@@ -132,6 +140,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public UserDto removeRole(String userId, String roleId) {
         User user = userRepository.findById(UUID.fromString(userId))

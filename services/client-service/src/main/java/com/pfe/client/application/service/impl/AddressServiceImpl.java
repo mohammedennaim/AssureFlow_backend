@@ -10,6 +10,7 @@ import com.pfe.client.domain.repository.ClientRepository;
 import com.pfe.commons.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ public class AddressServiceImpl implements AddressService {
     private final ClientMapper mapper;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public AddressDto addAddress(UUID clientId, AddressDto addressDto) {
         clientRepository.findById(clientId)
@@ -41,6 +43,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public List<AddressDto> getAddressesByClientId(UUID clientId) {
         return addressRepository.findByClientId(clientId).stream()
@@ -49,6 +52,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public AddressDto getAddressById(UUID id) {
         Address address = addressRepository.findById(id)
@@ -57,6 +61,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public AddressDto updateAddress(UUID id, AddressDto addressDto) {
         Address existing = addressRepository.findById(id)
@@ -74,6 +79,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteAddress(UUID id) {
         addressRepository.deleteById(id);

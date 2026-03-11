@@ -6,6 +6,7 @@ import com.pfe.iam.domain.model.AuditLog;
 import com.pfe.iam.domain.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public class AuditServiceImpl implements AuditService {
     private final AuditLogRepository auditLogRepository;
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public void log(String userId, String action) {
         AuditLog auditLog = AuditLog.builder()
                 .userId(UUID.fromString(userId))
@@ -32,6 +34,7 @@ public class AuditServiceImpl implements AuditService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<AuditLogDto> getAuditLogsByUserId(String userId) {
         return auditLogRepository.findByUserId(UUID.fromString(userId)).stream()
                 .map(this::toDto)
@@ -39,6 +42,7 @@ public class AuditServiceImpl implements AuditService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<AuditLogDto> getAllAuditLogs() {
         return auditLogRepository.findAll().stream()
                 .map(this::toDto)

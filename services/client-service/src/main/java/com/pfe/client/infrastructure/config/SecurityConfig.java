@@ -35,16 +35,6 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/actuator/**")
                         .permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/api/v1/clients/**").hasAnyRole("AGENT", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/clients/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/clients/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/clients/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/clients/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/clients/*/addresses/**").hasAnyRole("AGENT", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/clients/*/beneficiaries/**").hasAnyRole("AGENT", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/clients/*/documents/**").hasAnyRole("AGENT", "ADMIN")
-
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

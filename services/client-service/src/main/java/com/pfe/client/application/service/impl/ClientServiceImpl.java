@@ -20,6 +20,7 @@ import com.pfe.client.domain.event.ClientDeletedEvent;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public ClientResponse createClient(ClientRequest request) {
         log.info("Creating new client with email: {}", request.getEmail());
@@ -91,6 +93,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     @Cacheable(value = "clients", key = "#id")
     public ClientResponse getClientById(UUID id) {
@@ -102,6 +105,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public ClientResponse getClientByEmail(String email) {
         log.debug("Fetching client by email: {}", email);
@@ -112,6 +116,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
     public ClientResponse getClientByCin(String cin) {
         log.debug("Fetching client by CIN: {}", cin);
@@ -122,6 +127,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public List<ClientResponse> getAllClients() {
         log.debug("Fetching all clients");
@@ -138,6 +144,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "clients", allEntries = true)
     public ClientResponse updateClient(UUID id, ClientRequest request) {
@@ -185,6 +192,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteClient(UUID id) {
         log.info("Deleting client with ID: {}", id);
@@ -204,6 +212,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public List<ClientResponse> getAllClients(int page, int size) {
         return clientRepository.findAll(page, size).stream()
@@ -213,6 +222,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public List<ClientResponse> search(ClientSearchCriteria criteria, int page, int size) {
         return clientRepository.findAll(page, size).stream()
@@ -241,6 +251,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public void activateClient(UUID id) {
         var client = clientRepository.findById(id).orElseThrow(() -> new ClientNotFoundException(id));
@@ -251,6 +262,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public void deactivateClient(UUID id) {
         var client = clientRepository.findById(id).orElseThrow(() -> new ClientNotFoundException(id));

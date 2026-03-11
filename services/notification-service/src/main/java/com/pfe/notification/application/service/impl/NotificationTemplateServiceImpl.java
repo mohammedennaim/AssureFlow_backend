@@ -7,6 +7,7 @@ import com.pfe.notification.domain.exception.NotificationTemplateNotFoundExcepti
 import com.pfe.notification.domain.model.NotificationTemplate;
 import com.pfe.notification.domain.repository.NotificationTemplateRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class NotificationTemplateServiceImpl implements NotificationTemplateServ
     private final NotificationTemplateMapper templateMapper;
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public NotificationTemplateDto createTemplate(NotificationTemplateDto dto) {
         NotificationTemplate template = templateMapper.toDomain(dto);
@@ -30,6 +32,7 @@ public class NotificationTemplateServiceImpl implements NotificationTemplateServ
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public NotificationTemplateDto getTemplateById(UUID id) {
         NotificationTemplate template = templateRepository.findById(id)
                 .orElseThrow(() -> new NotificationTemplateNotFoundException(id));
@@ -37,6 +40,7 @@ public class NotificationTemplateServiceImpl implements NotificationTemplateServ
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public NotificationTemplateDto getTemplateByName(String name) {
         NotificationTemplate template = templateRepository.findByName(name)
                 .orElseThrow(() -> new NotificationTemplateNotFoundException(name));
@@ -44,6 +48,7 @@ public class NotificationTemplateServiceImpl implements NotificationTemplateServ
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public List<NotificationTemplateDto> getAllTemplates() {
         return templateRepository.findAll().stream()
                 .map(templateMapper::toDto)
@@ -51,6 +56,7 @@ public class NotificationTemplateServiceImpl implements NotificationTemplateServ
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public NotificationTemplateDto updateTemplate(UUID id, NotificationTemplateDto dto) {
         NotificationTemplate template = templateRepository.findById(id)
@@ -68,6 +74,7 @@ public class NotificationTemplateServiceImpl implements NotificationTemplateServ
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteTemplate(UUID id) {
         if (templateRepository.findById(id).isEmpty()) {
