@@ -88,8 +88,7 @@ public class PolicyServiceImpl implements PolicyService {
             throw new BusinessException("Client ID is required");
         }
         try {
-            UUID clientUuid = UUID.fromString(clientId);
-            BaseResponse<ClientDto> response = clientServiceClient.getClientById(clientUuid);
+            BaseResponse<ClientDto> response = clientServiceClient.getClientByEmail(clientId);
             if (response == null || !response.isSuccess() || response.getData() == null) {
                 throw new BusinessException("Client not found with ID: " + clientId);
             }

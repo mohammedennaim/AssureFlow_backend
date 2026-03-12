@@ -22,7 +22,6 @@ public class AuditServiceImpl implements AuditService {
     private final AuditLogRepository auditLogRepository;
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     public void log(String userId, String action) {
         AuditLog auditLog = AuditLog.builder()
                 .userId(UUID.fromString(userId))

@@ -29,10 +29,11 @@ spring:
   sql:
     init:
       mode: always
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:redis_secret_2024}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis_secret_2024}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -97,10 +98,11 @@ spring:
       on-profile: docker
   datasource:
     url: jdbc:postgresql://postgres-db:5432/policy_db
-  redis:
-    host: redis
-    port: 6379
-    password: redis_secret_2024
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: redis_secret_2024
   kafka:
     bootstrap-servers: kafka:29092
   jpa:

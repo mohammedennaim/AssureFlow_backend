@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +37,22 @@ public class ClientController {
         return new ResponseEntity<>(BaseResponse.success(response), HttpStatus.CREATED);
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
+    @Operation(summary = "Get current authenticated client profile")
+    public ResponseEntity<BaseResponse<ClientResponse>> getCurrentClient(Authentication authentication) {
+        String email = authentication.getName(); // JWT subject = email
+        return ResponseEntity.ok(BaseResponse.success(clientService.getClientByEmail(email)));
+    }
+    @PatchMapping("/me")
+    @PreAuthorize("hasAnyRole('CLIENT', 'AGENT', 'ADMIN')")
+    @Operation(summary = "Update current authenticated client profile (self-service)")
+    public ResponseEntity<BaseResponse<ClientResponse>> updateCurrentClient(
+            Authentication authentication,
+            @RequestBody ClientRequest request) {
+        String email = authentication.getName();
+        return ResponseEntity.ok(BaseResponse.success(clientService.updateMyProfile(email, request)));
+    }
     @GetMapping
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
     @Operation(summary = "Get all clients")
@@ -45,11 +62,16 @@ public class ClientController {
         return ResponseEntity.ok(BaseResponse.success(clientService.getAllClients(page, size)));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{identifier}")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
-    @Operation(summary = "Get a client by ID")
-    public ResponseEntity<BaseResponse<ClientResponse>> getClientById(@PathVariable UUID id) {
-        return ResponseEntity.ok(BaseResponse.success(clientService.getClientById(id)));
+    @Operation(summary = "Get a client by ID or Email")
+    public ResponseEntity<BaseResponse<ClientResponse>> getClient(@PathVariable String identifier) {
+        try {
+            UUID id = UUID.fromString(identifier);
+            return ResponseEntity.ok(BaseResponse.success(clientService.getClientById(id)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(BaseResponse.success(clientService.getClientByEmail(identifier)));
+        }
     }
 
     @GetMapping("/email/{email}")

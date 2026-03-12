@@ -192,6 +192,40 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "clients", allEntries = true)
+    public ClientResponse updateMyProfile(String email, ClientRequest request) {
+        log.info("Self-update profile for: {}", email);
+        Client existing = clientRepository.findByEmail(email)
+                .orElseThrow(() -> new ClientNotFoundException(null));
+
+        if (request.getFirstName() != null) existing.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) existing.setLastName(request.getLastName());
+        if (request.getPhone() != null) existing.setPhone(request.getPhone());
+        if (request.getDateOfBirth() != null) existing.setDateOfBirth(request.getDateOfBirth());
+        if (request.getCin() != null && !request.getCin().equals(existing.getCin())) {
+            if (clientRepository.existsByCin(request.getCin()))
+                throw new CinAlreadyExistsException(request.getCin());
+            existing.setCin(request.getCin());
+        }
+        existing.setUpdatedAt(java.time.LocalDateTime.now());
+
+        Client saved = clientRepository.save(existing);
+
+        if (request.getAddresses() != null && !request.getAddresses().isEmpty()) {
+            addressRepository.deleteByClientId(saved.getId());
+            request.getAddresses().forEach(dto -> {
+                Address addr = mapper.toAddressDomain(dto);
+                addr.setClientId(saved.getId());
+                addressRepository.save(addr);
+            });
+        }
+
+        historyService.recordHistory(saved.getId(), "SELF_PROFILE_UPDATED", email);
+        return mapper.toResponse(saved);
+    }
+
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteClient(UUID id) {

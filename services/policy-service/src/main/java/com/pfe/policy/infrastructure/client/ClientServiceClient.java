@@ -5,8 +5,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.UUID;
-
 @FeignClient(
         name = "client-service",
         url = "${feign.client.config.client-service.url}",
@@ -14,6 +12,6 @@ import java.util.UUID;
 )
 public interface ClientServiceClient {
 
-    @GetMapping("/api/v1/clients/{id}")
-    BaseResponse<ClientDto> getClientById(@PathVariable("id") UUID id);
+    @GetMapping("/api/v1/clients/email/{email}")
+    BaseResponse<ClientDto> getClientByEmail(@PathVariable("email") String email);
 }

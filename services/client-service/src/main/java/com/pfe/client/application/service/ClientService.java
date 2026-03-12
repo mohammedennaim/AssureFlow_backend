@@ -28,5 +28,7 @@ public interface ClientService {
 
     ClientResponse updateClient(UUID id, ClientRequest request);
 
+    ClientResponse updateMyProfile(String email, ClientRequest request);
+
     void deleteClient(UUID id);
 }

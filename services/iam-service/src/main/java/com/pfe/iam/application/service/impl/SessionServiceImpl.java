@@ -6,7 +6,6 @@ import com.pfe.iam.domain.model.Session;
 import com.pfe.iam.domain.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +22,6 @@ public class SessionServiceImpl implements SessionService {
     private final SessionRepository sessionRepository;
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
     public SessionDto createSession(String userId, String token, long expirationMs) {
         Session session = Session.builder()
@@ -39,7 +37,6 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     public List<SessionDto> getSessionsByUserId(String userId) {
         return sessionRepository.findByUserId(UUID.fromString(userId)).stream()
                 .map(this::toDto)
@@ -47,7 +44,6 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
     public void invalidateSession(String sessionId) {
         sessionRepository.deleteById(UUID.fromString(sessionId));
@@ -55,7 +51,6 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void invalidateAllUserSessions(String userId) {
         sessionRepository.deleteByUserId(UUID.fromString(userId));
@@ -63,7 +58,6 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void cleanupExpiredSessions() {
         sessionRepository.deleteExpiredSessions();
@@ -71,7 +65,6 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     public boolean isSessionValid(String token) {
         return sessionRepository.findByToken(token)
                 .map(session -> !session.isExpired())

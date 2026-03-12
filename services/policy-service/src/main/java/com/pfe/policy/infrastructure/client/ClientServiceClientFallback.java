@@ -4,15 +4,13 @@ import com.pfe.commons.dto.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 @Slf4j
 @Component
 public class ClientServiceClientFallback implements ClientServiceClient {
 
     @Override
-    public BaseResponse<ClientDto> getClientById(UUID id) {
-        log.warn("[FALLBACK] client-service is unavailable. Cannot fetch client {}", id);
+    public BaseResponse<ClientDto> getClientByEmail(String email) {
+        log.warn("[FALLBACK] client-service is unavailable. Cannot fetch client {}", email);
         return BaseResponse.error("Client service is unavailable");
     }
 }
