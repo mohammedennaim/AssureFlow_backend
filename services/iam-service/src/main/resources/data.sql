@@ -1,67 +1,42 @@
 -- ============================================================
 -- IAM Service - Fake Data
--- Replaces DataSeeder.java: seeds permissions, roles, role_permissions, users
--- Password 'Admin@123456' bcrypt hash
+-- Users, Roles, and Permissions for testing
 -- ============================================================
 
--- Permissions (resource + action, String id)
-INSERT INTO permissions (id, resource, action) VALUES
-  ('eeeeeeee-0000-0000-0000-000000000001', 'users',    'read'),
-  ('eeeeeeee-0000-0000-0000-000000000002', 'users',    'write'),
-  ('eeeeeeee-0000-0000-0000-000000000003', 'users',    'delete'),
-  ('eeeeeeee-0000-0000-0000-000000000004', 'policies', 'read'),
-  ('eeeeeeee-0000-0000-0000-000000000005', 'policies', 'write'),
-  ('eeeeeeee-0000-0000-0000-000000000006', 'policies', 'approve'),
-  ('eeeeeeee-0000-0000-0000-000000000007', 'claims',   'read'),
-  ('eeeeeeee-0000-0000-0000-000000000008', 'claims',   'write'),
-  ('eeeeeeee-0000-0000-0000-000000000009', 'claims',   'approve'),
-  ('eeeeeeee-0000-0000-0000-0000-000000000010', 'billing',  'read'),
-  ('eeeeeeee-0000-0000-0000-0000-000000000011', 'billing',  'write')
-ON CONFLICT DO NOTHING;
-
--- Roles
-INSERT INTO roles (id, name) VALUES
-  ('11111111-0000-0000-0000-000000000001', 'ADMIN'),
-  ('11111111-0000-0000-0000-000000000002', 'AGENT'),
-  ('11111111-0000-0000-0000-000000000003', 'CLIENT'),
-  ('11111111-0000-0000-0000-000000000004', 'FINANCE')
+-- Insert Roles
+INSERT INTO roles (id, name, description, created_at, updated_at) VALUES
+  ('rrrrrrrr-0000-0000-0000-000000000001', 'ADMIN',  'System Administrator with full access', NOW(), NOW()),
+  ('rrrrrrrr-0000-0000-0000-000000000002', 'AGENT',  'Insurance Agent with policy management access', NOW(), NOW()),
+  ('rrrrrrrr-0000-0000-0000-000000000003', 'CLIENT', 'Insurance Client with limited access', NOW(), NOW()),
+  ('rrrrrrrr-0000-0000-0000-000000000004', 'FINANCE','Finance team with billing access', NOW(), NOW()),
+  ('rrrrrrrr-0000-0000-0000-000000000005', 'OPS',    'Operations team with claims access', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- Role-Permission assignments (ADMIN gets all permissions)
-INSERT INTO role_permissions (role_id, permission_id) VALUES
-  ('11111111-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000001'),
-  ('11111111-0000-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000002'),
-  ('11111111-0000-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000003'),
-  ('11111111-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000004'),
-  ('11111111-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000005'),
-  ('11111111-0000-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000006'),
-  ('11111111-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000007'),
-  ('11111111-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000008'),
-  ('11111111-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000009'),
-  ('11111111-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000010'),
-  ('11111111-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000011'),
-  -- AGENT gets policies + claims + billing read
-  ('11111111-0000-0000-0000-000000000002', 'eeeeeeee-0000-0000-0000-000000000004'),
-  ('11111111-0000-0000-0000-000000000002', 'eeeeeeee-0000-0000-0000-000000000005'),
-  ('11111111-0000-0000-0000-000000000002', 'eeeeeeee-0000-0000-0000-000000000007'),
-  ('11111111-0000-0000-0000-000000000002', 'eeeeeeee-0000-0000-0000-000000000008'),
-  ('11111111-0000-0000-0000-000000000002', 'eeeeeeee-0000-0000-0000-000000000010'),
-  -- CLIENT gets read only
-  ('11111111-0000-0000-0000-000000000003', 'eeeeeeee-0000-0000-0000-000000000004'),
-  ('11111111-0000-0000-0000-000000000003', 'eeeeeeee-0000-0000-0000-000000000007'),
-  ('11111111-0000-0000-0000-000000000003', 'eeeeeeee-0000-0000-0000-000000000010'),
-  -- FINANCE gets billing full + policies read
-  ('11111111-0000-0000-0000-000000000004', 'eeeeeeee-0000-0000-0000-000000000004'),
-  ('11111111-0000-0000-0000-000000000004', 'eeeeeeee-0000-0000-0000-000000000010'),
-  ('11111111-0000-0000-0000-000000000004', 'eeeeeeee-0000-0000-0000-000000000011')
-ON CONFLICT DO NOTHING;
+-- Insert Users (password is 'password123' encoded with BCrypt)
+INSERT INTO users (id, username, email, password, first_name, last_name, phone, active, email_verified, created_at, updated_at) VALUES
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'admin',        'admin@assureflow.com',        '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', 'System',  'Administrator', '0661111111', true, true, NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000002', 'agent.hassan', 'hassan.agent@assureflow.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', 'Hassan',  'Alami',         '0662222222', true, true, NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000003', 'agent.sara',   'sara.agent@assureflow.com',   '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', 'Sara',    'Benali',        '0663333333', true, true, NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000004', 'ahmed.client', 'ahmed.benali@gmail.com',      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', 'Ahmed',   'Benali',        '0661234567', true, true, NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000005', 'fatima.client','fatima.alami@gmail.com',      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', 'Fatima',  'Alami',         '0662345678', true, true, NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000006', 'finance.omar', 'omar.finance@assureflow.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', 'Omar',    'Tazi',          '0664444444', true, true, NOW(), NOW()),
+  ('aaaaaaaa-0000-0000-0000-000000000007', 'ops.leila',    'leila.ops@assureflow.com',    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', 'Leila',   'Nejjari',       '0665555555', true, true, NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
 
--- Users (password = 'Admin@123456')
-INSERT INTO users (id, username, email, password_hash, active, role_id, created_at, updated_at) VALUES
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'admin',        'admin@assureflow.com',        '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000001', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000002', 'agent.dupont', 'jean.dupont@assureflow.com',  '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000002', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000003', 'agent.martin', 'marie.martin@assureflow.com', '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000002', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000004', 'client.benali','ahmed.benali@gmail.com',      '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000003', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000005', 'client.alami', 'fatima.alami@gmail.com',      '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000003', NOW(), NOW()),
-  ('aaaaaaaa-0000-0000-0000-000000000006', 'finance.user', 'finance@assureflow.com',      '$2a$10$59U6mfKfU4KO.COB8mVO3OGHlOHrtQJLyDNFUjW6KkKmeZXU30BOy', true, '11111111-0000-0000-0000-000000000004', NOW(), NOW())
+-- Insert User-Role associations
+INSERT INTO user_roles (user_id, role_id) VALUES
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'rrrrrrrr-0000-0000-0000-000000000001'), -- admin -> ADMIN
+  ('aaaaaaaa-0000-0000-0000-000000000002', 'rrrrrrrr-0000-0000-0000-000000000002'), -- hassan -> AGENT
+  ('aaaaaaaa-0000-0000-0000-000000000003', 'rrrrrrrr-0000-0000-0000-000000000002'), -- sara -> AGENT
+  ('aaaaaaaa-0000-0000-0000-000000000004', 'rrrrrrrr-0000-0000-0000-000000000003'), -- ahmed -> CLIENT
+  ('aaaaaaaa-0000-0000-0000-000000000005', 'rrrrrrrr-0000-0000-0000-000000000003'), -- fatima -> CLIENT
+  ('aaaaaaaa-0000-0000-0000-000000000006', 'rrrrrrrr-0000-0000-0000-000000000004'), -- omar -> FINANCE
+  ('aaaaaaaa-0000-0000-0000-000000000007', 'rrrrrrrr-0000-0000-0000-000000000005')  -- leila -> OPS
+ON CONFLICT (user_id, role_id) DO NOTHING;
+
+-- Insert Audit Logs
+INSERT INTO audit_logs (id, user_id, action, resource_type, resource_id, details, ip_address, user_agent, created_at) VALUES
+  ('llllllll-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'LOGIN',  'USER', 'aaaaaaaa-0000-0000-0000-000000000001', 'Admin login successful', '127.0.0.1', 'Mozilla/5.0', NOW() - INTERVAL '1 day'),
+  ('llllllll-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000002', 'LOGIN',  'USER', 'aaaaaaaa-0000-0000-0000-000000000002', 'Agent login successful', '127.0.0.1', 'Mozilla/5.0', NOW() - INTERVAL '2 hours'),
+  ('llllllll-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000004', 'LOGIN',  'USER', 'aaaaaaaa-0000-0000-0000-000000000004', 'Client login successful', '127.0.0.1', 'Mozilla/5.0', NOW() - INTERVAL '30 minutes')
 ON CONFLICT (id) DO NOTHING;
