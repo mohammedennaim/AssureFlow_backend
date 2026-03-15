@@ -1,21 +1,24 @@
 package com.pfe.workflow.domain.event;
 
-import com.pfe.commons.events.BaseEvent;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import com.pfe.commons.events.DomainEvent;
+import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
-@SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class SAGAStartedEvent extends BaseEvent {
-    private UUID sagaId;
-    private String sagaType;
-    private UUID initiatedBy;
+@Getter
+public class SAGAStartedEvent implements DomainEvent {
+    private final String eventId;
+    private final UUID sagaId;
+    private final String sagaType;
+    private final UUID initiatedBy;
+    private final LocalDateTime timestamp;
+
+    public SAGAStartedEvent(UUID sagaId, String sagaType, UUID initiatedBy) {
+        this.eventId = UUID.randomUUID().toString();
+        this.sagaId = sagaId;
+        this.sagaType = sagaType;
+        this.initiatedBy = initiatedBy;
+        this.timestamp = LocalDateTime.now();
+    }
 }

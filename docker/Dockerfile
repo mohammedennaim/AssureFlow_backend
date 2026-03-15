@@ -7,9 +7,9 @@
 ARG JAVA_VERSION=17
 
 # ============================================================
-# 🔨 STAGE 1: BUILD (Maven + JDK Alpine - Plus léger)
+# 🔨 STAGE 1: BUILD (Maven + JDK - ARM64 compatible)
 # ============================================================
-FROM maven:3.9-eclipse-temurin-${JAVA_VERSION}-alpine AS builder
+FROM maven:3.9-eclipse-temurin-17 AS builder
 
 ARG SERVICE_NAME
 
@@ -34,17 +34,17 @@ COPY services/${SERVICE_NAME}/src services/${SERVICE_NAME}/src
 RUN mvn clean package -DskipTests -pl services/${SERVICE_NAME} -am -B -T 1C -Ddocker.build=true
 
 # ============================================================
-# 📦 STAGE 2: RUNTIME (JRE Alpine - Ultra léger)
+# 📦 STAGE 2: RUNTIME (JRE - ARM64 compatible)
 # ============================================================
-FROM eclipse-temurin:${JAVA_VERSION}-jre-alpine AS runtime
+FROM eclipse-temurin:17-jre AS runtime
 
 ARG SERVICE_NAME
 
-# Installer curl pour healthcheck
-RUN apk add --no-cache curl
+# Installer curl pour healthcheck (Debian-based image)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Utilisateur non-root
-RUN addgroup -S appuser && adduser -S appuser -G appuser
+# Utilisateur non-root (Debian syntax)
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
 

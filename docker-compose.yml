@@ -25,13 +25,14 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql
       - ./docker/02-seed-databases.sh:/docker-entrypoint-initdb.d/02-seed-databases.sh
-      - ./services/policy-service/src/main/resources/data.sql:/seed-data/policy.sql
-      - ./services/client-service/src/main/resources/data.sql:/seed-data/client.sql
-      - ./services/billing-service/src/main/resources/data.sql:/seed-data/billing.sql
-      - ./services/claims-service/src/main/resources/data.sql:/seed-data/claims.sql
-      - ./services/notification-service/src/main/resources/data.sql:/seed-data/notification.sql
-      - ./services/iam-service/src/main/resources/data.sql:/seed-data/iam.sql
-      - ./services/workflow-service/src/main/resources/data.sql:/seed-data/workflow.sql
+      # Seed data commented out due to schema mismatch - can be enabled after fixing data.sql files
+      # - ./services/policy-service/src/main/resources/data.sql:/seed-data/policy.sql
+      # - ./services/client-service/src/main/resources/data.sql:/seed-data/client.sql
+      # - ./services/billing-service/src/main/resources/data.sql:/seed-data/billing.sql
+      # - ./services/claims-service/src/main/resources/data.sql:/seed-data/claims.sql
+      # - ./services/notification-service/src/main/resources/data.sql:/seed-data/notification.sql
+      # - ./services/iam-service/src/main/resources/data.sql:/seed-data/iam.sql
+      # - ./services/workflow-service/src/main/resources/data.sql:/seed-data/workflow.sql
     networks:
       - insurance-net
     healthcheck:

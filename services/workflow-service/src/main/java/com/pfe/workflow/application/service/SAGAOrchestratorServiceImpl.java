@@ -50,12 +50,11 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
         saga.start();
 
-        SAGAStartedEvent event = SAGAStartedEvent.builder()
-                .sagaId(saga.getId())
-                .sagaType(saga.getSagaType())
-                .initiatedBy(saga.getInitiatedBy())
-                .source("workflow-service")
-                .build();
+        SAGAStartedEvent event = new SAGAStartedEvent(
+                saga.getId(),
+                saga.getSagaType(),
+                saga.getInitiatedBy()
+        );
         saga.registerEvent(event);
 
         SAGATransaction savedSaga = sagaTransactionRepository.save(saga);
@@ -84,11 +83,10 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
         if (allStepsCompleted) {
             saga.complete();
-            SAGACompletedEvent event = SAGACompletedEvent.builder()
-                    .sagaId(saga.getId())
-                    .sagaType(saga.getSagaType())
-                    .source("workflow-service")
-                    .build();
+            SAGACompletedEvent event = new SAGACompletedEvent(
+                    saga.getId(),
+                    saga.getSagaType()
+            );
             saga.registerEvent(event);
             log.info("SAGA completed successfully: {}", sagaId);
         } else {
@@ -117,14 +115,12 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
         saga.fail();
         saga.compensate();
 
-        SAGAFailedEvent event = SAGAFailedEvent.builder()
-                .sagaId(saga.getId())
-                .sagaType(saga.getSagaType())
-                .failingStepId(stepId)
-                .failingServiceName(step.getServiceName())
-                .errorDetails(errorDetails)
-                .source("workflow-service")
-                .build();
+        SAGAFailedEvent event = new SAGAFailedEvent(
+                saga.getId(),
+                saga.getSagaType(),
+                errorDetails,
+                step.getServiceName()
+        );
         saga.registerEvent(event);
 
         log.warn("SAGA pending compensation: {} due to failure in step {}", sagaId, stepId);
