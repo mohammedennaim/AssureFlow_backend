@@ -1,9 +1,13 @@
 # ============================================================
 # 🐳 Docker Compose - Insurance Platform (AssureFlow)
 # ============================================================
-# Lancer tout le projet : docker-compose up -d --build
-# Arrêter tout           : docker-compose down
-# Voir les logs          : docker-compose logs -f <service-name>
+# Compatible Windows & Linux
+# ============================================================
+# Commands:
+#   Start:    docker-compose up -d --build
+#   Stop:     docker-compose down
+#   Logs:     docker-compose logs -f <service-name>
+#   Rebuild:  docker-compose up -d --build --force-recreate
 # ============================================================
 
 services:
@@ -23,16 +27,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql
-      - ./docker/02-seed-databases.sh:/docker-entrypoint-initdb.d/02-seed-databases.sh
-      # Seed data commented out due to schema mismatch - can be enabled after fixing data.sql files
-      # - ./services/policy-service/src/main/resources/data.sql:/seed-data/policy.sql
-      # - ./services/client-service/src/main/resources/data.sql:/seed-data/client.sql
-      # - ./services/billing-service/src/main/resources/data.sql:/seed-data/billing.sql
-      # - ./services/claims-service/src/main/resources/data.sql:/seed-data/claims.sql
-      # - ./services/notification-service/src/main/resources/data.sql:/seed-data/notification.sql
-      # - ./services/iam-service/src/main/resources/data.sql:/seed-data/iam.sql
-      # - ./services/workflow-service/src/main/resources/data.sql:/seed-data/workflow.sql
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
     networks:
       - insurance-net
     healthcheck:
@@ -71,7 +66,6 @@ services:
     ports:
       - "9092:9092"
     environment:
-      # --- KRAFT CONFIGURATION ---
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
@@ -97,7 +91,7 @@ services:
       start_period: 60s
 
   # ==========================================================
-  # 🔴 INFRASTRUCTURE - Redis (Cache & Sessions) - Sécurisé
+  # 🔴 INFRASTRUCTURE - Redis (Cache & Sessions)
   # ==========================================================
   redis:
     image: redis:7-alpine
@@ -149,7 +143,6 @@ services:
   # 🏢 MICROSERVICES APPLICATIFS
   # ==========================================================
 
-  # ---- 📋 Policy Service ----
   policy-service:
     build:
       context: .
@@ -177,7 +170,6 @@ services:
     networks:
       - insurance-net
 
-  # ---- 👤 Client Service ----
   client-service:
     build:
       context: .
@@ -205,7 +197,6 @@ services:
     networks:
       - insurance-net
 
-  # ---- 💰 Billing Service ----
   billing-service:
     build:
       context: .
@@ -233,7 +224,6 @@ services:
     networks:
       - insurance-net
 
-  # ---- 🚨 Claims Service ----
   claims-service:
     build:
       context: .
@@ -261,7 +251,6 @@ services:
     networks:
       - insurance-net
 
-  # ---- 🔔 Notification Service ----
   notification-service:
     build:
       context: .
@@ -286,14 +275,13 @@ services:
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-      MAIL_PORT: ${MAIL_PORT:-587}
-      MAIL_USERNAME: ${MAIL_USERNAME:-assureflow@gmail.com}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-changeme}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
     networks:
       - insurance-net
 
-  # ---- 🔐 IAM Service ----
   iam-service:
     build:
       context: .
@@ -323,7 +311,6 @@ services:
     networks:
       - insurance-net
 
-  # ---- ⚙️ Workflow Service ----
   workflow-service:
     build:
       context: .
@@ -351,7 +338,7 @@ services:
     networks:
       - insurance-net
 
-  # ===========================================================
+  # ==========================================================
   # 📊 OBSERVABILITÉ - Prometheus
   # ==========================================================
   prometheus:

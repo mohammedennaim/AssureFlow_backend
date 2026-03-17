@@ -1,13 +1,11 @@
 # ============================================================
-# 🐳 Dockerfile Multi-Stage ULTRA-OPTIMISÉ
+# 🐳 Dockerfile Multi-Stage - AssureFlow Platform
 # ============================================================
-# Réduction de taille: ~70% | Build time: -50%
+# Compatible Windows & Linux | Java 17 | Spring Boot 3.1.5
 # ============================================================
 
-ARG JAVA_VERSION=17
-
 # ============================================================
-# 🔨 STAGE 1: BUILD (Maven + JDK - ARM64 compatible)
+# 🔨 STAGE 1: BUILD (Maven + JDK 17)
 # ============================================================
 FROM maven:3.9-eclipse-temurin-17 AS builder
 
@@ -15,47 +13,43 @@ ARG SERVICE_NAME
 
 WORKDIR /build
 
-# 1. Copier POMs (cache layer)
+# 1. Copy parent POM
 COPY pom.xml .
+
+# 2. Copy shared-kernel POM and sources
 COPY shared-kernel/pom.xml shared-kernel/
-COPY services/${SERVICE_NAME}/pom.xml services/${SERVICE_NAME}/
-
-# Simplifier pom.xml parent
-RUN sed -i '/<modules>/,/<\/modules>/c\<modules><module>shared-kernel</module><module>services/'${SERVICE_NAME}'</module></modules>' pom.xml
-
-# 2. Télécharger dépendances (cache layer)
-RUN mvn dependency:go-offline -pl shared-kernel,services/${SERVICE_NAME} -am -B -Ddocker.build=true || true
-
-# 3. Copier sources
 COPY shared-kernel/src shared-kernel/src
+
+# 3. Copy service POM and sources
+COPY services/${SERVICE_NAME}/pom.xml services/${SERVICE_NAME}/
 COPY services/${SERVICE_NAME}/src services/${SERVICE_NAME}/src
 
-# 4. Build optimisé
-RUN mvn clean package -DskipTests -pl services/${SERVICE_NAME} -am -B -T 1C -Ddocker.build=true
+# 4. Build with Maven (skip tests for Docker build)
+RUN mvn clean package -DskipTests -pl services/${SERVICE_NAME} -am -B -T 1C
 
 # ============================================================
-# 📦 STAGE 2: RUNTIME (JRE - ARM64 compatible)
+# 📦 STAGE 2: RUNTIME (JRE 17)
 # ============================================================
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:17-jre-alpine AS runtime
 
 ARG SERVICE_NAME
 
-# Installer curl pour healthcheck (Debian-based image)
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install curl for healthcheck (Alpine package)
+RUN apk add --no-cache curl
 
-# Utilisateur non-root (Debian syntax)
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Create non-root user (Alpine syntax)
+RUN addgroup -S appuser && adduser -S appuser -G appuser
 
 WORKDIR /app
 
-# Copier JAR
+# Copy JAR from builder
 COPY --from=builder --chown=appuser:appuser /build/services/${SERVICE_NAME}/target/*.jar app.jar
 
 USER appuser
 
 EXPOSE 8080
 
-# JVM optimisée pour conteneurs
+# JVM optimized for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport \
                -XX:MaxRAMPercentage=75.0 \
                -XX:+UseG1GC \

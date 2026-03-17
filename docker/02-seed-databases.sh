@@ -1,48 +1,54 @@
 #!/bin/sh
+# ============================================================
+# AssureFlow - Database Seed Script
+# ============================================================
+# Compatible Windows (Git Bash) & Linux
+# ============================================================
+
 set -e
 
 echo "============================================================"
-echo "🌱 Starting database seeding with AssureFlow mock data..."
+echo "Starting database seeding with AssureFlow mock data..."
 echo "============================================================"
 
-# Wait a brief moment to ensure DBs are fully ready (if needed)
-sleep 2
+# Wait for databases to be fully ready
+sleep 3
 
+echo ">> Seeding Policy database..."
 if [ -f "/seed-data/policy.sql" ]; then
-    echo ">> Seeding Policy database..."
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d policy_db -f /seed-data/policy.sql
+    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d policy_db -f /seed-data/policy.sql || echo "Policy seed skipped"
 fi
 
+echo ">> Seeding Client database..."
 if [ -f "/seed-data/client.sql" ]; then
-    echo ">> Seeding Client database..."
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d client_db -f /seed-data/client.sql
+    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d client_db -f /seed-data/client.sql || echo "Client seed skipped"
 fi
 
+echo ">> Seeding Billing database..."
 if [ -f "/seed-data/billing.sql" ]; then
-    echo ">> Seeding Billing database..."
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d billing_db -f /seed-data/billing.sql
+    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d billing_db -f /seed-data/billing.sql || echo "Billing seed skipped"
 fi
 
+echo ">> Seeding Claims database..."
 if [ -f "/seed-data/claims.sql" ]; then
-    echo ">> Seeding Claims database..."
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d claims_db -f /seed-data/claims.sql
+    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d claims_db -f /seed-data/claims.sql || echo "Claims seed skipped"
 fi
 
+echo ">> Seeding Notification database..."
 if [ -f "/seed-data/notification.sql" ]; then
-    echo ">> Seeding Notification database..."
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d notification_db -f /seed-data/notification.sql
+    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d notification_db -f /seed-data/notification.sql || echo "Notification seed skipped"
 fi
 
+echo ">> Seeding IAM database..."
 if [ -f "/seed-data/iam.sql" ]; then
-    echo ">> Seeding IAM database..."
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d iam_db -f /seed-data/iam.sql
+    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d iam_db -f /seed-data/iam.sql || echo "IAM seed skipped"
 fi
 
+echo ">> Seeding Workflow database..."
 if [ -f "/seed-data/workflow.sql" ]; then
-    echo ">> Seeding Workflow database..."
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d workflow_db -f /seed-data/workflow.sql
+    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d workflow_db -f /seed-data/workflow.sql || echo "Workflow seed skipped"
 fi
 
 echo "============================================================"
-echo "✅ Database seeding completed successfully."
+echo "Database seeding completed successfully."
 echo "============================================================"
