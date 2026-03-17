@@ -24,8 +24,10 @@ COPY shared-kernel/src shared-kernel/src
 COPY services/${SERVICE_NAME}/pom.xml services/${SERVICE_NAME}/
 COPY services/${SERVICE_NAME}/src services/${SERVICE_NAME}/src
 
-# 4. Build with Maven (skip tests for Docker build)
-RUN mvn clean package -DskipTests -pl services/${SERVICE_NAME} -am -B -T 1C
+# 4. Install parent POM, then build shared-kernel and selected service (tests disabled)
+RUN mvn -N -f pom.xml install -Ddocker.build=true -Dmaven.test.skip=true -B -T 1C \
+    && mvn -f shared-kernel/pom.xml clean install -Ddocker.build=true -Dmaven.test.skip=true -B -T 1C \
+    && mvn -f services/${SERVICE_NAME}/pom.xml clean package -Ddocker.build=true -Dmaven.test.skip=true -B -T 1C
 
 # ============================================================
 # 📦 STAGE 2: RUNTIME (JRE 17)
