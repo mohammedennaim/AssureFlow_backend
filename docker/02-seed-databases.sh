@@ -2,53 +2,65 @@
 # ============================================================
 # AssureFlow - Database Seed Script
 # ============================================================
+# Executes data.sql files for each service database
 # Compatible Windows (Git Bash) & Linux
 # ============================================================
 
 set -e
 
 echo "============================================================"
-echo "Starting database seeding with AssureFlow mock data..."
+echo "🌱 Starting database seeding with AssureFlow mock data..."
 echo "============================================================"
 
-# Wait for databases to be fully ready
-sleep 3
+# Wait for PostgreSQL to be fully ready
+echo "⏳ Waiting for PostgreSQL to be ready..."
 
-echo ">> Seeding Policy database..."
-if [ -f "/seed-data/policy.sql" ]; then
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d policy_db -f /seed-data/policy.sql || echo "Policy seed skipped"
-fi
+# Use pg_isready to wait for PostgreSQL
+max_attempts=30
+attempt=0
+while ! pg_isready -h localhost -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; do
+    attempt=$((attempt + 1))
+    if [ $attempt -ge $max_attempts ]; then
+        echo "❌ PostgreSQL is not ready after $max_attempts attempts"
+        exit 1
+    fi
+    echo "   Waiting for PostgreSQL... ($attempt/$max_attempts)"
+    sleep 2
+done
 
-echo ">> Seeding Client database..."
-if [ -f "/seed-data/client.sql" ]; then
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d client_db -f /seed-data/client.sql || echo "Client seed skipped"
-fi
+echo "✅ PostgreSQL is ready!"
+echo ""
 
-echo ">> Seeding Billing database..."
-if [ -f "/seed-data/billing.sql" ]; then
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d billing_db -f /seed-data/billing.sql || echo "Billing seed skipped"
-fi
+# Function to execute SQL file
+execute_sql() {
+    local db_name=$1
+    local sql_file=$2
+    
+    if [ -f "$sql_file" ]; then
+        echo ">> Seeding $db_name from $sql_file..."
+        # Use Unix socket connection (more reliable in init context)
+        PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d "$db_name" -f "$sql_file" 2>&1 || echo "   Warning: $db_name seeding had issues (may already be seeded)"
+    else
+        echo ">> SQL file not found: $sql_file (skipping $db_name)"
+    fi
+}
 
-echo ">> Seeding Claims database..."
-if [ -f "/seed-data/claims.sql" ]; then
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d claims_db -f /seed-data/claims.sql || echo "Claims seed skipped"
-fi
-
-echo ">> Seeding Notification database..."
-if [ -f "/seed-data/notification.sql" ]; then
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d notification_db -f /seed-data/notification.sql || echo "Notification seed skipped"
-fi
-
-echo ">> Seeding IAM database..."
-if [ -f "/seed-data/iam.sql" ]; then
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d iam_db -f /seed-data/iam.sql || echo "IAM seed skipped"
-fi
-
-echo ">> Seeding Workflow database..."
-if [ -f "/seed-data/workflow.sql" ]; then
-    psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d workflow_db -f /seed-data/workflow.sql || echo "Workflow seed skipped"
-fi
-
+# Execute seed files for each service
+echo ""
 echo "============================================================"
-echo "Database seeding completed successfully."
+echo "📊 Executing Seed Data Scripts"
+echo "============================================================"
+echo ""
+
+execute_sql "policy_db" "/seed-data/policy.sql"
+execute_sql "client_db" "/seed-data/client.sql"
+execute_sql "billing_db" "/seed-data/billing.sql"
+execute_sql "claims_db" "/seed-data/claims.sql"
+execute_sql "notification_db" "/seed-data/notification.sql"
+execute_sql "iam_db" "/seed-data/iam.sql"
+execute_sql "workflow_db" "/seed-data/workflow.sql"
+
+echo ""
+echo "============================================================"
+echo "✅ Database seeding completed successfully."
 echo "============================================================"

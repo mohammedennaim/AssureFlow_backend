@@ -28,7 +28,11 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   sql:
     init:
-      mode: never
+      mode: embedded
+      continue-on-error: false
+      encoding: UTF-8
+      schema-locations: classpath*:schema.sql
+      data-locations: classpath*:data.sql
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -109,11 +113,17 @@ spring:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        hbm2ddl:
+          import_files_sql_extractor: org.hibernate.tool.schema.internal.script.MultiLineSqlScriptExtractor
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+      hibernate.hbm2ddl.import_files: data.sql
     defer-datasource-initialization: true
-  sql:
-    init:
-      mode: never
 server:
   port: 8080
 
@@ -122,3 +132,10 @@ feign:
     config:
       policy-service:
         url: http://policy-service:8080
+
+# Logging SQL
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.tool.schema.internal: INFO

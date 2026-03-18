@@ -50,7 +50,7 @@ spring:
         # 🔐 IAM SERVICE - Authentication & Authorization
         # ========================================
         - id: iam-auth-public
-          uri: http://iam-service:8091
+          uri: http://iam-service:8080
           predicates:
             - Path=/api/v1/auth/login, /api/v1/auth/register, /api/v1/auth/forgot-password, /api/v1/auth/reset-password
             - Method=POST
@@ -62,14 +62,14 @@ spring:
                 redis-rate-limiter.burstCapacity: 10
 
         - id: iam-auth-secured
-          uri: http://iam-service:8091
+          uri: http://iam-service:8080
           predicates:
             - Path=/api/v1/auth/logout, /api/v1/auth/refresh, /api/v1/auth/change-password, /api/v1/auth/profile
           filters:
             - StripPrefix=0
 
         - id: iam-users-admin
-          uri: http://iam-service:8091
+          uri: http://iam-service:8080
           predicates:
             - Path=/api/v1/users/**
             - Header=X-User-Role, ADMIN
@@ -77,7 +77,7 @@ spring:
             - StripPrefix=0
 
         - id: iam-roles-admin
-          uri: http://iam-service:8091
+          uri: http://iam-service:8080
           predicates:
             - Path=/api/v1/roles/**
             - Header=X-User-Role, ADMIN
@@ -88,7 +88,7 @@ spring:
         # 👥 CLIENT SERVICE - Customer Management
         # ========================================
         - id: client-service-read
-          uri: http://client-service:8084
+          uri: http://client-service:8080
           predicates:
             - Path=/api/v1/clients, /api/v1/clients/{id}, /api/v1/clients/search, /api/v1/clients/{id}/policies, /api/v1/clients/{id}/claims
             - Method=GET
@@ -100,7 +100,7 @@ spring:
                 fallbackUri: forward:/fallback/clients
 
         - id: client-service-write
-          uri: http://client-service:8084
+          uri: http://client-service:8080
           predicates:
             - Path=/api/v1/clients, /api/v1/clients/{id}
             - Method=POST,PUT,DELETE
@@ -112,7 +112,7 @@ spring:
                 redis-rate-limiter.burstCapacity: 6
 
         - id: client-addresses
-          uri: http://client-service:8084
+          uri: http://client-service:8080
           predicates:
             - Path=/api/v1/clients/{id}/addresses/**
           filters:
@@ -122,7 +122,7 @@ spring:
         # 📋 POLICY SERVICE - Insurance Policies
         # ========================================
         - id: policy-service-read
-          uri: http://policy-service:8086
+          uri: http://policy-service:8080
           predicates:
             - Path=/api/v1/policies, /api/v1/policies/{id}, /api/v1/policies/search, /api/v1/policies/client/{clientId}
             - Method=GET
@@ -134,7 +134,7 @@ spring:
                 fallbackUri: forward:/fallback/policies
 
         - id: policy-service-write
-          uri: http://policy-service:8086
+          uri: http://policy-service:8080
           predicates:
             - Path=/api/v1/policies, /api/v1/policies/{id}, /api/v1/policies/{id}/activate, /api/v1/policies/{id}/suspend, /api/v1/policies/{id}/renew
             - Method=POST,PUT,PATCH,DELETE
@@ -146,7 +146,7 @@ spring:
                 redis-rate-limiter.burstCapacity: 5
 
         - id: policy-premium-calculation
-          uri: http://policy-service:8086
+          uri: http://policy-service:8080
           predicates:
             - Path=/api/v1/policies/calculate-premium
             - Method=POST
@@ -157,7 +157,7 @@ spring:
         # 💰 BILLING SERVICE - Invoices & Payments
         # ========================================
         - id: billing-invoices
-          uri: http://billing-service:8087
+          uri: http://billing-service:8080
           predicates:
             - Path=/api/v1/invoices, /api/v1/invoices/{id}, /api/v1/invoices/policy/{policyId}, /api/v1/invoices/client/{clientId}
           filters:
@@ -168,7 +168,7 @@ spring:
                 fallbackUri: forward:/fallback/billing
 
         - id: billing-payments
-          uri: http://billing-service:8087
+          uri: http://billing-service:8080
           predicates:
             - Path=/api/v1/payments, /api/v1/payments/{id}, /api/v1/payments/invoice/{invoiceId}
           filters:
@@ -179,7 +179,7 @@ spring:
                 redis-rate-limiter.burstCapacity: 10
 
         - id: billing-overdue
-          uri: http://billing-service:8087
+          uri: http://billing-service:8080
           predicates:
             - Path=/api/v1/billing/overdue, /api/v1/billing/reminders
           filters:
@@ -189,7 +189,7 @@ spring:
         # 🚨 CLAIMS SERVICE - Insurance Claims
         # ========================================
         - id: claims-service-read
-          uri: http://claims-service:8088
+          uri: http://claims-service:8080
           predicates:
             - Path=/api/v1/claims, /api/v1/claims/{id}, /api/v1/claims/policy/{policyId}, /api/v1/claims/client/{clientId}
             - Method=GET
@@ -201,7 +201,7 @@ spring:
                 fallbackUri: forward:/fallback/claims
 
         - id: claims-service-write
-          uri: http://claims-service:8088
+          uri: http://claims-service:8080
           predicates:
             - Path=/api/v1/claims, /api/v1/claims/{id}
             - Method=POST,PUT,DELETE
@@ -209,7 +209,7 @@ spring:
             - StripPrefix=0
 
         - id: claims-workflow
-          uri: http://claims-service:8088
+          uri: http://claims-service:8080
           predicates:
             - Path=/api/v1/claims/{id}/approve, /api/v1/claims/{id}/reject, /api/v1/claims/{id}/payout, /api/v1/claims/{id}/close
             - Method=PATCH
@@ -224,7 +224,7 @@ spring:
         # 📧 NOTIFICATION SERVICE - Communications
         # ========================================
         - id: notification-service
-          uri: http://notification-service:8089
+          uri: http://notification-service:8080
           predicates:
             - Path=/api/v1/notifications/**
           filters:
@@ -235,7 +235,7 @@ spring:
                 fallbackUri: forward:/fallback/notifications
 
         - id: notification-templates
-          uri: http://notification-service:8089
+          uri: http://notification-service:8080
           predicates:
             - Path=/api/v1/notifications/templates/**
           filters:
@@ -245,21 +245,21 @@ spring:
         # 🔄 WORKFLOW SERVICE - SAGA Orchestration
         # ========================================
         - id: workflow-saga
-          uri: http://workflow-service:8090
+          uri: http://workflow-service:8080
           predicates:
             - Path=/api/v1/workflows/saga/**
           filters:
             - StripPrefix=0
 
         - id: workflow-audit
-          uri: http://workflow-service:8090
+          uri: http://workflow-service:8080
           predicates:
             - Path=/api/v1/workflows/audit/**
           filters:
             - StripPrefix=0
 
         - id: workflow-sla
-          uri: http://workflow-service:8090
+          uri: http://workflow-service:8080
           predicates:
             - Path=/api/v1/workflows/sla/**
           filters:
@@ -269,49 +269,49 @@ spring:
         # 📚 SWAGGER API DOCS - Service Documentation
         # ========================================
         - id: iam-api-docs
-          uri: http://iam-service:8091
+          uri: http://iam-service:8080
           predicates:
             - Path=/v3/api-docs/iam-service
           filters:
             - RewritePath=/v3/api-docs/iam-service, /v3/api-docs
 
         - id: client-api-docs
-          uri: http://client-service:8084
+          uri: http://client-service:8080
           predicates:
             - Path=/v3/api-docs/client-service
           filters:
             - RewritePath=/v3/api-docs/client-service, /v3/api-docs
 
         - id: policy-api-docs
-          uri: http://policy-service:8086
+          uri: http://policy-service:8080
           predicates:
             - Path=/v3/api-docs/policy-service
           filters:
             - RewritePath=/v3/api-docs/policy-service, /v3/api-docs
 
         - id: claims-api-docs
-          uri: http://claims-service:8088
+          uri: http://claims-service:8080
           predicates:
             - Path=/v3/api-docs/claims-service
           filters:
             - RewritePath=/v3/api-docs/claims-service, /v3/api-docs
 
         - id: notification-api-docs
-          uri: http://notification-service:8089
+          uri: http://notification-service:8080
           predicates:
             - Path=/v3/api-docs/notification-service
           filters:
             - RewritePath=/v3/api-docs/notification-service, /v3/api-docs
 
         - id: workflow-api-docs
-          uri: http://workflow-service:8090
+          uri: http://workflow-service:8080
           predicates:
             - Path=/v3/api-docs/workflow-service
           filters:
             - RewritePath=/v3/api-docs/workflow-service, /v3/api-docs
 
         - id: billing-api-docs
-          uri: http://billing-service:8087
+          uri: http://billing-service:8080
           predicates:
             - Path=/v3/api-docs/billing-service
           filters:
