@@ -1,50 +1,60 @@
 package com.pfe.claims.infrastructure.messaging;
 
-import com.pfe.claims.domain.event.ClaimSubmittedEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.CompletableFuture;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ClaimEventPublisher {
 
-    private static final String CLAIM_TOPIC = "claim-events";
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    public void publishClaimCreated(UUID claimId, UUID policyId, UUID clientId, LocalDateTime createdAt, LocalDateTime slaDeadline) {
+        try {
+            Map<String, Object> event = new HashMap<>();
+            event.put("eventType", "CLAIM_CREATED");
+            event.put("claimId", claimId.toString());
+            event.put("policyId", policyId.toString());
+            event.put("clientId", clientId.toString());
+            event.put("createdAt", createdAt.toString());
+            event.put("slaDeadline", slaDeadline.toString());
+            event.put("timestamp", LocalDateTime.now().toString());
 
-    public void publishClaimSubmitted(ClaimSubmittedEvent event) {
-        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(CLAIM_TOPIC, "claim.submitted",
-                event);
-
-        future.whenComplete((result, ex) -> {
-            if (ex != null) {
-                log.error("[KAFKA] Failed to publish ClaimSubmittedEvent for claim {}: {}",
-                        event.getClaimId(), ex.getMessage());
-            } else {
-                log.info("[KAFKA] ClaimSubmittedEvent published for claim {} -> topic={} partition={} offset={}",
-                        event.getClaimId(),
-                        result.getRecordMetadata().topic(),
-                        result.getRecordMetadata().partition(),
-                        result.getRecordMetadata().offset());
-            }
-        });
+            String message = objectMapper.writeValueAsString(event);
+            kafkaTemplate.send("claim-events", claimId.toString(), message);
+            
+            log.info("Published CLAIM_CREATED event for claim: {}", claimId);
+        } catch (Exception e) {
+            log.error("Failed to publish CLAIM_CREATED event", e);
+        }
     }
 
-    public void publishClaimEvent(String eventType, Object event) {
-        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(CLAIM_TOPIC, eventType, event);
+    public void publishClaimStatusChanged(UUID claimId, String oldStatus, String newStatus, UUID userId) {
+        try {
+            Map<String, Object> event = new HashMap<>();
+            event.put("eventType", "CLAIM_STATUS_CHANGED");
+            event.put("claimId", claimId.toString());
+            event.put("oldStatus", oldStatus);
+            event.put("newStatus", newStatus);
+            event.put("userId", userId != null ? userId.toString() : null);
+            event.put("timestamp", LocalDateTime.now().toString());
 
-        future.whenComplete((result, ex) -> {
-            if (ex != null) {
-                log.error("[KAFKA] Failed to publish {} event: {}", eventType, ex.getMessage());
-            } else {
-                log.info("[KAFKA] {} event published -> topic={}", eventType, CLAIM_TOPIC);
-            }
-        });
+            String message = objectMapper.writeValueAsString(event);
+            kafkaTemplate.send("claim-events", claimId.toString(), message);
+            
+            log.info("Published CLAIM_STATUS_CHANGED event for claim: {} ({} -> {})", claimId, oldStatus, newStatus);
+        } catch (Exception e) {
+            log.error("Failed to publish CLAIM_STATUS_CHANGED event", e);
+        }
     }
 }

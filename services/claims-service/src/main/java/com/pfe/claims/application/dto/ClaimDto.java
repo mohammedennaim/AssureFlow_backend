@@ -30,6 +30,7 @@ public class ClaimDto {
     private UUID approvedBy;
     private UUID assignedTo;
     private LocalDateTime createdAt;
+    private LocalDateTime slaDeadline;
     private List<ClaimDocumentDto> documents;
     private List<ClaimAssessmentDto> assessments;
     private PayoutDto payout;

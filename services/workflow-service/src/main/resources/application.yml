@@ -20,19 +20,19 @@ spring:
     password: ${DB_PASSWORD:assureflow123}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
   sql:
     init:
-      mode: embedded
+      mode: always
       continue-on-error: false
       encoding: UTF-8
-      schema-locations: classpath*:schema.sql
-      data-locations: classpath*:data.sql
+      data-locations: classpath:data.sql
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -88,8 +88,8 @@ spring:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
   jpa:
     hibernate:
-      ddl-auto: create
-    defer-datasource-initialization: true
+      ddl-auto: none
+    defer-datasource-initialization: false
   sql:
     init:
       mode: always

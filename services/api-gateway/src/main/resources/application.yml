@@ -200,25 +200,25 @@ spring:
                 name: claims-service-cb
                 fallbackUri: forward:/fallback/claims
 
-        - id: claims-service-write
-          uri: http://claims-service:8080
-          predicates:
-            - Path=/api/v1/claims, /api/v1/claims/{id}
-            - Method=POST,PUT,DELETE
-          filters:
-            - StripPrefix=0
-
         - id: claims-workflow
           uri: http://claims-service:8080
           predicates:
-            - Path=/api/v1/claims/{id}/approve, /api/v1/claims/{id}/reject, /api/v1/claims/{id}/payout, /api/v1/claims/{id}/close
-            - Method=PATCH
+            - Path=/api/v1/claims/{id}/approve, /api/v1/claims/{id}/reject, /api/v1/claims/{id}/payout, /api/v1/claims/{id}/close, /api/v1/claims/{id}/submit, /api/v1/claims/{id}/review, /api/v1/claims/{id}/request-info, /api/v1/claims/{id}/mark-as-paid
+            - Method=POST
           filters:
             - StripPrefix=0
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 1
                 redis-rate-limiter.burstCapacity: 3
+
+        - id: claims-service-write
+          uri: http://claims-service:8080
+          predicates:
+            - Path=/api/v1/claims, /api/v1/claims/{id}
+            - Method=POST,PUT,PATCH,DELETE
+          filters:
+            - StripPrefix=0
 
         # ========================================
         # 📧 NOTIFICATION SERVICE - Communications
@@ -242,26 +242,37 @@ spring:
             - StripPrefix=0
 
         # ========================================
-        # 🔄 WORKFLOW SERVICE - SAGA Orchestration
+        # 🔄 WORKFLOW SERVICE - SAGA Orchestration, Audit, SLA, Escalations
         # ========================================
         - id: workflow-saga
           uri: http://workflow-service:8080
           predicates:
-            - Path=/api/v1/workflows/saga/**
+            - Path=/api/v1/sagas/**
           filters:
             - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: workflow-service-cb
+                fallbackUri: forward:/fallback/workflow
 
         - id: workflow-audit
           uri: http://workflow-service:8080
           predicates:
-            - Path=/api/v1/workflows/audit/**
+            - Path=/api/v1/audit/**
           filters:
             - StripPrefix=0
 
         - id: workflow-sla
           uri: http://workflow-service:8080
           predicates:
-            - Path=/api/v1/workflows/sla/**
+            - Path=/api/v1/sla/**
+          filters:
+            - StripPrefix=0
+
+        - id: workflow-escalations
+          uri: http://workflow-service:8080
+          predicates:
+            - Path=/api/v1/escalations/**
           filters:
             - StripPrefix=0
 

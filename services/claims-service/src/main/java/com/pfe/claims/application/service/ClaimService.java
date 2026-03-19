@@ -31,6 +31,8 @@ public interface ClaimService {
 
     void requestInfo(UUID id);
 
+    void markAsPaid(UUID id);
+
     void closeClaim(UUID id);
 
     void deleteClaim(UUID id);

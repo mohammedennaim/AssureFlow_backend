@@ -12,6 +12,7 @@ import com.pfe.claims.domain.model.ClaimStatus;
 import com.pfe.claims.domain.repository.ClaimRepository;
 import com.pfe.claims.infrastructure.client.PolicyDto;
 import com.pfe.claims.infrastructure.client.PolicyServiceClient;
+import com.pfe.claims.infrastructure.messaging.ClaimEventPublisher;
 import com.pfe.commons.exceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class ClaimServiceImpl implements ClaimService {
     private final ClaimRepository claimRepository;
     private final ClaimMapper claimMapper;
     private final PolicyServiceClient policyServiceClient;
+    private final ClaimEventPublisher claimEventPublisher;
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
@@ -45,9 +47,23 @@ public class ClaimServiceImpl implements ClaimService {
         Claim claim = claimMapper.toDomain(request);
         claim.setClaimNumber("CLM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         claim.setStatus(ClaimStatus.SUBMITTED);
-        claim.setCreatedAt(LocalDateTime.now());
+        
+        LocalDateTime now = LocalDateTime.now();
+        claim.setCreatedAt(now);
+        
+        // Set SLA deadline to 48 hours from creation
+        claim.setSlaDeadline(now.plusHours(48));
 
         Claim savedClaim = claimRepository.save(claim);
+
+        // Publish event for SLA tracking
+        claimEventPublisher.publishClaimCreated(
+            savedClaim.getId(),
+            savedClaim.getPolicyId(),
+            savedClaim.getClientId(),
+            savedClaim.getCreatedAt(),
+            savedClaim.getSlaDeadline()
+        );
 
         ClaimSubmittedEvent event = ClaimSubmittedEvent.builder()
                 .claimId(savedClaim.getId())
@@ -62,7 +78,8 @@ public class ClaimServiceImpl implements ClaimService {
                 .build();
 
         savedClaim.registerEvent(event);
-        log.info("ClaimSubmittedEvent published for claim: {}", savedClaim.getClaimNumber());
+        log.info("ClaimSubmittedEvent published for claim: {} with SLA deadline: {}", 
+                savedClaim.getClaimNumber(), savedClaim.getSlaDeadline());
 
         savedClaim.clearDomainEvents();
 
@@ -183,9 +200,14 @@ public class ClaimServiceImpl implements ClaimService {
     public void approveClaim(UUID id, BigDecimal approvedAmount, UUID approvedBy) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
+        
+        String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.approve(approvedAmount);
         claim.setApprovedBy(approvedBy);
         claimRepository.save(claim);
+        
+        // Publish status change event
+        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "APPROVED", approvedBy);
     }
 
     @Override
@@ -195,8 +217,13 @@ public class ClaimServiceImpl implements ClaimService {
     public void rejectClaim(UUID id, String reason) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
+        
+        String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.reject(reason);
         claimRepository.save(claim);
+        
+        // Publish status change event
+        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "REJECTED", null);
     }
 
     @Override
@@ -214,11 +241,32 @@ public class ClaimServiceImpl implements ClaimService {
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     @CacheEvict(value = "claims", key = "#id")
+    public void markAsPaid(UUID id) {
+        Claim claim = claimRepository.findById(id)
+                .orElseThrow(() -> new ClaimNotFoundException(id));
+        
+        String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
+        claim.markAsPaid();
+        claimRepository.save(claim);
+        
+        // Publish status change event
+        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "PAID", null);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
+    @Transactional
+    @CacheEvict(value = "claims", key = "#id")
     public void closeClaim(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
+        
+        String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.close();
         claimRepository.save(claim);
+        
+        // Publish status change event
+        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "CLOSED", null);
     }
 
     @Override

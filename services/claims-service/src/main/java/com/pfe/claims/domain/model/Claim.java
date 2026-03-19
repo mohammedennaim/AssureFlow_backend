@@ -40,6 +40,7 @@ public class Claim {
     private UUID approvedBy;
     private UUID assignedTo;
     private LocalDateTime createdAt;
+    private LocalDateTime slaDeadline;
 
     @Builder.Default
     private List<ClaimDocument> documents = new ArrayList<>();

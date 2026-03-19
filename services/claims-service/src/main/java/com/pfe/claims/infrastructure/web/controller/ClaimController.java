@@ -146,6 +146,18 @@ public class ClaimController {
                 return ResponseEntity.noContent().build();
         }
 
+        @Operation(summary = "Mark claim as paid", description = "Marks an approved or payout-initiated claim as paid")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "204", description = "Claim marked as paid successfully"),
+                        @ApiResponse(responseCode = "400", description = "Claim cannot be marked as paid (invalid status)")
+        })
+        @PostMapping("/{id}/mark-as-paid")
+        public ResponseEntity<Void> markAsPaid(
+                        @Parameter(description = "The unique ID of the claim") @PathVariable UUID id) {
+                claimService.markAsPaid(id);
+                return ResponseEntity.noContent().build();
+        }
+
         @Operation(summary = "Close a claim", description = "Closes a paid, rejected, or refunded claim")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "204", description = "Claim closed successfully"),
