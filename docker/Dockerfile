@@ -1,7 +1,7 @@
 # ============================================================
 # 🐳 Dockerfile Multi-Stage - AssureFlow Platform
 # ============================================================
-# Compatible Windows & Linux | Java 17 | Spring Boot 3.1.5
+# Compatible Windows, Mac (M1/M2/M3) & Linux | Java 17 | Spring Boot 3.1.5
 # ============================================================
 
 # ============================================================
@@ -32,15 +32,15 @@ RUN mvn -N -f pom.xml install -Ddocker.build=true -Dmaven.test.skip=true -B -T 1
 # ============================================================
 # 📦 STAGE 2: RUNTIME (JRE 17)
 # ============================================================
-FROM eclipse-temurin:17-jre-alpine AS runtime
+FROM eclipse-temurin:17-jre AS runtime
 
 ARG SERVICE_NAME
 
-# Install curl for healthcheck (Alpine package)
-RUN apk add --no-cache curl
+# Install curl for healthcheck (Debian package)
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user (Alpine syntax)
-RUN addgroup -S appuser && adduser -S appuser -G appuser
+# Create non-root user (Debian syntax)
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
 
@@ -51,11 +51,16 @@ USER appuser
 
 EXPOSE 8080
 
-# JVM optimized for containers
+# JVM optimized for low memory containers (8GB RAM host)
 ENV JAVA_OPTS="-XX:+UseContainerSupport \
-               -XX:MaxRAMPercentage=75.0 \
+               -XX:MaxRAMPercentage=50.0 \
+               -XX:InitialRAMPercentage=25.0 \
                -XX:+UseG1GC \
-               -XX:+UseStringDeduplication \
-               -Djava.security.egd=file:/dev/./urandom"
+               -XX:G1HeapRegionSize=4m \
+               -XX:ConcGCThreads=2 \
+               -XX:ParallelGCThreads=2 \
+               -Xms128m \
+               -Djava.security.egd=file:/dev/./urandom \
+               -Dspring.profiles.active=docker"
 
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar app.jar"]

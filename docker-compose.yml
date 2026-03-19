@@ -1,13 +1,13 @@
 # ============================================================
 # 🐳 Docker Compose - Insurance Platform (AssureFlow)
 # ============================================================
-# Compatible Windows & Linux
+# Compatible Windows, Mac (M1/M2/M3) & Linux
 # ============================================================
 # Commands:
-#   Start:    docker-compose up -d --build
-#   Stop:     docker-compose down
-#   Logs:     docker-compose logs -f <service-name>
-#   Rebuild:  docker-compose up -d --build --force-recreate
+#   Start:    docker compose up -d --build
+#   Stop:     docker compose down
+#   Logs:     docker compose logs -f <service-name>
+#   Rebuild:  docker compose up -d --build --force-recreate
 # ============================================================
 
 services:
@@ -37,6 +37,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   # ==========================================================
   # 🗄️ INFRASTRUCTURE - pgAdmin (PostgreSQL GUI)
@@ -56,6 +62,12 @@ services:
       - pgadmin-data:/var/lib/pgadmin
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
   # ==========================================================
   # 📨 INFRASTRUCTURE - Apache Kafka (KRaft Mode)
@@ -90,6 +102,12 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   # ==========================================================
   # 🔴 INFRASTRUCTURE - Redis (Cache & Sessions)
@@ -111,6 +129,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
   # ==========================================================
   # 🌐 API GATEWAY - Point d'entrée unique
@@ -139,6 +163,12 @@ services:
       - "8080:8080"
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   # ==========================================================
   # 🏢 MICROSERVICES APPLICATIFS
@@ -170,6 +200,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
 
   client-service:
     build:
@@ -197,6 +233,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
 
   billing-service:
     build:
@@ -224,6 +266,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
 
   claims-service:
     build:
@@ -251,6 +299,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
 
   notification-service:
     build:
@@ -282,6 +336,12 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
 
   iam-service:
     build:
@@ -311,6 +371,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
 
   workflow-service:
     build:
@@ -338,6 +404,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
 
   # ==========================================================
   # 📊 OBSERVABILITÉ - Prometheus
@@ -355,6 +427,12 @@ services:
       - insurance-net
     depends_on:
       - api-gateway
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
   # ==========================================================
   # 📊 OBSERVABILITÉ - Grafana
@@ -375,6 +453,12 @@ services:
       - "3000:3000"
     networks:
       - insurance-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
 # ==========================================================
 # 🌐 RÉSEAUX
