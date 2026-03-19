@@ -89,7 +89,7 @@ class PolicyServiceImplTest {
             clientResponse.setSuccess(true);
             clientResponse.setData(new ClientDto());
 
-            when(clientServiceClient.getClientByEmail(any(String.class))).thenReturn(clientResponse);
+            when(clientServiceClient.getClientById(any(String.class))).thenReturn(clientResponse);
             when(policyMapper.toDomain(request)).thenReturn(domain);
             when(policyRepository.save(any(Policy.class))).thenReturn(domain);
             when(policyMapper.toDto(domain)).thenReturn(dto);
@@ -120,7 +120,7 @@ class PolicyServiceImplTest {
             response.setSuccess(false);
             response.setData(null);
 
-            when(clientServiceClient.getClientByEmail(any(String.class))).thenReturn(response);
+            when(clientServiceClient.getClientById(any(String.class))).thenReturn(response);
 
             assertThrows(BusinessException.class, () -> policyService.createPolicy(request));
             verify(policyRepository, never()).save(any());

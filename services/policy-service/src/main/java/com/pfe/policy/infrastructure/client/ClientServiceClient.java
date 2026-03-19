@@ -12,6 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 )
 public interface ClientServiceClient {
 
-    @GetMapping("/api/v1/clients/email/{email}")
-    BaseResponse<ClientDto> getClientByEmail(@PathVariable("email") String email);
+    @GetMapping("/api/v1/clients/{identifier}")
+    BaseResponse<ClientDto> getClientById(@PathVariable("identifier") String identifier);
 }

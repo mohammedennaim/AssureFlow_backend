@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 public class ClientServiceClientFallback implements ClientServiceClient {
 
     @Override
-    public BaseResponse<ClientDto> getClientByEmail(String email) {
-        log.warn("[FALLBACK] client-service is unavailable. Cannot fetch client {}", email);
+    public BaseResponse<ClientDto> getClientById(String identifier) {
+        log.warn("[FALLBACK] client-service is unavailable. Cannot fetch client {}", identifier);
         return BaseResponse.error("Client service is unavailable");
     }
 }
