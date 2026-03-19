@@ -148,20 +148,39 @@ public class PolicyServiceImpl implements PolicyService {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
 
-        if (request.getEndDate() != null) {
-            policy.setEndDate(request.getEndDate());
-        }
-        if (request.getPremiumAmount() != null) {
-            policy.setPremiumAmount(request.getPremiumAmount());
-        }
-        if (request.getCoverageAmount() != null) {
-            policy.setCoverageAmount(request.getCoverageAmount());
+        log.info("Updating policy {}: current status={}, request={}", id, policy.getStatus(), request);
+
+        if (request.getClientId() != null && !request.getClientId().equals(policy.getClientId())) {
+            validateClientExists(request.getClientId());
+            policy.setClientId(request.getClientId());
         }
         if (request.getType() != null) {
             policy.setType(request.getType());
         }
+        if (request.getStartDate() != null) {
+            policy.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            policy.setEndDate(request.getEndDate());
+        }
+        if (request.getCoverageAmount() != null) {
+            policy.setCoverageAmount(request.getCoverageAmount());
+            // Recalculate premium if coverage changed but premium amount not explicitly provided
+            if (request.getPremiumAmount() == null) {
+                policy.calculatePremium();
+                log.info("Recalculated premium for policy {} because coverage changed: {}", id, policy.getPremiumAmount());
+            }
+        }
+        if (request.getPremiumAmount() != null) {
+            policy.setPremiumAmount(request.getPremiumAmount());
+        }
+
+        // Enforce business rules from domain model
+        policy.validateDates();
+        policy.validateCoverageAmount();
 
         Policy updatedPolicy = policyRepository.save(policy);
+        log.info("Policy {} updated successfully", id);
         return policyMapper.toDto(updatedPolicy);
     }
 

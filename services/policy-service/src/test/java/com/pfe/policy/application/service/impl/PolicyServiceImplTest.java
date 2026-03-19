@@ -3,6 +3,7 @@ package com.pfe.policy.application.service.impl;
 import com.pfe.commons.dto.BaseResponse;
 import com.pfe.commons.exceptions.BusinessException;
 import com.pfe.policy.application.dto.CreatePolicyRequest;
+import com.pfe.policy.application.dto.UpdatePolicyRequest;
 import com.pfe.policy.application.dto.PolicyDto;
 import com.pfe.policy.application.mapper.PolicyMapper;
 import com.pfe.policy.domain.model.Policy;
@@ -231,6 +232,91 @@ class PolicyServiceImplTest {
             when(policyRepository.findById(POLICY_ID)).thenReturn(Optional.of(policy));
 
             assertThrows(IllegalStateException.class, () -> policyService.submitPolicy(POLICY_ID));
+        }
+    }
+
+    @Nested
+    @DisplayName("Update Policy Tests")
+    class UpdatePolicyTests {
+
+        @Test
+        @DisplayName("Should update clientId and startDate successfully")
+        void shouldUpdateClientIdAndStartDate() {
+            Policy policy = createTestPolicy(PolicyStatus.DRAFT);
+            String newClientId = UUID.randomUUID().toString();
+            LocalDate newStartDate = LocalDate.now().plusDays(5);
+            
+            UpdatePolicyRequest request = new UpdatePolicyRequest();
+            request.setClientId(newClientId);
+            request.setStartDate(newStartDate);
+
+            BaseResponse<ClientDto> clientResponse = new BaseResponse<>();
+            clientResponse.setSuccess(true);
+            clientResponse.setData(new ClientDto());
+
+            when(policyRepository.findById(POLICY_ID)).thenReturn(Optional.of(policy));
+            when(clientServiceClient.getClientById(newClientId)).thenReturn(clientResponse);
+            when(policyRepository.save(any(Policy.class))).thenReturn(policy);
+            when(policyMapper.toDto(any(Policy.class))).thenReturn(new PolicyDto());
+
+            policyService.updatePolicy(POLICY_ID, request);
+
+            assertEquals(newClientId, policy.getClientId());
+            assertEquals(newStartDate, policy.getStartDate());
+            verify(clientServiceClient).getClientById(newClientId);
+            verify(policyRepository).save(policy);
+        }
+
+        @Test
+        @DisplayName("Should update policy fields successfully")
+        void shouldUpdatePolicy() {
+            Policy policy = createTestPolicy(PolicyStatus.DRAFT);
+            UpdatePolicyRequest request = new UpdatePolicyRequest();
+            request.setCoverageAmount(new BigDecimal("20000"));
+            request.setPremiumAmount(new BigDecimal("1000"));
+
+            when(policyRepository.findById(POLICY_ID)).thenReturn(Optional.of(policy));
+            when(policyRepository.save(any(Policy.class))).thenReturn(policy);
+            when(policyMapper.toDto(any(Policy.class))).thenReturn(new PolicyDto());
+
+            PolicyDto result = policyService.updatePolicy(POLICY_ID, request);
+
+            assertNotNull(result);
+            assertEquals(new BigDecimal("20000"), policy.getCoverageAmount());
+            assertEquals(new BigDecimal("1000"), policy.getPremiumAmount());
+            verify(policyRepository).save(policy);
+        }
+
+        @Test
+        @DisplayName("Should recalculate premium if coverage changed and premium not provided")
+        void shouldRecalculatePremium() {
+            Policy policy = createTestPolicy(PolicyStatus.DRAFT);
+            policy.setType(PolicyType.VEHICLE); // VEHICLE_RATE = 0.07
+            UpdatePolicyRequest request = new UpdatePolicyRequest();
+            request.setCoverageAmount(new BigDecimal("1000")); // 1000 * 0.07 = 70
+
+            when(policyRepository.findById(POLICY_ID)).thenReturn(Optional.of(policy));
+            when(policyRepository.save(any(Policy.class))).thenReturn(policy);
+            when(policyMapper.toDto(any(Policy.class))).thenReturn(new PolicyDto());
+
+            policyService.updatePolicy(POLICY_ID, request);
+
+            assertEquals(new BigDecimal("1000"), policy.getCoverageAmount());
+            assertEquals(0, new BigDecimal("70.00").compareTo(policy.getPremiumAmount()));
+        }
+
+        @Test
+        @DisplayName("Should throw when end date is before start date")
+        void shouldThrowWhenDatesInvalid() {
+            Policy policy = createTestPolicy(PolicyStatus.DRAFT);
+            policy.setStartDate(LocalDate.now());
+            UpdatePolicyRequest request = new UpdatePolicyRequest();
+            request.setEndDate(LocalDate.now().minusDays(1));
+
+            when(policyRepository.findById(POLICY_ID)).thenReturn(Optional.of(policy));
+
+            assertThrows(IllegalArgumentException.class, () -> policyService.updatePolicy(POLICY_ID, request));
+            verify(policyRepository, never()).save(any());
         }
     }
 }

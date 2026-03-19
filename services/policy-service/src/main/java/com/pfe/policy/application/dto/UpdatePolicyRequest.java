@@ -14,8 +14,10 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdatePolicyRequest {
+    private String clientId;
+    private PolicyType type;
+    private LocalDate startDate;
     private LocalDate endDate;
     private BigDecimal premiumAmount;
     private BigDecimal coverageAmount;
-    private PolicyType type;
 }
