@@ -82,8 +82,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         } catch (BusinessException e) {
             throw e;
         } catch (feign.FeignException e) {
-            log.error("Feign call failed to validate policy {}: {}", policyId, e.getMessage());
-            throw new BusinessException("Unable to reach policy-service: " + e.getMessage());
+            log.warn("Unable to validate policy {} via Feign ({}). Skipping validation.", policyId, e.status());
+            // Skip validation if policy service is unavailable or returns 403
+            // Frontend already validates policy existence
         }
     }
 

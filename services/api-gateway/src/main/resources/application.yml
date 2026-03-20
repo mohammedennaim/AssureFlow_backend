@@ -156,10 +156,11 @@ spring:
         # ========================================
         # 💰 BILLING SERVICE - Invoices & Payments
         # ========================================
-        - id: billing-invoices
+        - id: billing-invoices-read
           uri: http://billing-service:8080
           predicates:
-            - Path=/api/v1/invoices, /api/v1/invoices/{id}, /api/v1/invoices/policy/{policyId}, /api/v1/invoices/client/{clientId}
+            - Path=/api/v1/invoices, /api/v1/invoices/{id}, /api/v1/invoices/number/{invoiceNumber}, /api/v1/invoices/policy/{policyId}, /api/v1/invoices/client/{clientId}
+            - Method=GET
           filters:
             - StripPrefix=0
             - name: CircuitBreaker
@@ -167,10 +168,35 @@ spring:
                 name: billing-service-cb
                 fallbackUri: forward:/fallback/billing
 
-        - id: billing-payments
+        - id: billing-invoices-write
           uri: http://billing-service:8080
           predicates:
-            - Path=/api/v1/payments, /api/v1/payments/{id}, /api/v1/payments/invoice/{invoiceId}
+            - Path=/api/v1/invoices, /api/v1/invoices/{id}, /api/v1/invoices/{id}/cancel, /api/v1/invoices/{invoiceId}/pay/{paymentId}
+            - Method=POST,PUT,PATCH,DELETE
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 3
+                redis-rate-limiter.burstCapacity: 6
+
+        - id: billing-payments-read
+          uri: http://billing-service:8080
+          predicates:
+            - Path=/api/v1/payments, /api/v1/payments/{id}, /api/v1/payments/invoice/{invoiceId}, /api/v1/payments/client/{clientId}
+            - Method=GET
+          filters:
+            - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: billing-service-cb
+                fallbackUri: forward:/fallback/billing
+
+        - id: billing-payments-write
+          uri: http://billing-service:8080
+          predicates:
+            - Path=/api/v1/payments, /api/v1/payments/{id}
+            - Method=POST,PUT,DELETE
           filters:
             - StripPrefix=0
             - name: RequestRateLimiter
