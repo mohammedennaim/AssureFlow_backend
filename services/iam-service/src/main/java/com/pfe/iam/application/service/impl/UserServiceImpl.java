@@ -1,6 +1,7 @@
 package com.pfe.iam.application.service.impl;
 
 import com.pfe.iam.application.dto.CreateUserRequest;
+import com.pfe.iam.application.dto.RoleDto;
 import com.pfe.iam.application.dto.UpdateUserRequest;
 import com.pfe.iam.application.dto.UserDto;
 import com.pfe.iam.application.service.AuditService;
@@ -159,6 +160,15 @@ public class UserServiceImpl implements UserService {
 
     private UserDto toDto(User user) {
         String roleStr = user.getRole() != null ? user.getRole().getName().name() : null;
+        
+        List<RoleDto> rolesDto = new java.util.ArrayList<>();
+        if (user.getRole() != null) {
+            rolesDto.add(RoleDto.builder()
+                    .id(user.getRole().getId().toString())
+                    .name(user.getRole().getName().name())
+                    .description(user.getRole().getDescription())
+                    .build());
+        }
 
         return UserDto.builder()
                 .id(user.getId() != null ? user.getId().toString() : null)
@@ -166,6 +176,7 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .active(user.isActive())
                 .role(roleStr)
+                .roles(rolesDto)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
