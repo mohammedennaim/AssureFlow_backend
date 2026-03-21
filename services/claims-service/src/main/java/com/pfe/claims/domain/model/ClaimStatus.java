@@ -1,6 +1,7 @@
 package com.pfe.claims.domain.model;
 
 public enum ClaimStatus {
+    PENDING,
     SUBMITTED,
     UNDER_REVIEW,
     APPROVED,

@@ -136,7 +136,7 @@ spring:
         - id: policy-service-write
           uri: http://policy-service:8080
           predicates:
-            - Path=/api/v1/policies, /api/v1/policies/{id}, /api/v1/policies/{id}/activate, /api/v1/policies/{id}/suspend, /api/v1/policies/{id}/renew
+            - Path=/api/v1/policies, /api/v1/policies/{id}, /api/v1/policies/{id}/activate, /api/v1/policies/{id}/suspend, /api/v1/policies/{id}/renew, /api/v1/policies/{id}/cancel, /api/v1/policies/{id}/expire, /api/v1/policies/{id}/submit, /api/v1/policies/{id}/approve, /api/v1/policies/{id}/reject
             - Method=POST,PUT,PATCH,DELETE
           filters:
             - StripPrefix=0

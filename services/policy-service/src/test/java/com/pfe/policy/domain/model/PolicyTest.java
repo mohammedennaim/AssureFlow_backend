@@ -180,11 +180,30 @@ class PolicyTest {
         }
 
         @Test
-        @DisplayName("Should throw when expiring non-ACTIVE policy")
-        void shouldNotExpireNonActivePolicy() {
+        @DisplayName("Should throw when expiring already EXPIRED policy")
+        void shouldNotExpireAlreadyExpiredPolicy() {
+            Policy policy = createActivePolicy();
+            policy.expire("First expiration");
+
+            assertThrows(IllegalStateException.class, () -> policy.expire("Second expiration"));
+        }
+
+        @Test
+        @DisplayName("Should throw when expiring CANCELLED policy")
+        void shouldNotExpireCancelledPolicy() {
+            Policy policy = createActivePolicy();
+            policy.cancel("Cancelled by client");
+
+            assertThrows(IllegalStateException.class, () -> policy.expire("Cannot expire cancelled"));
+        }
+
+        @Test
+        @DisplayName("Should allow expiring DRAFT policy")
+        void shouldAllowExpiringDraftPolicy() {
             Policy policy = createDraftPolicy();
 
-            assertThrows(IllegalStateException.class, () -> policy.expire("reason"));
+            assertDoesNotThrow(() -> policy.expire("Expired before activation"));
+            assertEquals(PolicyStatus.EXPIRED, policy.getStatus());
         }
 
         @Test

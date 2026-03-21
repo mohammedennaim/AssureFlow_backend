@@ -151,12 +151,18 @@ public class Policy {
         if (this.status == PolicyStatus.CANCELLED) {
             throw new IllegalStateException("Policy is already cancelled.");
         }
+        if (this.status == PolicyStatus.EXPIRED) {
+            throw new IllegalStateException("Cannot cancel an expired policy.");
+        }
         this.status = PolicyStatus.CANCELLED;
     }
 
     public void expire(String reason) {
-        if (this.status != PolicyStatus.ACTIVE) {
-            throw new IllegalStateException("Only ACTIVE policies can expire. Current status: " + this.status);
+        if (this.status == PolicyStatus.EXPIRED) {
+            throw new IllegalStateException("Policy is already expired.");
+        }
+        if (this.status == PolicyStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot expire a cancelled policy.");
         }
         this.status = PolicyStatus.EXPIRED;
     }

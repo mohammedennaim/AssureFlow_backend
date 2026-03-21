@@ -9,6 +9,7 @@ import com.pfe.claims.domain.model.ClaimStatus;
 import com.pfe.claims.domain.repository.ClaimRepository;
 import com.pfe.claims.infrastructure.client.PolicyDto;
 import com.pfe.claims.infrastructure.client.PolicyServiceClient;
+import com.pfe.claims.infrastructure.messaging.ClaimEventPublisher;
 import com.pfe.commons.exceptions.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +39,9 @@ class ClaimServiceImplTest {
 
     @Mock
     private PolicyServiceClient policyServiceClient;
+
+    @Mock
+    private ClaimEventPublisher claimEventPublisher;
 
     @InjectMocks
     private ClaimServiceImpl claimService;
@@ -85,6 +89,7 @@ class ClaimServiceImplTest {
             when(claimMapper.toDomain(request)).thenReturn(claim);
             when(claimRepository.save(any(Claim.class))).thenReturn(claim);
             when(claimMapper.toDto(claim)).thenReturn(dto);
+            doNothing().when(claimEventPublisher).publishClaimCreated(any(), any(), any(), any(), any());
 
             ClaimDto result = claimService.createClaim(request);
 
@@ -161,6 +166,7 @@ class ClaimServiceImplTest {
 
             when(claimRepository.findById(CLAIM_ID)).thenReturn(Optional.of(claim));
             when(claimRepository.save(any(Claim.class))).thenReturn(claim);
+            doNothing().when(claimEventPublisher).publishClaimStatusChanged(any(), any(), any(), any());
 
             assertDoesNotThrow(() -> claimService.approveClaim(CLAIM_ID, new BigDecimal("4000"), approvedBy));
             verify(claimRepository).save(claim);
@@ -173,6 +179,7 @@ class ClaimServiceImplTest {
 
             when(claimRepository.findById(CLAIM_ID)).thenReturn(Optional.of(claim));
             when(claimRepository.save(any(Claim.class))).thenReturn(claim);
+            doNothing().when(claimEventPublisher).publishClaimStatusChanged(any(), any(), any(), any());
 
             assertDoesNotThrow(() -> claimService.rejectClaim(CLAIM_ID, "Insufficient evidence"));
             verify(claimRepository).save(claim);
@@ -185,6 +192,7 @@ class ClaimServiceImplTest {
 
             when(claimRepository.findById(CLAIM_ID)).thenReturn(Optional.of(claim));
             when(claimRepository.save(any(Claim.class))).thenReturn(claim);
+            doNothing().when(claimEventPublisher).publishClaimStatusChanged(any(), any(), any(), any());
 
             assertDoesNotThrow(() -> claimService.closeClaim(CLAIM_ID));
             verify(claimRepository).save(claim);

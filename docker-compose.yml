@@ -40,8 +40,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '1.0'
           memory: 512M
         reservations:
+          cpus: '0.25'
           memory: 256M
 
   # ==========================================================
@@ -65,8 +67,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.5'
           memory: 256M
         reservations:
+          cpus: '0.1'
           memory: 128M
 
   # ==========================================================
@@ -92,6 +96,10 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       CLUSTER_ID: 'JgOOpmOWQ1aB3cbgf6c6ZQ'
+      # Optimisation CPU/Mémoire
+      KAFKA_NUM_NETWORK_THREADS: 2
+      KAFKA_NUM_IO_THREADS: 2
+      KAFKA_BACKGROUND_THREADS: 2
     volumes:
       - kafka-data:/var/lib/kafka/data
     networks:
@@ -105,8 +113,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '1.0'
           memory: 512M
         reservations:
+          cpus: '0.25'
           memory: 256M
 
   # ==========================================================
@@ -116,7 +126,7 @@ services:
     image: redis:7-alpine
     container_name: assureflow-redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 128mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
     volumes:
@@ -132,8 +142,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.5'
           memory: 256M
         reservations:
+          cpus: '0.1'
           memory: 128M
 
   # ==========================================================
@@ -166,8 +178,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '1.0'
           memory: 512M
         reservations:
+          cpus: '0.25'
           memory: 256M
 
   # ==========================================================
@@ -203,8 +217,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.75'
           memory: 400M
         reservations:
+          cpus: '0.25'
           memory: 200M
 
   client-service:
@@ -236,8 +252,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.75'
           memory: 400M
         reservations:
+          cpus: '0.25'
           memory: 200M
 
   billing-service:
@@ -269,8 +287,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.75'
           memory: 400M
         reservations:
+          cpus: '0.25'
           memory: 200M
 
   claims-service:
@@ -302,8 +322,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.75'
           memory: 400M
         reservations:
+          cpus: '0.25'
           memory: 200M
 
   notification-service:
@@ -339,8 +361,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.75'
           memory: 400M
         reservations:
+          cpus: '0.25'
           memory: 200M
 
   iam-service:
@@ -374,8 +398,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.75'
           memory: 400M
         reservations:
+          cpus: '0.25'
           memory: 200M
 
   workflow-service:
@@ -407,8 +433,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.75'
           memory: 400M
         reservations:
+          cpus: '0.25'
           memory: 200M
 
   # ==========================================================
@@ -430,8 +458,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.5'
           memory: 256M
         reservations:
+          cpus: '0.1'
           memory: 128M
 
   # ==========================================================
@@ -456,8 +486,10 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.5'
           memory: 256M
         reservations:
+          cpus: '0.1'
           memory: 128M
 
 # ==========================================================

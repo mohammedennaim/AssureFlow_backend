@@ -187,6 +187,7 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
+    @CacheEvict(value = "policies", allEntries = true)
     public void cancelPolicy(String id, String reason) {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
@@ -227,6 +228,7 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
+    @CacheEvict(value = "policies", allEntries = true)
     public void expirePolicy(String id, String reason) {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
