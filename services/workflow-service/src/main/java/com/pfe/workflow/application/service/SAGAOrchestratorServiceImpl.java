@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,12 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
     private final SAGATransactionRepository sagaTransactionRepository;
     private final SAGAStepExecutorPublisher stepExecutorPublisher;
+
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
+    public Page<SAGATransactionDto> getAllSagas(Pageable pageable) {
+        return sagaTransactionRepository.findAll(pageable).map(this::toDto);
+    }
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")

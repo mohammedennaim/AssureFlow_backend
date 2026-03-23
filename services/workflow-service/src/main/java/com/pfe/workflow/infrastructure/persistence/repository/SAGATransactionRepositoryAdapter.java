@@ -6,6 +6,8 @@ import com.pfe.workflow.infrastructure.persistence.entity.SAGAStepEntity;
 import com.pfe.workflow.infrastructure.persistence.entity.SAGATransactionEntity;
 import com.pfe.workflow.infrastructure.persistence.mapper.SAGAMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -35,5 +37,10 @@ public class SAGATransactionRepositoryAdapter implements SAGATransactionReposito
     @Override
     public Optional<SAGATransaction> findById(UUID id) {
         return jpaRepository.findById(id).map(mapper::toDomain);
+    }
+
+    @Override
+    public Page<SAGATransaction> findAll(Pageable pageable) {
+        return jpaRepository.findAll(pageable).map(mapper::toDomain);
     }
 }

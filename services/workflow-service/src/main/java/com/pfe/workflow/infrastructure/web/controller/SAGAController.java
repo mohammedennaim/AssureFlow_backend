@@ -3,9 +3,12 @@ package com.pfe.workflow.infrastructure.web.controller;
 import com.pfe.workflow.application.dto.SAGATransactionDto;
 import com.pfe.workflow.application.service.SAGAOrchestratorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -14,6 +17,11 @@ import java.util.UUID;
 public class SAGAController {
 
     private final SAGAOrchestratorService sagaService;
+
+    @GetMapping
+    public ResponseEntity<Page<SAGATransactionDto>> getAllSagas(Pageable pageable) {
+        return ResponseEntity.ok(sagaService.getAllSagas(pageable));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<SAGATransactionDto> getSagaStatus(@PathVariable UUID id) {
