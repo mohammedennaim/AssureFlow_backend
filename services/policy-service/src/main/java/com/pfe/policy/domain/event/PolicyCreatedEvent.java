@@ -19,6 +19,8 @@ public class PolicyCreatedEvent extends BaseEvent {
     private String policyId;
     private String policyNumber;
     private String clientId;
+    private String clientEmail;
+    private String clientPhone;
     private String type;
     private String status;
     private BigDecimal premiumAmount;

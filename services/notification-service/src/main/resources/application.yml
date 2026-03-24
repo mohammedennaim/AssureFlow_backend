@@ -62,6 +62,15 @@ spring:
           starttls:
             enable: true
 
+# Twilio SMS Configuration
+twilio:
+  account:
+    sid: ${TWILIO_ACCOUNT_SID:your_account_sid}
+  auth:
+    token: ${TWILIO_AUTH_TOKEN:your_auth_token}
+  phone:
+    number: ${TWILIO_PHONE_NUMBER:+1234567890}
+
 # JWT
 jwt:
   secret: ${JWT_SECRET}
@@ -118,5 +127,13 @@ spring:
           auth: true
           starttls:
             enable: true
+  # Twilio SMS Configuration (Docker)
+twilio:
+  account:
+    sid: ${TWILIO_ACCOUNT_SID:your_account_sid}
+  auth:
+    token: ${TWILIO_AUTH_TOKEN:your_auth_token}
+  phone:
+    number: ${TWILIO_PHONE_NUMBER:+1234567890}
 server:
   port: 8080

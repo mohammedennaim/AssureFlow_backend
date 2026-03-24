@@ -14,6 +14,7 @@ import com.pfe.policy.domain.model.PolicyStatus;
 import com.pfe.policy.domain.repository.PolicyRepository;
 import com.pfe.policy.infrastructure.client.ClientDto;
 import com.pfe.policy.infrastructure.client.ClientServiceClient;
+import com.pfe.policy.infrastructure.messaging.PolicyEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -37,6 +38,7 @@ public class PolicyServiceImpl implements PolicyService {
     private final PolicyRepository policyRepository;
     private final PolicyMapper policyMapper;
     private final ClientServiceClient clientServiceClient;
+    private final PolicyEventPublisher policyEventPublisher;
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
@@ -66,6 +68,8 @@ public class PolicyServiceImpl implements PolicyService {
                 .policyId(savedPolicy.getId())
                 .policyNumber(savedPolicy.getPolicyNumber())
                 .clientId(savedPolicy.getClientId())
+                .clientEmail(getClientEmail(savedPolicy.getClientId()))
+                .clientPhone(getClientPhone(savedPolicy.getClientId()))
                 .type(savedPolicy.getType() != null ? savedPolicy.getType().name() : null)
                 .status(savedPolicy.getStatus() != null ? savedPolicy.getStatus().name() : null)
                 .premiumAmount(savedPolicy.getPremiumAmount())
@@ -99,6 +103,30 @@ public class PolicyServiceImpl implements PolicyService {
             log.error("Feign call failed to validate client {}: {}", clientId, e.getMessage());
             throw new BusinessException("Unable to reach client-service: " + e.getMessage());
         }
+    }
+
+    private String getClientEmail(String clientId) {
+        try {
+            BaseResponse<ClientDto> response = clientServiceClient.getClientById(clientId);
+            if (response != null && response.getData() != null) {
+                return response.getData().getEmail();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch client email for {}: {}", clientId, e.getMessage());
+        }
+        return null;
+    }
+
+    private String getClientPhone(String clientId) {
+        try {
+            BaseResponse<ClientDto> response = clientServiceClient.getClientById(clientId);
+            if (response != null && response.getData() != null) {
+                return response.getData().getPhone();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch client phone for {}: {}", clientId, e.getMessage());
+        }
+        return null;
     }
 
     @Override
@@ -193,6 +221,10 @@ public class PolicyServiceImpl implements PolicyService {
                 .orElseThrow(() -> new PolicyNotFoundException(id));
         policy.cancel(reason);
         policyRepository.save(policy);
+        
+        // Publish policy.cancelled event
+        policyEventPublisher.publishPolicyEvent("policy.cancelled", buildPolicyEventMap(policy, reason));
+        log.info("Policy cancelled event published for policy: {}", policy.getPolicyNumber());
     }
 
     @Override
@@ -203,6 +235,10 @@ public class PolicyServiceImpl implements PolicyService {
                 .orElseThrow(() -> new PolicyNotFoundException(id));
         policy.submit();
         policyRepository.save(policy);
+        
+        // Publish policy.submitted event
+        policyEventPublisher.publishPolicyEvent("policy.submitted", buildPolicyEventMap(policy));
+        log.info("Policy submitted event published for policy: {}", policy.getPolicyNumber());
     }
 
     @Override
@@ -213,6 +249,10 @@ public class PolicyServiceImpl implements PolicyService {
                 .orElseThrow(() -> new PolicyNotFoundException(id));
         policy.approve();
         policyRepository.save(policy);
+        
+        // Publish policy.approved event
+        policyEventPublisher.publishPolicyEvent("policy.approved", buildPolicyEventMap(policy));
+        log.info("Policy approved event published for policy: {}", policy.getPolicyNumber());
     }
 
     @Override
@@ -223,6 +263,10 @@ public class PolicyServiceImpl implements PolicyService {
                 .orElseThrow(() -> new PolicyNotFoundException(id));
         policy.reject(reason);
         policyRepository.save(policy);
+        
+        // Publish policy.rejected event
+        policyEventPublisher.publishPolicyEvent("policy.rejected", buildPolicyEventMap(policy, reason));
+        log.info("Policy rejected event published for policy: {}", policy.getPolicyNumber());
     }
 
     @Override
@@ -234,6 +278,10 @@ public class PolicyServiceImpl implements PolicyService {
                 .orElseThrow(() -> new PolicyNotFoundException(id));
         policy.expire(reason);
         policyRepository.save(policy);
+        
+        // Publish policy.expiring event
+        policyEventPublisher.publishPolicyEvent("policy.expiring", buildPolicyEventMap(policy, reason));
+        log.info("Policy expiring event published for policy: {}", policy.getPolicyNumber());
     }
 
     @Override
@@ -260,6 +308,35 @@ public class PolicyServiceImpl implements PolicyService {
         policy.renewPolicy(newPolicy);
 
         Policy savedPolicy = policyRepository.save(newPolicy);
+
+        // Publish policy.renewed event
+        policyEventPublisher.publishPolicyEvent("policy.renewed", buildPolicyEventMap(savedPolicy));
+        log.info("Policy renewed event published for policy: {}", savedPolicy.getPolicyNumber());
+
         return policyMapper.toDto(savedPolicy);
+    }
+
+    private java.util.Map<String, Object> buildPolicyEventMap(Policy policy) {
+        return buildPolicyEventMap(policy, null);
+    }
+
+    private java.util.Map<String, Object> buildPolicyEventMap(Policy policy, String reason) {
+        java.util.Map<String, Object> eventMap = new java.util.HashMap<>();
+        eventMap.put("policyId", policy.getId());
+        eventMap.put("policyNumber", policy.getPolicyNumber());
+        eventMap.put("clientId", policy.getClientId());
+        eventMap.put("clientEmail", getClientEmail(policy.getClientId()));
+        eventMap.put("clientPhone", getClientPhone(policy.getClientId()));
+        eventMap.put("type", policy.getType() != null ? policy.getType().name() : null);
+        eventMap.put("status", policy.getStatus() != null ? policy.getStatus().name() : null);
+        eventMap.put("premiumAmount", policy.getPremiumAmount());
+        eventMap.put("coverageAmount", policy.getCoverageAmount());
+        eventMap.put("startDate", policy.getStartDate());
+        eventMap.put("endDate", policy.getEndDate());
+        if (reason != null) {
+            eventMap.put("rejectionReason", reason);
+            eventMap.put("cancellationReason", reason);
+        }
+        return eventMap;
     }
 }
