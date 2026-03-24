@@ -80,7 +80,10 @@ public class PolicyServiceImpl implements PolicyService {
                 .build();
 
         savedPolicy.registerEvent(event);
-        log.info("PolicyCreatedEvent published for policy: {}", savedPolicy.getPolicyNumber());
+        
+        // Publish event to Kafka for notification service
+        policyEventPublisher.publishPolicyCreated(event);
+        log.info("PolicyCreatedEvent published to Kafka for policy: {}", savedPolicy.getPolicyNumber());
 
         savedPolicy.clearDomainEvents();
 

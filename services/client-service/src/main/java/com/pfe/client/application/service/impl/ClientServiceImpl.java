@@ -17,6 +17,7 @@ import com.pfe.client.application.dto.ClientSearchCriteria;
 import com.pfe.client.domain.event.ClientCreatedEvent;
 import com.pfe.client.domain.event.ClientUpdatedEvent;
 import com.pfe.client.domain.event.ClientDeletedEvent;
+import com.pfe.client.infrastructure.messaging.ClientEventPublisher;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +43,7 @@ public class ClientServiceImpl implements ClientService {
     private final AddressRepository addressRepository;
     private final ClientMapper mapper;
     private final ApplicationEventPublisher publisher;
+    private final ClientEventPublisher clientEventPublisher;
     private final ClientHistoryService historyService;
 
     private String generateClientNumber() {
@@ -304,5 +308,26 @@ public class ClientServiceImpl implements ClientService {
         client.setStatus(ClientStatus.INACTIVE);
         clientRepository.save(client);
         historyService.recordHistory(id, "CLIENT_DEACTIVATED", "system");
+    }
+
+    /**
+     * Listens for client events and publishes them to Kafka after transaction commit.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleClientCreatedEvent(ClientCreatedEvent event) {
+        log.info("[KAFKA] Publishing client created event for client: {}", event.getClientId());
+        clientEventPublisher.publishClientCreated(event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleClientUpdatedEvent(ClientUpdatedEvent event) {
+        log.info("[KAFKA] Publishing client updated event for client: {}", event.getClientId());
+        clientEventPublisher.publishClientUpdated(event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleClientDeletedEvent(ClientDeletedEvent event) {
+        log.info("[KAFKA] Publishing client deleted event for client: {}", event.getClientId());
+        clientEventPublisher.publishClientDeleted(event);
     }
 }

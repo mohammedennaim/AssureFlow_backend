@@ -12,6 +12,7 @@ import com.pfe.policy.domain.model.PolicyType;
 import com.pfe.policy.domain.repository.PolicyRepository;
 import com.pfe.policy.infrastructure.client.ClientDto;
 import com.pfe.policy.infrastructure.client.ClientServiceClient;
+import com.pfe.policy.infrastructure.messaging.PolicyEventPublisher;
 import com.pfe.policy.domain.exception.PolicyNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,6 +43,9 @@ class PolicyServiceImplTest {
 
     @Mock
     private ClientServiceClient clientServiceClient;
+
+    @Mock
+    private PolicyEventPublisher policyEventPublisher;
 
     @InjectMocks
     private PolicyServiceImpl policyService;

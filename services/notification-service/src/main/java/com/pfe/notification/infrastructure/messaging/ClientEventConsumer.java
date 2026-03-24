@@ -125,8 +125,9 @@ public class ClientEventConsumer {
         String clientId = (String) payload.get("clientId");
         String clientEmail = (String) payload.get("email");
         String deletionReason = (String) payload.get("deletionReason");
-        
-        // This is typically for admin notifications, not client
+        String clientPhone = (String) payload.get("phone");
+
+        // Email notification to admin
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_CANCELLED)
                 .channel(NotificationChannel.EMAIL)
@@ -136,7 +137,32 @@ public class ClientEventConsumer {
                 .build();
         var emailDto = notificationService.createNotification(emailRequest);
         notificationService.sendNotification(emailDto.getId());
-        
-        log.info("[NOTIFICATION] CLIENT_DELETED notification sent to admin");
+
+        // SMS notification to admin if phone is available
+        String adminPhone = "+1234567890"; // Admin phone for critical alerts
+        CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                .type(NotificationType.POLICY_CANCELLED)
+                .channel(NotificationChannel.SMS)
+                .recipient(adminPhone)
+                .content("ALERTE: Compte client " + clientId + " supprimé. Raison: " + deletionReason + ".")
+                .build();
+        var smsDto = notificationService.createNotification(smsRequest);
+        notificationService.sendNotification(smsDto.getId());
+
+        // Also send SMS to client if phone is available (for transparency)
+        if (clientPhone != null && !clientPhone.isBlank()) {
+            CreateNotificationRequest clientSmsRequest = CreateNotificationRequest.builder()
+                    .type(NotificationType.POLICY_CANCELLED)
+                    .channel(NotificationChannel.SMS)
+                    .recipient(clientPhone)
+                    .content("Votre compte AssureFlow a été supprimé. Raison: " + deletionReason + ". Pour toute question, contactez le support.")
+                    .build();
+            var clientSmsDto = notificationService.createNotification(clientSmsRequest);
+            notificationService.sendNotification(clientSmsDto.getId());
+            log.info("[NOTIFICATION] CLIENT_DELETED SMS sent to client {}", clientPhone);
+        }
+
+        log.info("[NOTIFICATION] CLIENT_DELETED email sent to admin@assureflow.com");
+        log.info("[NOTIFICATION] CLIENT_DELETED SMS sent to admin {}", adminPhone);
     }
 }

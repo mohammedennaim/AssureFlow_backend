@@ -10,6 +10,7 @@ import com.pfe.claims.domain.exception.ClaimNotFoundException;
 import com.pfe.claims.domain.model.Claim;
 import com.pfe.claims.domain.model.ClaimStatus;
 import com.pfe.claims.domain.repository.ClaimRepository;
+import com.pfe.claims.infrastructure.client.ClientDto;
 import com.pfe.claims.infrastructure.client.PolicyDto;
 import com.pfe.claims.infrastructure.client.PolicyServiceClient;
 import com.pfe.claims.infrastructure.messaging.ClaimEventPublisher;
@@ -36,6 +37,7 @@ public class ClaimServiceImpl implements ClaimService {
     private final ClaimRepository claimRepository;
     private final ClaimMapper claimMapper;
     private final PolicyServiceClient policyServiceClient;
+    private final com.pfe.claims.infrastructure.client.ClientServiceClient clientServiceClient;
     private final ClaimEventPublisher claimEventPublisher;
 
     @Override
@@ -200,14 +202,24 @@ public class ClaimServiceImpl implements ClaimService {
     public void approveClaim(UUID id, BigDecimal approvedAmount, UUID approvedBy) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
-        
+
         String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.approve(approvedAmount);
         claim.setApprovedBy(approvedBy);
         claimRepository.save(claim);
+
+        // Fetch client data for notification
+        ClientDto clientDto = fetchClientData(claim.getPolicyId());
         
-        // Publish status change event
-        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "APPROVED", approvedBy);
+        // Publish status change event with full data
+        claimEventPublisher.publishClaimApproved(
+            id, 
+            claim.getClaimNumber(), 
+            claim.getClientId() != null ? claim.getClientId().toString() : null,
+            clientDto != null ? clientDto.getEmail() : null,
+            clientDto != null ? clientDto.getPhone() : null,
+            approvedAmount
+        );
     }
 
     @Override
@@ -217,13 +229,23 @@ public class ClaimServiceImpl implements ClaimService {
     public void rejectClaim(UUID id, String reason) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
-        
+
         String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.reject(reason);
         claimRepository.save(claim);
+
+        // Fetch client data for notification
+        ClientDto clientDto = fetchClientData(claim.getPolicyId());
         
-        // Publish status change event
-        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "REJECTED", null);
+        // Publish status change event with full data
+        claimEventPublisher.publishClaimRejected(
+            id,
+            claim.getClaimNumber(),
+            claim.getClientId() != null ? claim.getClientId().toString() : null,
+            clientDto != null ? clientDto.getEmail() : null,
+            clientDto != null ? clientDto.getPhone() : null,
+            reason
+        );
     }
 
     @Override
@@ -244,13 +266,23 @@ public class ClaimServiceImpl implements ClaimService {
     public void markAsPaid(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
-        
+
         String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.markAsPaid();
         claimRepository.save(claim);
+
+        // Fetch client data for notification
+        ClientDto clientDto = fetchClientData(claim.getPolicyId());
         
-        // Publish status change event
-        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "PAID", null);
+        // Publish status change event with full data
+        claimEventPublisher.publishClaimPaid(
+            id,
+            claim.getClaimNumber(),
+            claim.getClientId() != null ? claim.getClientId().toString() : null,
+            clientDto != null ? clientDto.getEmail() : null,
+            clientDto != null ? clientDto.getPhone() : null,
+            claim.getApprovedAmount()
+        );
     }
 
     @Override
@@ -278,5 +310,24 @@ public class ClaimServiceImpl implements ClaimService {
             throw new ClaimNotFoundException(id);
         }
         claimRepository.deleteById(id);
+    }
+
+    /**
+     * Fetches client data from policy for Kafka notifications.
+     */
+    private ClientDto fetchClientData(UUID policyId) {
+        try {
+            if (policyId == null) {
+                return null;
+            }
+            PolicyDto policy = policyServiceClient.getPolicyById(policyId.toString());
+            if (policy == null || policy.getClientId() == null) {
+                return null;
+            }
+            return clientServiceClient.getClientById(policy.getClientId());
+        } catch (Exception e) {
+            log.warn("[KAFKA] Could not fetch client data for notification: {}", e.getMessage());
+            return null;
+        }
     }
 }
