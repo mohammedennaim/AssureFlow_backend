@@ -1,10 +1,12 @@
 package com.pfe.notification.infrastructure.persistence.repository;
 
+import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationStatus;
 import com.pfe.notification.domain.model.NotificationType;
 import com.pfe.notification.infrastructure.persistence.entity.NotificationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,4 +21,11 @@ public interface JpaNotificationRepository extends JpaRepository<NotificationEnt
     List<NotificationEntity> findByStatus(NotificationStatus status);
 
     long countByRecipientAndReadFalse(String recipient);
+
+    // Statistics methods
+    long countByStatus(NotificationStatus status);
+
+    long countByChannel(NotificationChannel channel);
+
+    long countByCreatedAtAfter(LocalDateTime date);
 }

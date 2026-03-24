@@ -1,11 +1,13 @@
 package com.pfe.notification.domain.repository;
 
 import com.pfe.notification.domain.model.Notification;
+import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationStatus;
 import com.pfe.notification.domain.model.NotificationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,4 +35,13 @@ public interface NotificationRepository {
     List<Notification> saveAll(List<Notification> notifications);
 
     void deleteById(UUID id);
+
+    // Statistics methods
+    long count();
+
+    long countByStatus(NotificationStatus status);
+
+    long countByChannel(NotificationChannel channel);
+
+    long countByCreatedAtAfter(LocalDateTime date);
 }

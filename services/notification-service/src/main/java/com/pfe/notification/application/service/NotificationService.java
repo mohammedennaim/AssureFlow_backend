@@ -5,6 +5,7 @@ import com.pfe.notification.application.dto.NotificationDto;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface NotificationService {
@@ -30,4 +31,6 @@ public interface NotificationService {
     long getUnreadCount(String recipient);
 
     void deleteNotification(UUID id);
+
+    Map<String, Object> getDashboardStatistics();
 }

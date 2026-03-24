@@ -1,6 +1,7 @@
 package com.pfe.notification.infrastructure.persistence.repository;
 
 import com.pfe.notification.domain.model.Notification;
+import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationStatus;
 import com.pfe.notification.domain.model.NotificationType;
 import com.pfe.notification.domain.repository.NotificationRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -88,5 +90,25 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     @Override
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public long countByStatus(NotificationStatus status) {
+        return jpaRepository.countByStatus(status);
+    }
+
+    @Override
+    public long countByChannel(NotificationChannel channel) {
+        return jpaRepository.countByChannel(channel);
+    }
+
+    @Override
+    public long countByCreatedAtAfter(LocalDateTime date) {
+        return jpaRepository.countByCreatedAtAfter(date);
     }
 }

@@ -35,6 +35,13 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
             <version>1.11.5</version>
         </dependency>
+
+        <!-- Twilio for SMS -->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>9.14.0</version>
+        </dependency>
     </dependencies>
     </dependencyManagement>
 
@@ -133,6 +140,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- Twilio for SMS -->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>9.14.0</version>
         </dependency>
     </dependencies>
 

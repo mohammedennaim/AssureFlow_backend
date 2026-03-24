@@ -10,6 +10,7 @@ import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationStatus;
 import com.pfe.notification.domain.repository.NotificationRepository;
 import com.pfe.notification.infrastructure.email.EmailNotificationService;
+import com.pfe.notification.infrastructure.sms.TwilioSmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -21,7 +22,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
     private final EmailNotificationService emailNotificationService;
+    private final TwilioSmsService twilioSmsService;
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
@@ -95,7 +99,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendNotification(UUID id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotificationNotFoundException(id));
-        
+
         try {
             if (NotificationChannel.EMAIL.equals(notification.getChannel())
                     && notification.getRecipient() != null && notification.getRecipient().contains("@")) {
@@ -105,8 +109,13 @@ public class NotificationServiceImpl implements NotificationService {
                         notification.getContent());
                 notification.send();
                 log.info("[NOTIFICATION] Email sent successfully: id={}", id);
+            } else if (NotificationChannel.SMS.equals(notification.getChannel())
+                    && notification.getRecipient() != null) {
+                twilioSmsService.sendSms(notification.getRecipient(), notification.getContent());
+                notification.send();
+                log.info("[NOTIFICATION] SMS sent successfully via Twilio: id={}", id);
             } else {
-                log.info("[NOTIFICATION] Channel={} — recipient={} — non-email delivery not yet implemented",
+                log.info("[NOTIFICATION] Channel={} — recipient={} — delivery method not configured",
                         notification.getChannel(), notification.getRecipient());
                 notification.send();
             }
@@ -158,5 +167,48 @@ public class NotificationServiceImpl implements NotificationService {
     @Cacheable(value = "notifications", key = "'unread_count_' + #recipient")
     public long getUnreadCount(String recipient) {
         return notificationRepository.countByRecipientAndReadFalse(recipient);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
+    public Map<String, Object> getDashboardStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // Total notifications
+        long totalNotifications = notificationRepository.count();
+        stats.put("totalNotifications", totalNotifications);
+        
+        // Notifications by status
+        long sentCount = notificationRepository.countByStatus(NotificationStatus.SENT);
+        long pendingCount = notificationRepository.countByStatus(NotificationStatus.PENDING);
+        long failedCount = notificationRepository.countByStatus(NotificationStatus.FAILED);
+        long deliveredCount = notificationRepository.countByStatus(NotificationStatus.DELIVERED);
+        
+        stats.put("sentCount", sentCount);
+        stats.put("pendingCount", pendingCount);
+        stats.put("failedCount", failedCount);
+        stats.put("deliveredCount", deliveredCount);
+        
+        // Notifications by channel
+        long emailCount = notificationRepository.countByChannel(NotificationChannel.EMAIL);
+        long smsCount = notificationRepository.countByChannel(NotificationChannel.SMS);
+        long pushCount = notificationRepository.countByChannel(NotificationChannel.PUSH);
+        
+        stats.put("emailCount", emailCount);
+        stats.put("smsCount", smsCount);
+        stats.put("pushCount", pushCount);
+        
+        // Success rate
+        double successRate = totalNotifications > 0 
+            ? ((double) (sentCount + deliveredCount) / totalNotifications) * 100 
+            : 0.0;
+        stats.put("successRate", Math.round(successRate * 100.0) / 100.0);
+        
+        // Recent notifications (last 7 days)
+        long recentNotifications = notificationRepository.countByCreatedAtAfter(
+            java.time.LocalDateTime.now().minusDays(7));
+        stats.put("recentNotifications", recentNotifications);
+        
+        return stats;
     }
 }

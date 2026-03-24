@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -59,6 +60,13 @@ public class NotificationController {
             @RequestParam(defaultValue = "20") int size) {
         Page<NotificationDto> list = notificationService.getAllNotificationsPaged(page, size);
         return ResponseEntity.ok(BaseResponse.success(list));
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Get notification statistics for dashboard")
+    public ResponseEntity<BaseResponse<Map<String, Object>>> getStatistics() {
+        Map<String, Object> stats = notificationService.getDashboardStatistics();
+        return ResponseEntity.ok(BaseResponse.success(stats, "Statistics retrieved successfully"));
     }
 
     @PostMapping("/{id}/send")
