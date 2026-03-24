@@ -28,5 +28,9 @@ public interface NotificationRepository {
 
     Page<Notification> findAllPaged(Pageable pageable);
 
+    long countByRecipientAndReadFalse(String recipient);
+
+    List<Notification> saveAll(List<Notification> notifications);
+
     void deleteById(UUID id);
 }

@@ -17,4 +17,6 @@ public interface JpaNotificationRepository extends JpaRepository<NotificationEnt
     List<NotificationEntity> findByType(NotificationType type);
 
     List<NotificationEntity> findByStatus(NotificationStatus status);
+
+    long countByRecipientAndReadFalse(String recipient);
 }

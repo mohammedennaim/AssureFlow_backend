@@ -16,7 +16,7 @@ public class EmailNotificationService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:assureflow@gmail.com}")
+    @Value("${spring.mail.username:no-reply@assureflow.local}")
     private String fromAddress;
 
     public void sendEmail(String to, String subject, String content) {
@@ -30,7 +30,11 @@ public class EmailNotificationService {
             mailSender.send(message);
             log.info("[EMAIL] Sent to={} subject={}", to, subject);
         } catch (MessagingException e) {
-            log.error("[EMAIL] Failed to send email to={} : {}", to, e.getMessage());
+            log.error("[EMAIL] Failed to send email to={} : {}", to, e.getMessage(), e);
+            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("[EMAIL] Unexpected error sending email to={} : {}", to, e.getMessage(), e);
+            throw new RuntimeException("Unexpected error sending email: " + e.getMessage(), e);
         }
     }
 }

@@ -95,18 +95,27 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendNotification(UUID id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotificationNotFoundException(id));
-        notification.send();
-        notificationRepository.save(notification);
-
-        if (NotificationChannel.EMAIL.equals(notification.getChannel())
-                && notification.getRecipient() != null && notification.getRecipient().contains("@")) {
-            emailNotificationService.sendEmail(
-                    notification.getRecipient(),
-                    notification.getSubject(),
-                    notification.getContent());
-        } else {
-            log.info("[NOTIFICATION] Channel={} — recipient={} — non-email delivery not yet implemented",
-                    notification.getChannel(), notification.getRecipient());
+        
+        try {
+            if (NotificationChannel.EMAIL.equals(notification.getChannel())
+                    && notification.getRecipient() != null && notification.getRecipient().contains("@")) {
+                emailNotificationService.sendEmail(
+                        notification.getRecipient(),
+                        notification.getSubject(),
+                        notification.getContent());
+                notification.send();
+                log.info("[NOTIFICATION] Email sent successfully: id={}", id);
+            } else {
+                log.info("[NOTIFICATION] Channel={} — recipient={} — non-email delivery not yet implemented",
+                        notification.getChannel(), notification.getRecipient());
+                notification.send();
+            }
+        } catch (Exception e) {
+            log.error("[NOTIFICATION] Failed to send notification id={}: {}", id, e.getMessage(), e);
+            notification.fail();
+            throw new RuntimeException("Failed to send notification: " + e.getMessage(), e);
+        } finally {
+            notificationRepository.save(notification);
         }
     }
 
@@ -119,5 +128,35 @@ public class NotificationServiceImpl implements NotificationService {
             throw new NotificationNotFoundException(id);
         }
         notificationRepository.deleteById(id);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
+    @Transactional
+    @CacheEvict(value = "notifications", key = "#id")
+    public void markAsRead(UUID id) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new NotificationNotFoundException(id));
+        notification.markAsRead();
+        notificationRepository.save(notification);
+        log.info("[NOTIFICATION] Marked as read: id={}", id);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
+    @Transactional
+    @CacheEvict(value = "notifications", allEntries = true)
+    public void markAllAsRead(String recipient) {
+        List<Notification> notifications = notificationRepository.findByRecipient(recipient);
+        notifications.forEach(Notification::markAsRead);
+        notificationRepository.saveAll(notifications);
+        log.info("[NOTIFICATION] Marked all as read for recipient: {}", recipient);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
+    @Cacheable(value = "notifications", key = "'unread_count_' + #recipient")
+    public long getUnreadCount(String recipient) {
+        return notificationRepository.countByRecipientAndReadFalse(recipient);
     }
 }

@@ -249,6 +249,14 @@ spring:
         # ========================================
         # 📧 NOTIFICATION SERVICE - Communications
         # ========================================
+        - id: notification-send
+          uri: http://notification-service:8080
+          predicates:
+            - Path=/api/v1/notifications/*/send
+            - Method=POST
+          filters:
+            - StripPrefix=0
+
         - id: notification-service
           uri: http://notification-service:8080
           predicates:

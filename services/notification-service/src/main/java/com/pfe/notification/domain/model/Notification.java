@@ -24,9 +24,18 @@ public class Notification {
     private NotificationStatus status;
     private UUID policyId;
     private LocalDateTime sentAt;
+    private boolean read;
 
     public void send() {
         this.status = NotificationStatus.SENT;
         this.sentAt = LocalDateTime.now();
+    }
+    
+    public void fail() {
+        this.status = NotificationStatus.FAILED;
+    }
+    
+    public void markAsRead() {
+        this.read = true;
     }
 }

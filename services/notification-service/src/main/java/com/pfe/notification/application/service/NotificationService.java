@@ -23,5 +23,11 @@ public interface NotificationService {
 
     void sendNotification(UUID id);
 
+    void markAsRead(UUID id);
+
+    void markAllAsRead(String recipient);
+
+    long getUnreadCount(String recipient);
+
     void deleteNotification(UUID id);
 }

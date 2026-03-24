@@ -31,6 +31,11 @@ public class ClaimEventConsumer {
         log.info("[KAFKA] notification-service received claim event type={} partition={} offset={}",
                 eventType, partition, offset);
 
+        if (payload == null || payload.isEmpty()) {
+            log.warn("[KAFKA] Received null or empty payload for event type={}, skipping", eventType);
+            return;
+        }
+
         switch (eventType) {
             case "claim.submitted" -> handleClaimSubmitted(payload);
             case "claim.approved" -> handleClaimApproved(payload);

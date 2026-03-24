@@ -70,6 +70,22 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     }
 
     @Override
+    public long countByRecipientAndReadFalse(String recipient) {
+        return jpaRepository.countByRecipientAndReadFalse(recipient);
+    }
+
+    @Override
+    public List<Notification> saveAll(List<Notification> notifications) {
+        var entities = notifications.stream()
+                .map(mapper::toEntity)
+                .collect(Collectors.toList());
+        var saved = jpaRepository.saveAll(entities);
+        return saved.stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
     }

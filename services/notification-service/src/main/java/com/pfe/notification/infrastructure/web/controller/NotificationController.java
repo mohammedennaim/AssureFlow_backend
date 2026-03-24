@@ -68,6 +68,27 @@ public class NotificationController {
         return ResponseEntity.ok(BaseResponse.success(null, "Notification sent successfully"));
     }
 
+    @PutMapping("/{id}/read")
+    @Operation(summary = "Mark notification as read")
+    public ResponseEntity<BaseResponse<Void>> markAsRead(@PathVariable UUID id) {
+        notificationService.markAsRead(id);
+        return ResponseEntity.ok(BaseResponse.success(null, "Notification marked as read"));
+    }
+
+    @PutMapping("/recipient/{recipient}/read-all")
+    @Operation(summary = "Mark all notifications as read for a recipient")
+    public ResponseEntity<BaseResponse<Void>> markAllAsRead(@PathVariable String recipient) {
+        notificationService.markAllAsRead(recipient);
+        return ResponseEntity.ok(BaseResponse.success(null, "All notifications marked as read"));
+    }
+
+    @GetMapping("/recipient/{recipient}/unread-count")
+    @Operation(summary = "Get unread notification count for a recipient")
+    public ResponseEntity<BaseResponse<Long>> getUnreadCount(@PathVariable String recipient) {
+        long count = notificationService.getUnreadCount(recipient);
+        return ResponseEntity.ok(BaseResponse.success(count));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a notification")
     public ResponseEntity<BaseResponse<Void>> deleteNotification(@PathVariable UUID id) {

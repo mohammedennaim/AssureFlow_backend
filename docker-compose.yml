@@ -356,6 +356,7 @@ services:
       MAIL_PORT: ${MAIL_PORT}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
     networks:
       - insurance-net
     deploy:
@@ -438,6 +439,27 @@ services:
         reservations:
           cpus: '0.25'
           memory: 200M
+
+  # ==========================================================
+  # 📧 INFRASTRUCTURE - MailHog (Email Testing)
+  # ==========================================================
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: assureflow-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - insurance-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
 
   # ==========================================================
   # 📊 OBSERVABILITÉ - Prometheus
