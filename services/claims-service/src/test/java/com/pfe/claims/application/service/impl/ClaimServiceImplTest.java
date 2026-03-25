@@ -166,7 +166,7 @@ class ClaimServiceImplTest {
 
             when(claimRepository.findById(CLAIM_ID)).thenReturn(Optional.of(claim));
             when(claimRepository.save(any(Claim.class))).thenReturn(claim);
-            doNothing().when(claimEventPublisher).publishClaimStatusChanged(any(), any(), any(), any());
+            lenient().doNothing().when(claimEventPublisher).publishClaimApproved(any(), any(), any(), any(), any(), any());
 
             assertDoesNotThrow(() -> claimService.approveClaim(CLAIM_ID, new BigDecimal("4000"), approvedBy));
             verify(claimRepository).save(claim);
@@ -179,7 +179,7 @@ class ClaimServiceImplTest {
 
             when(claimRepository.findById(CLAIM_ID)).thenReturn(Optional.of(claim));
             when(claimRepository.save(any(Claim.class))).thenReturn(claim);
-            doNothing().when(claimEventPublisher).publishClaimStatusChanged(any(), any(), any(), any());
+            lenient().doNothing().when(claimEventPublisher).publishClaimRejected(any(), any(), any(), any(), any(), any());
 
             assertDoesNotThrow(() -> claimService.rejectClaim(CLAIM_ID, "Insufficient evidence"));
             verify(claimRepository).save(claim);

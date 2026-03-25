@@ -3,6 +3,7 @@ package com.pfe.policy.infrastructure.messaging;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pfe.policy.application.dto.CreatePolicyRequest;
 import com.pfe.policy.application.service.PolicyService;
+import com.pfe.policy.domain.model.PolicyType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -82,9 +83,6 @@ public class SagaCommandConsumer {
                 sagaId, stepId, policyNumber);
 
         try {
-            // Parse clientId
-            UUID clientId = clientIdStr != null ? UUID.fromString(clientIdStr) : null;
-
             // Parse amounts
             BigDecimal coverageAmount = null;
             if (coverageAmountStr != null) {
@@ -125,8 +123,8 @@ public class SagaCommandConsumer {
 
             // Create policy request
             CreatePolicyRequest request = CreatePolicyRequest.builder()
-                    .clientId(clientId)
-                    .type(type != null ? type : "AUTO")
+                    .clientId(clientIdStr)  // Pass String directly, not UUID
+                    .type(type != null ? PolicyType.valueOf(type) : PolicyType.VEHICLE)
                     .coverageAmount(coverageAmount)
                     .premiumAmount(premiumAmount)
                     .startDate(startDate)

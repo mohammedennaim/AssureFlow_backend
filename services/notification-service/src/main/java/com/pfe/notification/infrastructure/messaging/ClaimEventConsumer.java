@@ -1,7 +1,7 @@
 package com.pfe.notification.infrastructure.messaging;
 
 import com.pfe.notification.application.dto.CreateNotificationRequest;
-import com.pfe.notification.application.service.NotificationService;
+import com.pfe.notification.application.service.impl.NotificationServiceImpl;
 import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationType;
 import com.pfe.notification.infrastructure.sms.TwilioSmsService;
@@ -20,10 +20,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ClaimEventConsumer {
 
-    private final NotificationService notificationService;
+    private final NotificationServiceImpl notificationService;
     private final TwilioSmsService twilioSmsService;
 
-    @KafkaListener(topics = "claim-events", groupId = "notification-service-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "claim-events", groupId = "notification-service-claim-group-v2", containerFactory = "kafkaListenerContainerFactory")
     public void onClaimEvent(
             @Payload Map<String, Object> payload,
             @Header(KafkaHeaders.RECEIVED_KEY) String eventType,
@@ -62,7 +62,7 @@ public class ClaimEventConsumer {
                 .subject("Votre réclamation a été soumise")
                 .content("Votre réclamation " + claimId + " a bien été enregistrée. Nous revenons vers vous sous 48h.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -73,7 +73,7 @@ public class ClaimEventConsumer {
                     .recipient(clientPhone)
                     .content("Votre réclamation " + claimId + " a été enregistrée. Nous vous contactons sous 48h.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_SUBMITTED SMS sent to {}", clientPhone);
         }
@@ -96,7 +96,7 @@ public class ClaimEventConsumer {
                 .subject("Votre réclamation est approuvée")
                 .content("Félicitations ! Votre réclamation " + claimId + " est approuvée. Montant : " + amount + ".")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -107,7 +107,7 @@ public class ClaimEventConsumer {
                     .recipient(clientPhone)
                     .content("Bonne nouvelle ! Votre réclamation " + claimId + " est approuvée. Montant: " + amount + ".")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_APPROVED SMS sent to {}", clientPhone);
         }
@@ -129,7 +129,7 @@ public class ClaimEventConsumer {
                 .subject("Votre réclamation a été refusée")
                 .content("Nous sommes désolés. Votre réclamation " + claimId + " n'a pas pu être approuvée.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -140,7 +140,7 @@ public class ClaimEventConsumer {
                     .recipient(clientPhone)
                     .content("Votre réclamation " + claimId + " n'a pas été approuvée. Contactez-nous pour plus d'infos.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_REJECTED SMS sent to {}", clientPhone);
         }
@@ -163,7 +163,7 @@ public class ClaimEventConsumer {
                 .subject("Paiement effectué pour votre réclamation")
                 .content("Le règlement de " + amount + " pour la réclamation " + claimId + " a été effectué.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -174,7 +174,7 @@ public class ClaimEventConsumer {
                     .recipient(clientPhone)
                     .content("Paiement de " + amount + " effectué pour réclamation " + claimId + ".")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_PAID SMS sent to {}", clientPhone);
         }
@@ -200,7 +200,7 @@ public class ClaimEventConsumer {
                 .content("Votre réclamation " + claimNumber + " est en cours de traitement avancé. " +
                         "Un responsable vous contactera dans les plus brefs délais.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -211,7 +211,7 @@ public class ClaimEventConsumer {
                     .recipient(clientPhone)
                     .content("Réclamation " + claimNumber + " en cours de traitement avancé. Un responsable vous contactera.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_SLA_BREACHED SMS sent to {}", clientPhone);
         }

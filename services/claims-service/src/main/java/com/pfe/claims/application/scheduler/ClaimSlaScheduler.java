@@ -46,7 +46,19 @@ public class ClaimSlaScheduler {
                     claim.getCreatedAt(),
                     SLA_HOURS);
 
-            kafkaTemplate.send("claim-events", "claim.sla.breached", claim.getId().toString());
+            // Create a proper JSON payload instead of just sending the ID
+            java.util.Map<String, Object> payload = new java.util.HashMap<>();
+            payload.put("claimId", claim.getId().toString());
+            payload.put("claimNumber", claim.getClaimNumber());
+            payload.put("clientId", claim.getClientId().toString());
+            payload.put("policyId", claim.getPolicyId().toString());
+            payload.put("status", claim.getStatus().toString());
+            payload.put("createdAt", claim.getCreatedAt().toString());
+            payload.put("slaHours", SLA_HOURS);
+            payload.put("timestamp", LocalDateTime.now().toString());
+
+            kafkaTemplate.send("claim-events", "claim.sla.breached", payload);
+            log.info("[KAFKA] Published claim.sla.breached event for claim {}", claim.getClaimNumber());
         }
     }
 }

@@ -5,6 +5,7 @@ import com.pfe.billing.application.dto.CreateInvoiceRequest;
 import com.pfe.billing.application.dto.CreatePaymentRequest;
 import com.pfe.billing.application.service.InvoiceService;
 import com.pfe.billing.application.service.PaymentService;
+import com.pfe.billing.domain.model.PaymentMethod;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -164,9 +165,10 @@ public class SagaCommandConsumer {
             // Create payment request
             CreatePaymentRequest request = CreatePaymentRequest.builder()
                     .invoiceId(invoiceId)
+                    .clientId(null)  // Will be fetched from invoice
                     .amount(amount != null ? amount : BigDecimal.ZERO)
-                    .paymentMethod(paymentMethod != null ? paymentMethod : "BANK_TRANSFER")
-                    .paymentDate(LocalDateTime.now())
+                    .method(PaymentMethod.BANK_TRANSFER)
+                    .transactionId(null)
                     .build();
 
             // Process payment via service
@@ -180,7 +182,7 @@ public class SagaCommandConsumer {
                 "paymentId", paymentDto.getId(),
                 "invoiceId", invoiceIdStr,
                 "amount", paymentDto.getAmount(),
-                "paymentMethod", paymentDto.getPaymentMethod(),
+                "paymentMethod", paymentDto.getMethod() != null ? paymentDto.getMethod().name() : null,
                 "status", paymentDto.getStatus()
             ));
 

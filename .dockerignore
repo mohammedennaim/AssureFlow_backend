@@ -1,0 +1,93 @@
+# ============================================================
+# 🐳 .dockerignore - AssureFlow Platform
+# ============================================================
+# Optimized for fast Docker builds with minimal context
+# ============================================================
+
+# --- Maven / Java ---
+target/
+**/target/**
+!.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+
+# --- IDE ---
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Environment ---
+.env
+.env.local
+.env.*
+
+# --- Git ---
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# --- Docker (avoid recursive copy) ---
+docker/Dockerfile
+docker-compose.yml
+docker-compose*.yml
+.dockerignore
+
+# --- Documentation ---
+*.md
+README*
+LICENSE
+CHANGELOG
+CONTRIBUTING
+docs/
+
+# --- Test resources ---
+src/test/
+**/test/**
+
+# --- Build artifacts ---
+build/
+dist/
+node_modules/
+.npm
+.yarn
+
+# --- Temporary files ---
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# --- Frontend (not needed for backend build) ---
+AssureFlow-FrontEnd/node_modules/
+AssureFlow-FrontEnd/dist/
+AssureFlow-FrontEnd/build/

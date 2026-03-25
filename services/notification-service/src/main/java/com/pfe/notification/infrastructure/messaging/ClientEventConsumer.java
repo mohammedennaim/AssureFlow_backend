@@ -1,7 +1,7 @@
 package com.pfe.notification.infrastructure.messaging;
 
 import com.pfe.notification.application.dto.CreateNotificationRequest;
-import com.pfe.notification.application.service.NotificationService;
+import com.pfe.notification.application.service.impl.NotificationServiceImpl;
 import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationType;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +23,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ClientEventConsumer {
 
-    private final NotificationService notificationService;
+    private final NotificationServiceImpl notificationService;
 
-    @KafkaListener(topics = "client-events", groupId = "notification-service-client-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "client-events", groupId = "notification-service-client-group-v2", containerFactory = "kafkaListenerContainerFactory")
     public void onClientEvent(
             @Payload Map<String, Object> payload,
             @Header(KafkaHeaders.RECEIVED_KEY) String eventType,
@@ -66,7 +66,7 @@ public class ClientEventConsumer {
                 .content("Bienvenue " + firstName + " " + lastName + " ! Votre compte client a été créé avec succès. " +
                         "Nous sommes ravis de vous compter parmi nous.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -77,7 +77,7 @@ public class ClientEventConsumer {
                     .recipient(clientPhone)
                     .content("Bienvenue " + firstName + " ! Votre compte AssureFlow est créé.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] CLIENT_CREATED SMS sent to {}", clientPhone);
         }
@@ -102,7 +102,7 @@ public class ClientEventConsumer {
                 .content("Vos informations client ont été mises à jour avec succès. " +
                         "Champs modifiés : " + updatedFields + ".")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -113,7 +113,7 @@ public class ClientEventConsumer {
                     .recipient(clientPhone)
                     .content("Vos informations ont été mises à jour.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] CLIENT_UPDATED SMS sent to {}", clientPhone);
         }
@@ -135,7 +135,7 @@ public class ClientEventConsumer {
                 .subject("Suppression de compte client")
                 .content("Le compte client " + clientId + " a été supprimé. Raison : " + deletionReason + ".")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
 
         // SMS notification to admin if phone is available
@@ -146,7 +146,7 @@ public class ClientEventConsumer {
                 .recipient(adminPhone)
                 .content("ALERTE: Compte client " + clientId + " supprimé. Raison: " + deletionReason + ".")
                 .build();
-        var smsDto = notificationService.createNotification(smsRequest);
+        var smsDto = notificationService.createNotificationInternal(smsRequest);
         notificationService.sendNotification(smsDto.getId());
 
         // Also send SMS to client if phone is available (for transparency)
@@ -157,7 +157,7 @@ public class ClientEventConsumer {
                     .recipient(clientPhone)
                     .content("Votre compte AssureFlow a été supprimé. Raison: " + deletionReason + ". Pour toute question, contactez le support.")
                     .build();
-            var clientSmsDto = notificationService.createNotification(clientSmsRequest);
+            var clientSmsDto = notificationService.createNotificationInternal(clientSmsRequest);
             notificationService.sendNotification(clientSmsDto.getId());
             log.info("[NOTIFICATION] CLIENT_DELETED SMS sent to client {}", clientPhone);
         }

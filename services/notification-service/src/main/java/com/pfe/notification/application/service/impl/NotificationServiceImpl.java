@@ -43,6 +43,16 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     @CacheEvict(value = "notifications", allEntries = true)
     public NotificationDto createNotification(CreateNotificationRequest request) {
+        return createNotificationInternal(request);
+    }
+
+    /**
+     * Internal method for creating notifications without security checks.
+     * Used by Kafka consumers and other internal services.
+     */
+    @Transactional
+    @CacheEvict(value = "notifications", allEntries = true)
+    public NotificationDto createNotificationInternal(CreateNotificationRequest request) {
         Notification notification = notificationMapper.toDomain(request);
         notification.setStatus(NotificationStatus.PENDING);
         Notification saved = notificationRepository.save(notification);

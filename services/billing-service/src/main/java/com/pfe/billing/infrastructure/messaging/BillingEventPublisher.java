@@ -143,8 +143,7 @@ public class BillingEventPublisher {
             payload.put("clientEmail", client != null ? client.getEmail() : null);
             payload.put("clientPhone", client != null ? client.getPhone() : null);
             payload.put("amount", payment.getAmount());
-            payload.put("paymentDate", payment.getPaymentDate() != null ? payment.getPaymentDate().toString() : null);
-            payload.put("paymentMethod", payment.getPaymentMethod());
+            payload.put("paymentMethod", payment.getMethod() != null ? payment.getMethod().name() : null);
             payload.put("timestamp", event.getEventTimestamp() != null ? event.getEventTimestamp().toString() : 
                 java.time.LocalDateTime.now().toString());
 

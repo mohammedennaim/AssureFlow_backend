@@ -7,6 +7,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -20,8 +22,22 @@ public class PolicyEventPublisher {
 
 
     public void publishPolicyCreated(PolicyCreatedEvent event) {
-        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(POLICY_TOPIC, "policy.created",
-                event);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("policyId", event.getPolicyId());
+        payload.put("policyNumber", event.getPolicyNumber());
+        payload.put("clientId", event.getClientId());
+        payload.put("clientEmail", event.getClientEmail());
+        payload.put("clientPhone", event.getClientPhone());
+        payload.put("type", event.getType());
+        payload.put("status", event.getStatus());
+        payload.put("premiumAmount", event.getPremiumAmount());
+        payload.put("coverageAmount", event.getCoverageAmount());
+        payload.put("startDate", event.getStartDate());
+        payload.put("endDate", event.getEndDate());
+        payload.put("timestamp", java.time.LocalDateTime.now().toString());
+
+        // Send as Map<String, Object> to ensure proper deserialization in consumer
+        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(POLICY_TOPIC, "policy.created", payload);
 
         future.whenComplete((result, ex) -> {
             if (ex != null) {

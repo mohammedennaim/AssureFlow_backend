@@ -1,7 +1,7 @@
 package com.pfe.notification.infrastructure.messaging;
 
 import com.pfe.notification.application.dto.CreateNotificationRequest;
-import com.pfe.notification.application.service.NotificationService;
+import com.pfe.notification.application.service.impl.NotificationServiceImpl;
 import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationType;
 import com.pfe.notification.infrastructure.sms.TwilioSmsService;
@@ -20,10 +20,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PaymentEventConsumer {
 
-    private final NotificationService notificationService;
+    private final NotificationServiceImpl notificationService;
     private final TwilioSmsService twilioSmsService;
 
-    @KafkaListener(topics = "billing-events", groupId = "notification-service-billing-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "billing-events", groupId = "notification-service-billing-group-v2", containerFactory = "kafkaListenerContainerFactory")
     public void onBillingEvent(
             @Payload Map<String, Object> payload,
             @Header(KafkaHeaders.RECEIVED_KEY) String eventType,
@@ -56,7 +56,7 @@ public class PaymentEventConsumer {
                 .subject("Paiement reçu")
                 .content("Nous avons bien reçu votre paiement de " + amount + " pour la facture " + invoiceId + ".")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -67,7 +67,7 @@ public class PaymentEventConsumer {
                     .recipient(clientPhone)
                     .content("Paiement de " + amount + " reçu pour facture " + invoiceId + ". Merci!")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] PAYMENT_RECEIVED SMS sent to {}", clientPhone);
         }
@@ -91,7 +91,7 @@ public class PaymentEventConsumer {
                 .subject("Nouvelle facture générée")
                 .content("Une facture " + invoiceId + " a été générée. Échéance : " + dueDate + ".")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -102,7 +102,7 @@ public class PaymentEventConsumer {
                     .recipient(clientPhone)
                     .content("Facture " + invoiceId + " générée. Montant: " + amount + ". Échéance: " + dueDate + ".")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] INVOICE_GENERATED SMS sent to {}", clientPhone);
         }
@@ -125,7 +125,7 @@ public class PaymentEventConsumer {
                 .subject("Facture en retard de paiement")
                 .content("Rappel : votre facture " + invoiceId + " est en retard. Merci de régulariser votre situation.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -136,7 +136,7 @@ public class PaymentEventConsumer {
                     .recipient(clientPhone)
                     .content("RAPPEL: Facture " + invoiceId + " en retard. Montant: " + amount + ". Merci de régulariser.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] INVOICE_OVERDUE SMS sent to {}", clientPhone);
         }

@@ -1,7 +1,7 @@
 package com.pfe.notification.infrastructure.messaging;
 
 import com.pfe.notification.application.dto.CreateNotificationRequest;
-import com.pfe.notification.application.service.NotificationService;
+import com.pfe.notification.application.service.impl.NotificationServiceImpl;
 import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationType;
 import lombok.RequiredArgsConstructor;
@@ -23,35 +23,43 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PolicyEventConsumer {
 
-    private final NotificationService notificationService;
+    private final NotificationServiceImpl notificationService;
 
-    @KafkaListener(topics = "policy-events", groupId = "notification-service-policy-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "policy-events", groupId = "notification-service-policy-group-v2", containerFactory = "kafkaListenerContainerFactory")
     public void onPolicyEvent(
             @Payload Map<String, Object> payload,
             @Header(KafkaHeaders.RECEIVED_KEY) String eventType,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset) {
 
-        log.info("[KAFKA] notification-service received policy event type={} partition={} offset={}",
-                eventType, partition, offset);
+        try {
+            log.info("[KAFKA] notification-service received policy event type={} partition={} offset={}",
+                    eventType, partition, offset);
+            log.info("[KAFKA] Payload content: {}", payload);
 
-        if (payload == null || payload.isEmpty()) {
-            log.warn("[KAFKA] Received null or empty payload for event type={}, skipping", eventType);
-            return;
-        }
+            if (payload == null || payload.isEmpty()) {
+                log.warn("[KAFKA] Received null or empty payload for event type={}, skipping", eventType);
+                return;
+            }
 
-        switch (eventType) {
-            case "policy.created" -> handlePolicyCreated(payload);
-            case "policy.approved" -> handlePolicyApproved(payload);
-            case "policy.rejected" -> handlePolicyRejected(payload);
-            case "policy.renewed" -> handlePolicyRenewed(payload);
-            case "policy.cancelled" -> handlePolicyCancelled(payload);
-            case "policy.expiring" -> handlePolicyExpiring(payload);
-            default -> log.debug("[NOTIFICATION] Ignoring unhandled policy event: {}", eventType);
+            switch (eventType) {
+                case "policy.created" -> handlePolicyCreated(payload);
+                case "policy.approved" -> handlePolicyApproved(payload);
+                case "policy.rejected" -> handlePolicyRejected(payload);
+                case "policy.renewed" -> handlePolicyRenewed(payload);
+                case "policy.cancelled" -> handlePolicyCancelled(payload);
+                case "policy.expiring" -> handlePolicyExpiring(payload);
+                default -> log.debug("[NOTIFICATION] Ignoring unhandled policy event: {}", eventType);
+            }
+        } catch (Exception e) {
+            log.error("[KAFKA] Exception in onPolicyEvent for type={}: {}", eventType, e.getMessage(), e);
+            throw e;
         }
     }
 
     private void handlePolicyCreated(Map<String, Object> payload) {
+        log.debug("[NOTIFICATION] Processing policy.created payload: {}", payload);
+        
         String policyId = (String) payload.get("policyId");
         String policyNumber = (String) payload.get("policyNumber");
         String clientId = (String) payload.get("clientId");
@@ -60,34 +68,42 @@ public class PolicyEventConsumer {
         String clientPhone = (String) payload.get("clientPhone");
         Object premiumAmount = payload.get("premiumAmount");
         
+        log.info("[NOTIFICATION] Extracted data - policyNumber={}, clientEmail={}, clientPhone={}", 
+            policyNumber, clientEmail, clientPhone);
+
         String recipient = clientEmail != null ? clientEmail : clientId;
         
+        if (recipient == null) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping notification", policyNumber);
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_CREATED)
                 .channel(NotificationChannel.EMAIL)
                 .recipient(recipient)
                 .subject("Votre police d'assurance a été créée")
-                .content("Votre police " + policyNumber + " de type " + policyType + 
-                        " a été créée avec succès. Prime: " + premiumAmount + "€.")
+                .content("Votre police " + policyNumber + " de type " + policyType +
+                        " a été créée avec succès. Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "€.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
-        
+
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
             CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
                     .type(NotificationType.POLICY_CREATED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
-                    .content("Police " + policyNumber + " créée. Type: " + policyType + 
-                            ". Prime: " + premiumAmount + "€.")
+                    .content("Police " + policyNumber + " créée. Type: " + policyType +
+                            ". Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "€.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_CREATED SMS sent to {}", clientPhone);
         }
-        
+
         log.info("[NOTIFICATION] POLICY_CREATED email sent to {}", recipient);
     }
 
@@ -109,7 +125,7 @@ public class PolicyEventConsumer {
                 .content("Bonne nouvelle ! Votre police " + policyNumber + " a été approuvée. " +
                         "Votre couverture est maintenant active.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -120,7 +136,7 @@ public class PolicyEventConsumer {
                     .recipient(clientPhone)
                     .content("Police " + policyNumber + " approuvée. Couverture active.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_APPROVED SMS sent to {}", clientPhone);
         }
@@ -147,7 +163,7 @@ public class PolicyEventConsumer {
                 .content("Votre demande de police " + policyNumber + " n'a pas pu être approuvée. " +
                         "Raison : " + rejectionReason + ". Contactez-nous pour plus d'informations.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -159,7 +175,7 @@ public class PolicyEventConsumer {
                     .content("Police " + policyNumber + " refusée. Raison: " + rejectionReason + 
                             ". Contactez-nous.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_REJECTED SMS sent to {}", clientPhone);
         }
@@ -186,7 +202,7 @@ public class PolicyEventConsumer {
                 .content("Votre police " + policyNumber + " a été renouvelée avec succès. " +
                         "Date de renouvellement : " + renewalDate + ".")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -197,7 +213,7 @@ public class PolicyEventConsumer {
                     .recipient(clientPhone)
                     .content("Police " + policyNumber + " renouvelée. Date: " + renewalDate + ".")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_RENEWED SMS sent to {}", clientPhone);
         }
@@ -224,7 +240,7 @@ public class PolicyEventConsumer {
                 .content("Votre police " + policyNumber + " a été annulée. " +
                         "Raison : " + cancellationReason + ". Pour toute question, contactez notre service client.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -236,7 +252,7 @@ public class PolicyEventConsumer {
                     .content("Police " + policyNumber + " annulée. Raison: " + cancellationReason + 
                             ". Contactez-nous.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_CANCELLED SMS sent to {}", clientPhone);
         }
@@ -264,7 +280,7 @@ public class PolicyEventConsumer {
                 .content("Votre police " + policyNumber + " arrivera à expiration le " + expirationDate + 
                         " (dans " + daysUntilExpiry + " jours). Pensez à la renouveler pour rester couvert.")
                 .build();
-        var emailDto = notificationService.createNotification(emailRequest);
+        var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotification(emailDto.getId());
         
         // Create SMS notification if phone number is available
@@ -276,7 +292,7 @@ public class PolicyEventConsumer {
                     .content("Rappel: Police " + policyNumber + " expire le " + expirationDate + 
                             " (dans " + daysUntilExpiry + " jours). Renouvelez maintenant.")
                     .build();
-            var smsDto = notificationService.createNotification(smsRequest);
+            var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotification(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_EXPIRING SMS sent to {}", clientPhone);
         }
