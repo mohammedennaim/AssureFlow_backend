@@ -55,9 +55,9 @@ feign:
   client:
     config:
       policy-service:
-        url: http://localhost:8086
+        url: ${FEIGN_CLIENT_CONFIG_POLICY-SERVICE_URL:http://localhost:8086}
       client-service:
-        url: http://localhost:8084
+        url: ${FEIGN_CLIENT_CONFIG_CLIENT-SERVICE_URL:http://localhost:8084}
   circuitbreaker:
     enabled: true
 

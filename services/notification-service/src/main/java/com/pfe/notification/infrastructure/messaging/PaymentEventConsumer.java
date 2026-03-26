@@ -46,8 +46,27 @@ public class PaymentEventConsumer {
         String invoiceId = (String) payload.get("invoiceId");
         Object amount    = payload.get("amount");
         String clientPhone = (String) payload.get("clientPhone");
-        String recipient = (String) payload.getOrDefault("clientEmail", clientId);
-        
+        String clientEmail = (String) payload.get("clientEmail");
+        String recipient = clientEmail != null ? clientEmail : clientId;
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for invoice={}, skipping email notification", invoiceId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.PAYMENT_RECEIVED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Paiement " + amount + " reçu")
+                        .content("Paiement de " + amount + " reçu pour facture " + invoiceId + ". Merci!")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] PAYMENT_RECEIVED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.PAYMENT_RECEIVED)
@@ -57,18 +76,19 @@ public class PaymentEventConsumer {
                 .content("Nous avons bien reçu votre paiement de " + amount + " pour la facture " + invoiceId + ".")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
-        
+        notificationService.sendNotificationInternal(emailDto.getId());
+
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
             CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
                     .type(NotificationType.PAYMENT_RECEIVED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Paiement " + amount + " reçu")
                     .content("Paiement de " + amount + " reçu pour facture " + invoiceId + ". Merci!")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] PAYMENT_RECEIVED SMS sent to {}", clientPhone);
         }
         
@@ -81,8 +101,27 @@ public class PaymentEventConsumer {
         Object dueDate   = payload.get("dueDate");
         Object amount    = payload.get("amount");
         String clientPhone = (String) payload.get("clientPhone");
-        String recipient = (String) payload.getOrDefault("clientEmail", clientId);
-        
+        String clientEmail = (String) payload.get("clientEmail");
+        String recipient = clientEmail != null ? clientEmail : clientId;
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for invoice={}, skipping email notification", invoiceId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.INVOICE_GENERATED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Facture " + invoiceId + " générée")
+                        .content("Facture " + invoiceId + " générée. Montant: " + amount + ". Échéance: " + dueDate + ".")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] INVOICE_GENERATED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.INVOICE_GENERATED)
@@ -92,18 +131,19 @@ public class PaymentEventConsumer {
                 .content("Une facture " + invoiceId + " a été générée. Échéance : " + dueDate + ".")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
-        
+        notificationService.sendNotificationInternal(emailDto.getId());
+
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
             CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
                     .type(NotificationType.INVOICE_GENERATED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Facture " + invoiceId + " générée")
                     .content("Facture " + invoiceId + " générée. Montant: " + amount + ". Échéance: " + dueDate + ".")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] INVOICE_GENERATED SMS sent to {}", clientPhone);
         }
         
@@ -115,8 +155,27 @@ public class PaymentEventConsumer {
         String invoiceId = (String) payload.get("invoiceId");
         Object amount    = payload.get("amount");
         String clientPhone = (String) payload.get("clientPhone");
-        String recipient = (String) payload.getOrDefault("clientEmail", clientId);
-        
+        String clientEmail = (String) payload.get("clientEmail");
+        String recipient = clientEmail != null ? clientEmail : clientId;
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for invoice={}, skipping email notification", invoiceId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.INVOICE_OVERDUE)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Facture " + invoiceId + " en retard")
+                        .content("RAPPEL: Facture " + invoiceId + " en retard. Montant: " + amount + ". Merci de régulariser.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] INVOICE_OVERDUE SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.INVOICE_OVERDUE)
@@ -126,18 +185,19 @@ public class PaymentEventConsumer {
                 .content("Rappel : votre facture " + invoiceId + " est en retard. Merci de régulariser votre situation.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
-        
+        notificationService.sendNotificationInternal(emailDto.getId());
+
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
             CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
                     .type(NotificationType.INVOICE_OVERDUE)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Facture " + invoiceId + " en retard")
                     .content("RAPPEL: Facture " + invoiceId + " en retard. Montant: " + amount + ". Merci de régulariser.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] INVOICE_OVERDUE SMS sent to {}", clientPhone);
         }
         

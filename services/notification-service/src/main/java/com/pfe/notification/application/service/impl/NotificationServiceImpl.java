@@ -51,6 +51,7 @@ public class NotificationServiceImpl implements NotificationService {
      * Used by Kafka consumers and other internal services.
      */
     @Transactional
+    
     @CacheEvict(value = "notifications", allEntries = true)
     public NotificationDto createNotificationInternal(CreateNotificationRequest request) {
         Notification notification = notificationMapper.toDomain(request);
@@ -107,6 +108,16 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     @CacheEvict(value = "notifications", key = "#id")
     public void sendNotification(UUID id) {
+        sendNotificationInternal(id);
+    }
+
+    /**
+     * Internal method for sending notifications without security checks.
+     * Used by Kafka consumers and other internal services.
+     */
+    @Transactional
+    @CacheEvict(value = "notifications", key = "#id")
+    public void sendNotificationInternal(UUID id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotificationNotFoundException(id));
 

@@ -47,6 +47,12 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
+        # Session timeout configuration - increased for stability
+        session.timeout.ms: 45000
+        heartbeat.interval.ms: 15000
+        max.poll.interval.ms: 300000
+        max.poll.records: 100
+        fetch.max.wait.ms: 500
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -61,6 +67,9 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectiontimeout: 10000
+          timeout: 30000
+          writetimeout: 30000
 
 # Twilio SMS Configuration
 twilio:
@@ -127,6 +136,9 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectiontimeout: 10000
+          timeout: 30000
+          writetimeout: 30000
   # Twilio SMS Configuration (Docker)
 twilio:
   account:

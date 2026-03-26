@@ -122,7 +122,7 @@ class NotificationServiceImplTest {
         void shouldSendNotificationSuccessfully() {
             when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
 
-            notificationService.sendNotification(notificationId);
+            notificationService.sendNotificationInternal(notificationId);
 
             assertThat(notification.getStatus()).isEqualTo(NotificationStatus.SENT);
             verify(notificationRepository).save(notification);

@@ -53,13 +53,14 @@ public class PolicyEventConsumer {
             }
         } catch (Exception e) {
             log.error("[KAFKA] Exception in onPolicyEvent for type={}: {}", eventType, e.getMessage(), e);
-            throw e;
+            // Don't rethrow - let the error handler manage retries
+            // This prevents one bad message from blocking the entire consumer
         }
     }
 
     private void handlePolicyCreated(Map<String, Object> payload) {
         log.debug("[NOTIFICATION] Processing policy.created payload: {}", payload);
-        
+
         String policyId = (String) payload.get("policyId");
         String policyNumber = (String) payload.get("policyNumber");
         String clientId = (String) payload.get("clientId");
@@ -67,14 +68,28 @@ public class PolicyEventConsumer {
         String clientEmail = (String) payload.get("clientEmail");
         String clientPhone = (String) payload.get("clientPhone");
         Object premiumAmount = payload.get("premiumAmount");
-        
-        log.info("[NOTIFICATION] Extracted data - policyNumber={}, clientEmail={}, clientPhone={}", 
+
+        log.info("[NOTIFICATION] Extracted data - policyNumber={}, clientEmail={}, clientPhone={}",
             policyNumber, clientEmail, clientPhone);
 
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
-        if (recipient == null) {
-            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping notification", policyNumber);
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.POLICY_CREATED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Police " + policyNumber + " créée")
+                        .content("Police " + policyNumber + " créée. Type: " + policyType +
+                                ". Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "€.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] POLICY_CREATED SMS sent to {}", clientPhone);
+            }
             return;
         }
 
@@ -88,7 +103,7 @@ public class PolicyEventConsumer {
                         " a été créée avec succès. Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "€.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
 
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -96,11 +111,12 @@ public class PolicyEventConsumer {
                     .type(NotificationType.POLICY_CREATED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Police " + policyNumber + " créée")
                     .content("Police " + policyNumber + " créée. Type: " + policyType +
                             ". Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "€.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_CREATED SMS sent to {}", clientPhone);
         }
 
@@ -113,9 +129,27 @@ public class PolicyEventConsumer {
         String clientId = (String) payload.get("clientId");
         String clientEmail = (String) payload.get("clientEmail");
         String clientPhone = (String) payload.get("clientPhone");
-        
+
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.POLICY_APPROVED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Police " + policyNumber + " approuvée")
+                        .content("Police " + policyNumber + " approuvée. Couverture active.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] POLICY_APPROVED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_APPROVED)
@@ -126,7 +160,7 @@ public class PolicyEventConsumer {
                         "Votre couverture est maintenant active.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -134,10 +168,11 @@ public class PolicyEventConsumer {
                     .type(NotificationType.POLICY_APPROVED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Police " + policyNumber + " approuvée")
                     .content("Police " + policyNumber + " approuvée. Couverture active.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_APPROVED SMS sent to {}", clientPhone);
         }
         
@@ -151,9 +186,28 @@ public class PolicyEventConsumer {
         String rejectionReason = (String) payload.get("rejectionReason");
         String clientEmail = (String) payload.get("clientEmail");
         String clientPhone = (String) payload.get("clientPhone");
-        
+
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.POLICY_REJECTED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Police " + policyNumber + " refusée")
+                        .content("Police " + policyNumber + " refusée. Raison: " + rejectionReason +
+                                ". Contactez-nous.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] POLICY_REJECTED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_REJECTED)
@@ -164,7 +218,7 @@ public class PolicyEventConsumer {
                         "Raison : " + rejectionReason + ". Contactez-nous pour plus d'informations.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -172,11 +226,12 @@ public class PolicyEventConsumer {
                     .type(NotificationType.POLICY_REJECTED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
-                    .content("Police " + policyNumber + " refusée. Raison: " + rejectionReason + 
+                    .subject("Police " + policyNumber + " refusée")
+                    .content("Police " + policyNumber + " refusée. Raison: " + rejectionReason +
                             ". Contactez-nous.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_REJECTED SMS sent to {}", clientPhone);
         }
         
@@ -190,9 +245,27 @@ public class PolicyEventConsumer {
         String clientEmail = (String) payload.get("clientEmail");
         String clientPhone = (String) payload.get("clientPhone");
         Object renewalDate = payload.get("renewalDate");
-        
+
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.POLICY_RENEWED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Police " + policyNumber + " renouvelée")
+                        .content("Police " + policyNumber + " renouvelée. Date: " + renewalDate + ".")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] POLICY_RENEWED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_RENEWED)
@@ -203,7 +276,7 @@ public class PolicyEventConsumer {
                         "Date de renouvellement : " + renewalDate + ".")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -211,10 +284,11 @@ public class PolicyEventConsumer {
                     .type(NotificationType.POLICY_RENEWED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Police " + policyNumber + " renouvelée")
                     .content("Police " + policyNumber + " renouvelée. Date: " + renewalDate + ".")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_RENEWED SMS sent to {}", clientPhone);
         }
         
@@ -228,9 +302,28 @@ public class PolicyEventConsumer {
         String cancellationReason = (String) payload.get("cancellationReason");
         String clientEmail = (String) payload.get("clientEmail");
         String clientPhone = (String) payload.get("clientPhone");
-        
+
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.POLICY_CANCELLED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Police " + policyNumber + " annulée")
+                        .content("Police " + policyNumber + " annulée. Raison: " + cancellationReason +
+                                ". Contactez-nous.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] POLICY_CANCELLED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_CANCELLED)
@@ -241,7 +334,7 @@ public class PolicyEventConsumer {
                         "Raison : " + cancellationReason + ". Pour toute question, contactez notre service client.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -249,11 +342,12 @@ public class PolicyEventConsumer {
                     .type(NotificationType.POLICY_CANCELLED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
-                    .content("Police " + policyNumber + " annulée. Raison: " + cancellationReason + 
+                    .subject("Police " + policyNumber + " annulée")
+                    .content("Police " + policyNumber + " annulée. Raison: " + cancellationReason +
                             ". Contactez-nous.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_CANCELLED SMS sent to {}", clientPhone);
         }
         
@@ -268,9 +362,28 @@ public class PolicyEventConsumer {
         String clientPhone = (String) payload.get("clientPhone");
         Object expirationDate = payload.get("expirationDate");
         Object daysUntilExpiry = payload.get("daysUntilExpiry");
-        
+
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.POLICY_EXPIRING)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Police " + policyNumber + " expire bientôt")
+                        .content("Rappel: Police " + policyNumber + " expire le " + expirationDate +
+                                " (dans " + daysUntilExpiry + " jours). Renouvelez maintenant.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] POLICY_EXPIRING SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_EXPIRING)
@@ -281,7 +394,7 @@ public class PolicyEventConsumer {
                         " (dans " + daysUntilExpiry + " jours). Pensez à la renouveler pour rester couvert.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -289,11 +402,12 @@ public class PolicyEventConsumer {
                     .type(NotificationType.POLICY_EXPIRING)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
-                    .content("Rappel: Police " + policyNumber + " expire le " + expirationDate + 
+                    .subject("Police " + policyNumber + " expire bientôt")
+                    .content("Rappel: Police " + policyNumber + " expire le " + expirationDate +
                             " (dans " + daysUntilExpiry + " jours). Renouvelez maintenant.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_EXPIRING SMS sent to {}", clientPhone);
         }
         

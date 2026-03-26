@@ -52,8 +52,27 @@ public class ClaimEventConsumer {
         String clientId = (String) payload.get("clientId");
         String claimId  = (String) payload.get("claimId");
         String clientPhone = (String) payload.get("clientPhone");
-        String recipient = (String) payload.getOrDefault("clientEmail", clientId);
-        
+        String clientEmail = (String) payload.get("clientEmail");
+        String recipient = clientEmail != null ? clientEmail : clientId;
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for claim={}, skipping email notification", claimId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.CLAIM_SUBMITTED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Réclamation " + claimId + " enregistrée")
+                        .content("Votre réclamation " + claimId + " a été enregistrée. Nous vous contactons sous 48h.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] CLAIM_SUBMITTED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.CLAIM_SUBMITTED)
@@ -63,7 +82,7 @@ public class ClaimEventConsumer {
                 .content("Votre réclamation " + claimId + " a bien été enregistrée. Nous revenons vers vous sous 48h.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -71,10 +90,11 @@ public class ClaimEventConsumer {
                     .type(NotificationType.CLAIM_SUBMITTED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Réclamation " + claimId + " enregistrée")
                     .content("Votre réclamation " + claimId + " a été enregistrée. Nous vous contactons sous 48h.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_SUBMITTED SMS sent to {}", clientPhone);
         }
         
@@ -86,8 +106,27 @@ public class ClaimEventConsumer {
         String claimId  = (String) payload.get("claimId");
         Object amount   = payload.get("approvedAmount");
         String clientPhone = (String) payload.get("clientPhone");
-        String recipient = (String) payload.getOrDefault("clientEmail", clientId);
-        
+        String clientEmail = (String) payload.get("clientEmail");
+        String recipient = clientEmail != null ? clientEmail : clientId;
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for claim={}, skipping email notification", claimId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.CLAIM_APPROVED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Réclamation " + claimId + " approuvée")
+                        .content("Bonne nouvelle ! Votre réclamation " + claimId + " est approuvée. Montant: " + amount + ".")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] CLAIM_APPROVED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.CLAIM_APPROVED)
@@ -97,7 +136,7 @@ public class ClaimEventConsumer {
                 .content("Félicitations ! Votre réclamation " + claimId + " est approuvée. Montant : " + amount + ".")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -105,10 +144,11 @@ public class ClaimEventConsumer {
                     .type(NotificationType.CLAIM_APPROVED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Réclamation " + claimId + " approuvée")
                     .content("Bonne nouvelle ! Votre réclamation " + claimId + " est approuvée. Montant: " + amount + ".")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_APPROVED SMS sent to {}", clientPhone);
         }
         
@@ -119,8 +159,27 @@ public class ClaimEventConsumer {
         String clientId = (String) payload.get("clientId");
         String claimId  = (String) payload.get("claimId");
         String clientPhone = (String) payload.get("clientPhone");
-        String recipient = (String) payload.getOrDefault("clientEmail", clientId);
-        
+        String clientEmail = (String) payload.get("clientEmail");
+        String recipient = clientEmail != null ? clientEmail : clientId;
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for claim={}, skipping email notification", claimId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.CLAIM_REJECTED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Réclamation " + claimId + " refusée")
+                        .content("Votre réclamation " + claimId + " n'a pas été approuvée. Contactez-nous pour plus d'infos.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] CLAIM_REJECTED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.CLAIM_REJECTED)
@@ -130,7 +189,7 @@ public class ClaimEventConsumer {
                 .content("Nous sommes désolés. Votre réclamation " + claimId + " n'a pas pu être approuvée.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -138,10 +197,11 @@ public class ClaimEventConsumer {
                     .type(NotificationType.CLAIM_REJECTED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Réclamation " + claimId + " refusée")
                     .content("Votre réclamation " + claimId + " n'a pas été approuvée. Contactez-nous pour plus d'infos.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_REJECTED SMS sent to {}", clientPhone);
         }
         
@@ -153,8 +213,27 @@ public class ClaimEventConsumer {
         String claimId  = (String) payload.get("claimId");
         Object amount   = payload.get("paidAmount");
         String clientPhone = (String) payload.get("clientPhone");
-        String recipient = (String) payload.getOrDefault("clientEmail", clientId);
-        
+        String clientEmail = (String) payload.get("clientEmail");
+        String recipient = clientEmail != null ? clientEmail : clientId;
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for claim={}, skipping email notification", claimId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.CLAIM_PAID)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Paiement réclamation " + claimId)
+                        .content("Paiement de " + amount + " effectué pour réclamation " + claimId + ".")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] CLAIM_PAID SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.CLAIM_PAID)
@@ -164,7 +243,7 @@ public class ClaimEventConsumer {
                 .content("Le règlement de " + amount + " pour la réclamation " + claimId + " a été effectué.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -172,10 +251,11 @@ public class ClaimEventConsumer {
                     .type(NotificationType.CLAIM_PAID)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Paiement réclamation " + claimId)
                     .content("Paiement de " + amount + " effectué pour réclamation " + claimId + ".")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_PAID SMS sent to {}", clientPhone);
         }
         
@@ -188,9 +268,27 @@ public class ClaimEventConsumer {
         String clientId = (String) payload.get("clientId");
         String clientEmail = (String) payload.get("clientEmail");
         String clientPhone = (String) payload.get("clientPhone");
-        
+
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for claim={}, skipping email notification", claimNumber);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.CLAIM_UNDER_REVIEW)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Réclamation " + claimNumber + " en traitement")
+                        .content("Réclamation " + claimNumber + " en cours de traitement avancé. Un responsable vous contactera.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] CLAIM_SLA_BREACHED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.CLAIM_UNDER_REVIEW)
@@ -201,7 +299,7 @@ public class ClaimEventConsumer {
                         "Un responsable vous contactera dans les plus brefs délais.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
         
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -209,10 +307,11 @@ public class ClaimEventConsumer {
                     .type(NotificationType.CLAIM_UNDER_REVIEW)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Réclamation " + claimNumber + " en traitement")
                     .content("Réclamation " + claimNumber + " en cours de traitement avancé. Un responsable vous contactera.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] CLAIM_SLA_BREACHED SMS sent to {}", clientPhone);
         }
         

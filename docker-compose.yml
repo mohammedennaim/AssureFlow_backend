@@ -210,6 +210,8 @@ services:
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      # Feign Client Configuration
+      FEIGN_CLIENT_CONFIG_CLIENT-SERVICE_URL: http://client-service:8080
     networks:
       - insurance-net
     deploy:
@@ -280,6 +282,9 @@ services:
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      # Feign Client Configuration
+      FEIGN_CLIENT_CONFIG_POLICY-SERVICE_URL: http://policy-service:8080
+      FEIGN_CLIENT_CONFIG_CLIENT-SERVICE_URL: http://client-service:8080
     networks:
       - insurance-net
     deploy:
@@ -315,6 +320,9 @@ services:
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      # Feign Client Configuration
+      FEIGN_CLIENT_CONFIG_POLICY-SERVICE_URL: http://policy-service:8080
+      FEIGN_CLIENT_CONFIG_CLIENT-SERVICE_URL: http://client-service:8080
     networks:
       - insurance-net
     deploy:
@@ -340,8 +348,6 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      mailhog:
-        condition: service_started
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       SPRING_DATASOURCE_URL: ${NOTIFICATION_DB_URL}
@@ -352,12 +358,14 @@ services:
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      MAIL_HOST: mailhog
-      MAIL_PORT: 1025
-      MAIL_USERNAME: ""
-      MAIL_PASSWORD: ""
-      SPRING_MAIL_USERNAME: ""
-      SPRING_MAIL_PASSWORD: ""
+      # Gmail SMTP Configuration
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
       TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}

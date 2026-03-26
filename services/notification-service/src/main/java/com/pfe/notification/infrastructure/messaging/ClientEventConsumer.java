@@ -54,9 +54,27 @@ public class ClientEventConsumer {
         String clientPhone = (String) payload.get("phone");
         String firstName = (String) payload.get("firstName");
         String lastName = (String) payload.get("lastName");
-        
+
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for client={}, skipping email notification", clientId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.POLICY_CREATED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Bienvenue " + firstName)
+                        .content("Bienvenue " + firstName + " ! Votre compte AssureFlow est créé.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] CLIENT_CREATED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_CREATED)
@@ -67,18 +85,19 @@ public class ClientEventConsumer {
                         "Nous sommes ravis de vous compter parmi nous.")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
-        
+        notificationService.sendNotificationInternal(emailDto.getId());
+
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
             CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
                     .type(NotificationType.POLICY_CREATED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Bienvenue " + firstName)
                     .content("Bienvenue " + firstName + " ! Votre compte AssureFlow est créé.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] CLIENT_CREATED SMS sent to {}", clientPhone);
         }
         
@@ -90,9 +109,27 @@ public class ClientEventConsumer {
         String clientEmail = (String) payload.get("email");
         String clientPhone = (String) payload.get("phone");
         String updatedFields = (String) payload.get("updatedFields");
-        
+
         String recipient = clientEmail != null ? clientEmail : clientId;
-        
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("[NOTIFICATION] No recipient (email or clientId) for client={}, skipping email notification", clientId);
+            // Only create SMS if phone is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.POLICY_RENEWED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Informations mises à jour")
+                        .content("Vos informations ont été mises à jour.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] CLIENT_UPDATED SMS sent to {}", clientPhone);
+            }
+            return;
+        }
+
         // Create EMAIL notification
         CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
                 .type(NotificationType.POLICY_RENEWED)
@@ -103,18 +140,19 @@ public class ClientEventConsumer {
                         "Champs modifiés : " + updatedFields + ".")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
-        
+        notificationService.sendNotificationInternal(emailDto.getId());
+
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
             CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
                     .type(NotificationType.POLICY_RENEWED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Informations mises à jour")
                     .content("Vos informations ont été mises à jour.")
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotification(smsDto.getId());
+            notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] CLIENT_UPDATED SMS sent to {}", clientPhone);
         }
         
@@ -136,7 +174,7 @@ public class ClientEventConsumer {
                 .content("Le compte client " + clientId + " a été supprimé. Raison : " + deletionReason + ".")
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotification(emailDto.getId());
+        notificationService.sendNotificationInternal(emailDto.getId());
 
         // SMS notification to admin if phone is available
         String adminPhone = "+1234567890"; // Admin phone for critical alerts
@@ -144,10 +182,11 @@ public class ClientEventConsumer {
                 .type(NotificationType.POLICY_CANCELLED)
                 .channel(NotificationChannel.SMS)
                 .recipient(adminPhone)
+                .subject("Suppression compte client " + clientId)
                 .content("ALERTE: Compte client " + clientId + " supprimé. Raison: " + deletionReason + ".")
                 .build();
         var smsDto = notificationService.createNotificationInternal(smsRequest);
-        notificationService.sendNotification(smsDto.getId());
+        notificationService.sendNotificationInternal(smsDto.getId());
 
         // Also send SMS to client if phone is available (for transparency)
         if (clientPhone != null && !clientPhone.isBlank()) {
@@ -155,10 +194,11 @@ public class ClientEventConsumer {
                     .type(NotificationType.POLICY_CANCELLED)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
+                    .subject("Votre compte supprimé")
                     .content("Votre compte AssureFlow a été supprimé. Raison: " + deletionReason + ". Pour toute question, contactez le support.")
                     .build();
             var clientSmsDto = notificationService.createNotificationInternal(clientSmsRequest);
-            notificationService.sendNotification(clientSmsDto.getId());
+            notificationService.sendNotificationInternal(clientSmsDto.getId());
             log.info("[NOTIFICATION] CLIENT_DELETED SMS sent to client {}", clientPhone);
         }
 
