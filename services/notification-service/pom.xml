@@ -28,13 +28,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-    
-        <!-- Prometheus Metrics -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.11.5</version>
-        </dependency>
 
         <!-- Twilio for SMS -->
         <dependency>
@@ -42,7 +35,7 @@
             <artifactId>twilio</artifactId>
             <version>9.14.0</version>
         </dependency>
-    </dependencies>
+        </dependencies>
     </dependencyManagement>
 
     <dependencies>
@@ -101,13 +94,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <!-- Prometheus Metrics -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.11.5</version>
         </dependency>
 
         <!-- MapStruct -->

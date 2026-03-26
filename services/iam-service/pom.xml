@@ -22,14 +22,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-    
-        <!-- Prometheus Metrics -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.11.5</version>
-        </dependency>
-    </dependencies>
+        </dependencies>
     </dependencyManagement>
 
     <dependencies>
@@ -101,18 +94,6 @@
         </dependency>
 
         <!-- Swagger OpenAPI -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.2.0</version>
-        </dependency>
-
-        <!-- Prometheus Metrics -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.11.5</version>
-        </dependency>
     </dependencies>
 
     <build>

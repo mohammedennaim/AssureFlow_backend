@@ -62,19 +62,15 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
 
-# Actuator & Prometheus
+# Actuator
 management:
   endpoints:
     web:
       exposure:
-        include: health, info, prometheus
+        include: health, info
   endpoint:
     health:
       show-details: always
-  metrics:
-    export:
-      prometheus:
-        enabled: true
 
 ---
 spring:

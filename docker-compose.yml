@@ -452,80 +452,6 @@ services:
           cpus: '0.25'
           memory: 200M
 
-  # ==========================================================
-  # 📧 INFRASTRUCTURE - MailCatcher (Email Testing)
-  # ==========================================================
-  mailhog:
-    image: schickling/mailcatcher:latest
-    container_name: assureflow-mailhog
-    restart: unless-stopped
-    ports:
-      - "1025:1025"  # SMTP server
-      - "1080:1080"  # Web UI
-    networks:
-      - insurance-net
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: 128M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
-
-  # ==========================================================
-  # 📊 OBSERVABILITÉ - Prometheus
-  # ==========================================================
-  prometheus:
-    image: prom/prometheus:v2.48.0
-    container_name: assureflow-prometheus
-    restart: unless-stopped
-    volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
-    ports:
-      - "9090:9090"
-    networks:
-      - insurance-net
-    depends_on:
-      - api-gateway
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-
-  # ==========================================================
-  # 📊 OBSERVABILITÉ - Grafana
-  # ==========================================================
-  grafana:
-    image: grafana/grafana:10.2.0
-    container_name: assureflow-grafana
-    restart: unless-stopped
-    depends_on:
-      - prometheus
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
-    ports:
-      - "3000:3000"
-    networks:
-      - insurance-net
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-
 # ==========================================================
 # 🌐 RÉSEAUX
 # ==========================================================
@@ -541,10 +467,6 @@ volumes:
   postgres-data:
     driver: local
   redis-data:
-    driver: local
-  prometheus-data:
-    driver: local
-  grafana-data:
     driver: local
   pgadmin-data:
     driver: local
