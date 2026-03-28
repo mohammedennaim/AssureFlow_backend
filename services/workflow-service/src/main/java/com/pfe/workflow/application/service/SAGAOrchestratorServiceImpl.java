@@ -13,8 +13,6 @@ import com.pfe.workflow.domain.repository.SAGATransactionRepository;
 import com.pfe.workflow.infrastructure.messaging.SAGAStepExecutorPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +38,6 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
-    @Cacheable(value = "sagas", key = "#sagaId")
     public SAGATransactionDto getSagaStatus(UUID sagaId) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
                 .orElseThrow(() -> new SAGANotFoundException(sagaId));
@@ -78,7 +75,6 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
-    @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportStepSuccess(UUID sagaId, UUID stepId) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
                 .orElseThrow(() -> new SAGANotFoundException(sagaId));
@@ -112,7 +108,6 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
-    @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportStepFailure(UUID sagaId, UUID stepId, String errorDetails) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
                 .orElseThrow(() -> new SAGANotFoundException(sagaId));
@@ -142,7 +137,6 @@ public class SAGAOrchestratorServiceImpl implements SAGAOrchestratorService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    @CacheEvict(value = "sagas", key = "#sagaId")
     public void reportCompensationSuccess(UUID sagaId, UUID stepId) {
         SAGATransaction saga = sagaTransactionRepository.findById(sagaId)
                 .orElseThrow(() -> new SAGANotFoundException(sagaId));

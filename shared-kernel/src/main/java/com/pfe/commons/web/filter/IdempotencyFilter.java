@@ -4,25 +4,20 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@RequiredArgsConstructor
 public class IdempotencyFilter extends OncePerRequestFilter {
 
     public static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
-    private static final String REDIS_KEY_PREFIX = "idempotency:";
-    private static final Duration IDEMPOTENCY_TTL = Duration.ofHours(24);
     private static final Set<String> IDEMPOTENT_METHODS = Set.of("POST", "PUT", "PATCH", "DELETE");
-    private final StringRedisTemplate redisTemplate;
+    private static final ConcurrentHashMap<String, Long> processedRequests = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(
@@ -37,11 +32,7 @@ public class IdempotencyFilter extends OncePerRequestFilter {
             return;
         }
 
-        String redisKey = REDIS_KEY_PREFIX + idempotencyKey;
-
-        Boolean alreadyProcessed = redisTemplate.hasKey(redisKey);
-
-        if (Boolean.TRUE.equals(alreadyProcessed)) {
+        if (processedRequests.containsKey(idempotencyKey)) {
             log.warn("[IDEMPOTENCY] Duplicate request detected for key={} method={} uri={}",
                     idempotencyKey, request.getMethod(), request.getRequestURI());
             response.setStatus(HttpServletResponse.SC_OK);
@@ -50,7 +41,7 @@ public class IdempotencyFilter extends OncePerRequestFilter {
             return;
         }
 
-        redisTemplate.opsForValue().set(redisKey, "processed", IDEMPOTENCY_TTL);
+        processedRequests.put(idempotencyKey, System.currentTimeMillis());
         log.debug("[IDEMPOTENCY] New request registered key={}", idempotencyKey);
 
         filterChain.doFilter(request, response);

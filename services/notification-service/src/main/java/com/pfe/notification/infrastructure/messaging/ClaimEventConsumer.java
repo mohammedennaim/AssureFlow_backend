@@ -51,10 +51,12 @@ public class ClaimEventConsumer {
     private void handleClaimSubmitted(Map<String, Object> payload) {
         String clientId = (String) payload.get("clientId");
         String claimId  = (String) payload.get("claimId");
+        String claimNumber = (String) payload.get("claimNumber");
         String clientPhone = (String) payload.get("clientPhone");
         String clientEmail = (String) payload.get("clientEmail");
         String recipient = clientEmail != null ? clientEmail : clientId;
 
+        // 1. Send notification to CLIENT
         if (recipient == null || recipient.isBlank()) {
             log.warn("[NOTIFICATION] No recipient (email or clientId) for claim={}, skipping email notification", claimId);
             // Only create SMS if phone is available
@@ -63,42 +65,57 @@ public class ClaimEventConsumer {
                         .type(NotificationType.CLAIM_SUBMITTED)
                         .channel(NotificationChannel.SMS)
                         .recipient(clientPhone)
-                        .subject("Réclamation " + claimId + " enregistrée")
-                        .content("Votre réclamation " + claimId + " a été enregistrée. Nous vous contactons sous 48h.")
+                        .subject("Réclamation " + claimNumber + " enregistrée")
+                        .content("Votre réclamation " + claimNumber + " a été enregistrée. Nous vous contactons sous 48h.")
                         .build();
                 var smsDto = notificationService.createNotificationInternal(smsRequest);
                 notificationService.sendNotificationInternal(smsDto.getId());
-                log.info("[NOTIFICATION] CLAIM_SUBMITTED SMS sent to {}", clientPhone);
+                log.info("[NOTIFICATION] CLAIM_SUBMITTED SMS sent to client {}", clientPhone);
             }
-            return;
+        } else {
+            // Create EMAIL notification for client
+            CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
+                    .type(NotificationType.CLAIM_SUBMITTED)
+                    .channel(NotificationChannel.EMAIL)
+                    .recipient(recipient)
+                    .subject("Votre réclamation a été soumise")
+                    .content("Votre réclamation " + claimNumber + " a bien été enregistrée. Nous revenons vers vous sous 48h.")
+                    .build();
+            var emailDto = notificationService.createNotificationInternal(emailRequest);
+            notificationService.sendNotificationInternal(emailDto.getId());
+            
+            // Create SMS notification if phone number is available
+            if (clientPhone != null && !clientPhone.isBlank()) {
+                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+                        .type(NotificationType.CLAIM_SUBMITTED)
+                        .channel(NotificationChannel.SMS)
+                        .recipient(clientPhone)
+                        .subject("Réclamation " + claimNumber + " enregistrée")
+                        .content("Votre réclamation " + claimNumber + " a été enregistrée. Nous vous contactons sous 48h.")
+                        .build();
+                var smsDto = notificationService.createNotificationInternal(smsRequest);
+                notificationService.sendNotificationInternal(smsDto.getId());
+                log.info("[NOTIFICATION] CLAIM_SUBMITTED SMS sent to client {}", clientPhone);
+            }
+            
+            log.info("[NOTIFICATION] CLAIM_SUBMITTED email sent to client {}", recipient);
         }
 
-        // Create EMAIL notification
-        CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
-                .type(NotificationType.CLAIM_SUBMITTED)
-                .channel(NotificationChannel.EMAIL)
-                .recipient(recipient)
-                .subject("Votre réclamation a été soumise")
-                .content("Votre réclamation " + claimId + " a bien été enregistrée. Nous revenons vers vous sous 48h.")
-                .build();
-        var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotificationInternal(emailDto.getId());
-        
-        // Create SMS notification if phone number is available
-        if (clientPhone != null && !clientPhone.isBlank()) {
-            CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
+        // 2. Send notification to ADMIN (for all admins to see new claim)
+        try {
+            CreateNotificationRequest adminNotification = CreateNotificationRequest.builder()
                     .type(NotificationType.CLAIM_SUBMITTED)
-                    .channel(NotificationChannel.SMS)
-                    .recipient(clientPhone)
-                    .subject("Réclamation " + claimId + " enregistrée")
-                    .content("Votre réclamation " + claimId + " a été enregistrée. Nous vous contactons sous 48h.")
+                    .channel(NotificationChannel.IN_APP)
+                    .recipient("ADMIN") // Special recipient for all admins
+                    .subject("Nouvelle réclamation soumise")
+                    .content("Une nouvelle réclamation " + claimNumber + " a été soumise par le client " + clientId + ".")
                     .build();
-            var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotificationInternal(smsDto.getId());
-            log.info("[NOTIFICATION] CLAIM_SUBMITTED SMS sent to {}", clientPhone);
+            var adminDto = notificationService.createNotificationInternal(adminNotification);
+            notificationService.sendNotificationInternal(adminDto.getId());
+            log.info("[NOTIFICATION] CLAIM_SUBMITTED in-app notification sent to ADMIN for claim {}", claimNumber);
+        } catch (Exception e) {
+            log.error("[NOTIFICATION] Failed to send admin notification for claim {}: {}", claimNumber, e.getMessage());
         }
-        
-        log.info("[NOTIFICATION] CLAIM_SUBMITTED email sent to {}", recipient);
     }
 
     private void handleClaimApproved(Map<String, Object> payload) {

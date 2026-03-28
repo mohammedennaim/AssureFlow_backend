@@ -17,8 +17,6 @@ import com.pfe.policy.infrastructure.client.ClientServiceClient;
 import com.pfe.policy.infrastructure.messaging.PolicyEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
@@ -135,7 +133,6 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
-    @Cacheable(value = "policies", key = "#id")
     public PolicyDto getPolicyById(String id) {
         log.info("Fetching policy from database: {}", id);
         Policy policy = policyRepository.findById(id)
@@ -146,7 +143,6 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
-    @Cacheable(value = "policies", key = "'client:' + #clientId")
     public List<PolicyDto> getPoliciesByClientId(String clientId) {
         log.info("Fetching policies from database for client: {}", clientId);
         return policyRepository.findByClientId(clientId).stream()
@@ -174,7 +170,6 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
-    @CacheEvict(value = "policies", allEntries = true)
     public PolicyDto updatePolicy(String id, UpdatePolicyRequest request) {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
@@ -218,7 +213,6 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
-    @CacheEvict(value = "policies", allEntries = true)
     public void cancelPolicy(String id, String reason) {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));
@@ -275,7 +269,6 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
-    @CacheEvict(value = "policies", allEntries = true)
     public void expirePolicy(String id, String reason) {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new PolicyNotFoundException(id));

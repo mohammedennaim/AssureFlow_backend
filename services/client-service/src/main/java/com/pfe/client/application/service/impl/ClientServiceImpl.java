@@ -18,8 +18,6 @@ import com.pfe.client.domain.event.ClientCreatedEvent;
 import com.pfe.client.domain.event.ClientUpdatedEvent;
 import com.pfe.client.domain.event.ClientDeletedEvent;
 import com.pfe.client.infrastructure.messaging.ClientEventPublisher;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
@@ -99,7 +97,6 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional(readOnly = true)
-    @Cacheable(value = "clients", key = "#id")
     public ClientResponse getClientById(UUID id) {
         log.debug("Fetching client from database by ID: {}", id);
         Client client = clientRepository.findById(id)
@@ -150,7 +147,6 @@ public class ClientServiceImpl implements ClientService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
-    @CacheEvict(value = "clients", allEntries = true)
     public ClientResponse updateClient(UUID id, ClientRequest request) {
         log.info("Updating client with ID: {}", id);
 
@@ -197,7 +193,6 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "clients", allEntries = true)
     public ClientResponse updateMyProfile(String email, ClientRequest request) {
         log.info("Self-update profile for: {}", email);
         Client existing = clientRepository.findByEmail(email)

@@ -13,8 +13,6 @@ import com.pfe.notification.infrastructure.email.EmailNotificationService;
 import com.pfe.notification.infrastructure.sms.TwilioSmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -41,7 +39,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
-    @CacheEvict(value = "notifications", allEntries = true)
     public NotificationDto createNotification(CreateNotificationRequest request) {
         return createNotificationInternal(request);
     }
@@ -51,8 +48,6 @@ public class NotificationServiceImpl implements NotificationService {
      * Used by Kafka consumers and other internal services.
      */
     @Transactional
-    
-    @CacheEvict(value = "notifications", allEntries = true)
     public NotificationDto createNotificationInternal(CreateNotificationRequest request) {
         Notification notification = notificationMapper.toDomain(request);
         notification.setStatus(NotificationStatus.PENDING);
@@ -62,7 +57,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
-    @Cacheable(value = "notifications", key = "#id")
     public NotificationDto getNotificationById(UUID id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotificationNotFoundException(id));
@@ -71,7 +65,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
-    @Cacheable(value = "notifications", key = "'policy_' + #policyId")
     public List<NotificationDto> getNotificationsByPolicyId(UUID policyId) {
         return notificationRepository.findByPolicyId(policyId).stream()
                 .map(notificationMapper::toDto)
@@ -80,7 +73,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
-    @Cacheable(value = "notifications", key = "'recipient_' + #recipient")
     public List<NotificationDto> getNotificationsByRecipient(String recipient) {
         return notificationRepository.findByRecipient(recipient).stream()
                 .map(notificationMapper::toDto)
@@ -106,7 +98,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
-    @CacheEvict(value = "notifications", key = "#id")
     public void sendNotification(UUID id) {
         sendNotificationInternal(id);
     }
@@ -116,7 +107,6 @@ public class NotificationServiceImpl implements NotificationService {
      * Used by Kafka consumers and other internal services.
      */
     @Transactional
-    @CacheEvict(value = "notifications", key = "#id")
     public void sendNotificationInternal(UUID id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotificationNotFoundException(id));
@@ -152,7 +142,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    @CacheEvict(value = "notifications", key = "#id")
     public void deleteNotification(UUID id) {
         if (notificationRepository.findById(id).isEmpty()) {
             throw new NotificationNotFoundException(id);
@@ -163,7 +152,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
-    @CacheEvict(value = "notifications", key = "#id")
     public void markAsRead(UUID id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new NotificationNotFoundException(id));
@@ -175,7 +163,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
-    @CacheEvict(value = "notifications", allEntries = true)
     public void markAllAsRead(String recipient) {
         List<Notification> notifications = notificationRepository.findByRecipient(recipient);
         notifications.forEach(Notification::markAsRead);
@@ -185,7 +172,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
-    @Cacheable(value = "notifications", key = "'unread_count_' + #recipient")
     public long getUnreadCount(String recipient) {
         return notificationRepository.countByRecipientAndReadFalse(recipient);
     }

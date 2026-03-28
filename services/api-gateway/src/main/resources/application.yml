@@ -9,12 +9,6 @@ spring:
       # Configuration globale
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 10
-            redis-rate-limiter.burstCapacity: 20
-            redis-rate-limiter.requestedTokens: 1
-            key-resolver: "#{@ipKeyResolver}"
 
       globalcors:
         corsConfigurations:
@@ -56,10 +50,6 @@ spring:
             - Method=POST
           filters:
             - StripPrefix=0
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
 
         - id: iam-auth-secured
           uri: http://iam-service:8080
@@ -68,19 +58,17 @@ spring:
           filters:
             - StripPrefix=0
 
-        - id: iam-users-admin
+        - id: iam-users
           uri: http://iam-service:8080
           predicates:
             - Path=/api/v1/users/**
-            - Header=X-User-Role, ADMIN
           filters:
             - StripPrefix=0
 
-        - id: iam-roles-admin
+        - id: iam-roles
           uri: http://iam-service:8080
           predicates:
             - Path=/api/v1/roles/**
-            - Header=X-User-Role, ADMIN
           filters:
             - StripPrefix=0
 
@@ -106,10 +94,6 @@ spring:
             - Method=POST,PUT,DELETE
           filters:
             - StripPrefix=0
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 3
-                redis-rate-limiter.burstCapacity: 6
 
         - id: client-addresses
           uri: http://client-service:8080
@@ -140,10 +124,6 @@ spring:
             - Method=POST,PUT,PATCH,DELETE
           filters:
             - StripPrefix=0
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 2
-                redis-rate-limiter.burstCapacity: 5
 
         - id: policy-premium-calculation
           uri: http://policy-service:8080
@@ -175,10 +155,6 @@ spring:
             - Method=POST,PUT,PATCH,DELETE
           filters:
             - StripPrefix=0
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 3
-                redis-rate-limiter.burstCapacity: 6
 
         - id: billing-payments-read
           uri: http://billing-service:8080
@@ -199,10 +175,6 @@ spring:
             - Method=POST,PUT,DELETE
           filters:
             - StripPrefix=0
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
 
         - id: billing-overdue
           uri: http://billing-service:8080
@@ -233,10 +205,6 @@ spring:
             - Method=POST
           filters:
             - StripPrefix=0
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 1
-                redis-rate-limiter.burstCapacity: 3
 
         - id: claims-service-write
           uri: http://claims-service:8080
