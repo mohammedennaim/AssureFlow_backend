@@ -46,8 +46,7 @@ public class PolicyServiceImpl implements PolicyService {
 
         Policy policy = policyMapper.toDomain(request);
         policy.setPolicyNumber("POL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        policy.setStatus(PolicyStatus.DRAFT);
-        policy.setCreatedAt(LocalDateTime.now());
+        policy.setStatus(PolicyStatus.ACTIVE);
 
         if (policy.getCoverageAmount() != null) {
             policy.calculatePremium();
@@ -79,7 +78,6 @@ public class PolicyServiceImpl implements PolicyService {
 
         savedPolicy.registerEvent(event);
         
-        // Publish event to Kafka for notification service
         policyEventPublisher.publishPolicyCreated(event);
         log.info("PolicyCreatedEvent published to Kafka for policy: {}", savedPolicy.getPolicyNumber());
 
@@ -191,7 +189,6 @@ public class PolicyServiceImpl implements PolicyService {
         }
         if (request.getCoverageAmount() != null) {
             policy.setCoverageAmount(request.getCoverageAmount());
-            // Recalculate premium if coverage changed but premium amount not explicitly provided
             if (request.getPremiumAmount() == null) {
                 policy.calculatePremium();
                 log.info("Recalculated premium for policy {} because coverage changed: {}", id, policy.getPremiumAmount());
@@ -201,7 +198,6 @@ public class PolicyServiceImpl implements PolicyService {
             policy.setPremiumAmount(request.getPremiumAmount());
         }
 
-        // Enforce business rules from domain model
         policy.validateDates();
         policy.validateCoverageAmount();
 
@@ -219,7 +215,6 @@ public class PolicyServiceImpl implements PolicyService {
         policy.cancel(reason);
         policyRepository.save(policy);
         
-        // Publish policy.cancelled event
         policyEventPublisher.publishPolicyEvent("policy.cancelled", buildPolicyEventMap(policy, reason));
         log.info("Policy cancelled event published for policy: {}", policy.getPolicyNumber());
     }
@@ -233,7 +228,6 @@ public class PolicyServiceImpl implements PolicyService {
         policy.submit();
         policyRepository.save(policy);
         
-        // Publish policy.submitted event
         policyEventPublisher.publishPolicyEvent("policy.submitted", buildPolicyEventMap(policy));
         log.info("Policy submitted event published for policy: {}", policy.getPolicyNumber());
     }
@@ -247,7 +241,6 @@ public class PolicyServiceImpl implements PolicyService {
         policy.approve();
         policyRepository.save(policy);
         
-        // Publish policy.approved event
         policyEventPublisher.publishPolicyEvent("policy.approved", buildPolicyEventMap(policy));
         log.info("Policy approved event published for policy: {}", policy.getPolicyNumber());
     }
@@ -261,7 +254,6 @@ public class PolicyServiceImpl implements PolicyService {
         policy.reject(reason);
         policyRepository.save(policy);
         
-        // Publish policy.rejected event
         policyEventPublisher.publishPolicyEvent("policy.rejected", buildPolicyEventMap(policy, reason));
         log.info("Policy rejected event published for policy: {}", policy.getPolicyNumber());
     }
@@ -275,7 +267,6 @@ public class PolicyServiceImpl implements PolicyService {
         policy.expire(reason);
         policyRepository.save(policy);
         
-        // Publish policy.expiring event
         policyEventPublisher.publishPolicyEvent("policy.expiring", buildPolicyEventMap(policy, reason));
         log.info("Policy expiring event published for policy: {}", policy.getPolicyNumber());
     }

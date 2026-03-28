@@ -1,5 +1,7 @@
 package com.pfe.claims.infrastructure.messaging;
 
+import com.pfe.claims.domain.model.Claim;
+import com.pfe.claims.domain.repository.ClaimRepository;
 import com.pfe.claims.infrastructure.client.ClientServiceClient;
 import com.pfe.claims.infrastructure.client.PolicyDto;
 import com.pfe.claims.infrastructure.client.PolicyServiceClient;
@@ -27,66 +29,65 @@ public class ClaimEventPublisher {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PolicyServiceClient policyServiceClient;
     private final ClientServiceClient clientServiceClient;
+    private final ClaimRepository claimRepository;
 
     /**
      * Publishes a claim created event (claim.submitted).
      */
     public void publishClaimCreated(UUID claimId, UUID policyId, UUID clientId, LocalDateTime createdAt, LocalDateTime slaDeadline) {
+        // Fetch policy and client data for notification (best effort - don't fail if unavailable)
+        String clientEmail = null;
+        String clientPhone = null;
+        String claimNumber = null;
+
         try {
-            // Fetch policy and client data for notification
-            String clientEmail = null;
-            String clientPhone = null;
-            String claimNumber = null;
-            
-            try {
-                PolicyDto policy = policyServiceClient.getPolicyById(policyId.toString());
-                if (policy != null) {
-                    // Fetch client data
-                    try {
-                        var client = clientServiceClient.getClientById(policy.getClientId());
-                        if (client != null) {
-                            clientEmail = client.getEmail();
-                            clientPhone = client.getPhone();
-                        }
-                    } catch (Exception e) {
-                        log.warn("[KAFKA] Could not fetch client data for notification: {}", e.getMessage());
+            PolicyDto policy = policyServiceClient.getPolicyById(policyId.toString());
+            if (policy != null) {
+                claimNumber = policy.getPolicyNumber(); // Use policy number as reference
+                // Fetch client data
+                try {
+                    var client = clientServiceClient.getClientById(policy.getClientId());
+                    if (client != null) {
+                        clientEmail = client.getEmail();
+                        clientPhone = client.getPhone();
                     }
+                } catch (Exception e) {
+                    log.warn("[KAFKA] Could not fetch client data for notification: {}", e.getMessage());
                 }
-            } catch (Exception e) {
-                log.warn("[KAFKA] Could not fetch policy data for notification: {}", e.getMessage());
             }
-
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("claimId", claimId.toString());
-            payload.put("claimNumber", claimNumber != null ? claimNumber : "CLM-" + claimId.toString().substring(0, 8).toUpperCase());
-            payload.put("policyId", policyId.toString());
-            payload.put("clientId", clientId.toString());
-            payload.put("clientEmail", clientEmail);
-            payload.put("clientPhone", clientPhone);
-            payload.put("createdAt", createdAt.toString());
-            payload.put("slaDeadline", slaDeadline.toString());
-            payload.put("status", "SUBMITTED");
-            payload.put("timestamp", LocalDateTime.now().toString());
-
-            String eventType = "claim.submitted";
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send("claim-events", eventType, payload);
-
-            future.whenComplete((result, ex) -> {
-                if (ex != null) {
-                    log.error("[KAFKA] Failed to publish claim.submitted event for claim {}: {}",
-                            claimId, ex.getMessage());
-                } else {
-                    log.info("[KAFKA] claim.submitted published → claim={} topic={} partition={} offset={}",
-                            claimId,
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                }
-            });
         } catch (Exception e) {
-            log.error("[KAFKA] Error publishing claim.submitted event", e);
+            log.warn("[KAFKA] Could not fetch policy data for notification: {}", e.getMessage());
         }
+
+        // Build payload with null-safe handling
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("claimId", claimId.toString());
+        payload.put("claimNumber", claimNumber != null ? claimNumber : "CLM-" + claimId.toString().substring(0, 8).toUpperCase());
+        payload.put("policyId", policyId.toString());
+        payload.put("clientId", clientId.toString());
+        payload.put("clientEmail", clientEmail);
+        payload.put("clientPhone", clientPhone);
+        payload.put("createdAt", createdAt != null ? createdAt.toString() : LocalDateTime.now().toString());
+        payload.put("slaDeadline", slaDeadline != null ? slaDeadline.toString() : null);
+        payload.put("status", "SUBMITTED");
+        payload.put("timestamp", LocalDateTime.now().toString());
+
+        String eventType = "claim.submitted";
+        CompletableFuture<SendResult<String, Object>> future =
+                kafkaTemplate.send("claim-events", eventType, payload);
+
+        future.whenComplete((result, ex) -> {
+            if (ex != null) {
+                log.error("[KAFKA] Failed to publish claim.submitted event for claim {}: {}",
+                        claimId, ex.getMessage());
+            } else {
+                log.info("[KAFKA] claim.submitted published → claim={} topic={} partition={} offset={}",
+                        claimId,
+                        result.getRecordMetadata().topic(),
+                        result.getRecordMetadata().partition(),
+                        result.getRecordMetadata().offset());
+            }
+        });
     }
 
     /**
@@ -96,22 +97,35 @@ public class ClaimEventPublisher {
         try {
             // Map internal status to event type
             String eventType = mapStatusToEventType(newStatus);
-            
+
             // Fetch claim, policy and client data for notification
             String clientId = null;
             String clientEmail = null;
             String clientPhone = null;
             String claimNumber = null;
             Object approvedAmount = null;
-            
+
             try {
-                // Fetch claim data (would need a Claim Feign client or pass data directly)
-                // For now, we'll use the claimId as reference
-                claimNumber = "CLM-" + claimId.toString().substring(0, 8).toUpperCase();
-                
-                // Try to fetch from database or use passed data
-                // This is a simplified version - in production, you'd fetch the full claim
-                clientId = claimId.toString(); // Placeholder
+                // Fetch claim data from database
+                var claimOpt = claimRepository.findById(claimId);
+                if (claimOpt.isPresent()) {
+                    var claim = claimOpt.get();
+                    claimNumber = claim.getClaimNumber();
+                    clientId = claim.getClientId() != null ? claim.getClientId().toString() : null;
+                    
+                    try {
+                        PolicyDto policy = policyServiceClient.getPolicyById(claim.getPolicyId().toString());
+                        if (policy != null && policy.getClientId() != null) {
+                            var client = clientServiceClient.getClientById(policy.getClientId().toString());
+                            if (client != null) {
+                                clientEmail = client.getEmail();
+                                clientPhone = client.getPhone();
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("[KAFKA] Could not fetch policy/client data for notification: {}", e.getMessage());
+                    }
+                }
             } catch (Exception e) {
                 log.warn("[KAFKA] Could not fetch claim data: {}", e.getMessage());
             }
@@ -126,7 +140,7 @@ public class ClaimEventPublisher {
             payload.put("newStatus", newStatus);
             payload.put("approvedAmount", approvedAmount);
             payload.put("userId", userId != null ? userId.toString() : null);
-            payload.put("timestamp", LocalDateTime.now().toString());
+            payload.put("timestamp", java.time.LocalDateTime.now().toString());
 
             CompletableFuture<SendResult<String, Object>> future =
                     kafkaTemplate.send("claim-events", eventType, payload);
