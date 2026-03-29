@@ -173,8 +173,16 @@ public class ClaimServiceImpl implements ClaimService {
     public void submitClaim(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
+        
+        String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.submit();
         claimRepository.save(claim);
+        
+        // Publish status change event if status changed
+        if (!ClaimStatus.SUBMITTED.name().equals(oldStatus)) {
+            claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "SUBMITTED", null);
+            log.info("Claim {} status changed to SUBMITTED, event published", claim.getClaimNumber());
+        }
     }
 
     @Override
@@ -183,8 +191,14 @@ public class ClaimServiceImpl implements ClaimService {
     public void reviewClaim(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
+        
+        String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.markAsUnderReview();
         claimRepository.save(claim);
+        
+        // Publish status change event
+        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "UNDER_REVIEW", null);
+        log.info("Claim {} status changed to UNDER_REVIEW, event published", claim.getClaimNumber());
     }
 
     @Override
@@ -244,8 +258,14 @@ public class ClaimServiceImpl implements ClaimService {
     public void requestInfo(UUID id) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
+        
+        String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
         claim.requestInfo();
         claimRepository.save(claim);
+        
+        // Publish status change event
+        claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "INFO_REQUESTED", null);
+        log.info("Claim {} status changed to INFO_REQUESTED, event published", claim.getClaimNumber());
     }
 
     @Override
