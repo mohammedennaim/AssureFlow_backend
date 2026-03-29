@@ -1,0 +1,112 @@
+name: CI/CD Pipeline - Backend Services
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  # ============================================================
+  # CI: Build & Test Backend Services
+  # ============================================================
+  build-and-test:
+    name: Build & Test Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build all services
+        run: |
+          echo "Building all backend services (shared-kernel + 8 microservices)..."
+          mvn clean install -DskipTests -B
+
+      - name: Run tests
+        run: |
+          echo "Running all tests..."
+          mvn test -B
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-test-results
+          path: '**/target/surefire-reports/*.xml'
+          retention-days: 7
+
+  # ============================================================
+  # CD: Build & Push Docker Images
+  # ============================================================
+  build-docker-images:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker credentials
+        run: |
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+            echo "ERROR: DOCKER_USERNAME secret is not set"
+            echo "Please configure it in GitHub Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
+            echo "ERROR: DOCKER_PASSWORD secret is not set"
+            echo "Please configure it in GitHub Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          echo "Docker credentials validated successfully"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set image tag
+        id: tag
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker images
+        run: |
+          echo "Building Docker images with tag: ${{ steps.tag.outputs.tag }}"
+          
+          services="api-gateway policy-service client-service billing-service claims-service notification-service iam-service workflow-service"
+          
+          for service in $services; do
+            echo "Building $service..."
+            docker build \
+              --build-arg SERVICE_NAME=$service \
+              -t ${{ secrets.DOCKER_USERNAME }}/assureflow-$service:${{ steps.tag.outputs.tag }} \
+              -f docker/Dockerfile .
+            
+            echo "Pushing $service..."
+            docker push ${{ secrets.DOCKER_USERNAME }}/assureflow-$service:${{ steps.tag.outputs.tag }}
+          done
+
+      - name: Image digest
+        run: echo "Images pushed successfully with tag ${{ steps.tag.outputs.tag }}"
