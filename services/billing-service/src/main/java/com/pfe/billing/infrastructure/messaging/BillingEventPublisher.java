@@ -52,26 +52,40 @@ public class BillingEventPublisher {
                 return;
             }
 
-            // Fetch policy and client data
+            // Fetch policy and client data with fallback strategy
             PolicyDto policy = null;
             ClientDto client = null;
-            
-            try {
-                if (invoice.getPolicyId() != null) {
+            UUID clientIdToUse = null;
+
+            // Priority 1: Use clientId from invoice (UUID)
+            if (invoice.getClientId() != null) {
+                clientIdToUse = invoice.getClientId();
+            }
+            // Priority 2: Fallback to policy's clientId (String -> UUID)
+            else if (invoice.getPolicyId() != null) {
+                try {
                     policy = policyServiceClient.getPolicyById(invoice.getPolicyId().toString());
                     if (policy != null && policy.getClientId() != null) {
-                        client = clientServiceClient.getClientById(policy.getClientId());
+                        clientIdToUse = UUID.fromString(policy.getClientId());
                     }
+                } catch (Exception e) {
+                    log.warn("[KAFKA] Could not fetch policy: {}", e.getMessage());
                 }
-            } catch (Exception e) {
-                log.warn("[KAFKA] Could not fetch policy/client data: {}", e.getMessage());
+            }
+
+            // Fetch client data if we have a clientId
+            if (clientIdToUse != null) {
+                try {
+                    client = clientServiceClient.getClientById(clientIdToUse.toString());
+                } catch (Exception e) {
+                    log.warn("[KAFKA] Could not fetch client {}: {}", clientIdToUse, e.getMessage());
+                }
             }
 
             Map<String, Object> payload = new HashMap<>();
             payload.put("invoiceId", event.getInvoiceId().toString());
             payload.put("policyId", invoice.getPolicyId() != null ? invoice.getPolicyId().toString() : null);
-            payload.put("clientId", invoice.getClientId() != null ? invoice.getClientId().toString() : 
-                (client != null ? client.getId() : null));
+            payload.put("clientId", clientIdToUse != null ? clientIdToUse.toString() : null);
             payload.put("clientEmail", client != null ? client.getEmail() : null);
             payload.put("clientPhone", client != null ? client.getPhone() : null);
             payload.put("amount", invoice.getTotalAmount());
@@ -116,30 +130,46 @@ public class BillingEventPublisher {
                 return;
             }
 
-            // Fetch invoice and client data
+            // Fetch invoice and client data with fallback strategy
             Invoice invoice = null;
             PolicyDto policy = null;
             ClientDto client = null;
-            
+            UUID clientIdToUse = null;
+
             try {
                 if (payment.getInvoiceId() != null) {
                     invoice = invoiceRepository.findById(payment.getInvoiceId()).orElse(null);
-                    if (invoice != null && invoice.getPolicyId() != null) {
-                        policy = policyServiceClient.getPolicyById(invoice.getPolicyId().toString());
-                        if (policy != null && policy.getClientId() != null) {
-                            client = clientServiceClient.getClientById(policy.getClientId());
+                    if (invoice != null) {
+                        // Priority 1: Use clientId from invoice (UUID)
+                        if (invoice.getClientId() != null) {
+                            clientIdToUse = invoice.getClientId();
+                        }
+                        // Priority 2: Fallback to policy's clientId (String -> UUID)
+                        else if (invoice.getPolicyId() != null) {
+                            policy = policyServiceClient.getPolicyById(invoice.getPolicyId().toString());
+                            if (policy != null && policy.getClientId() != null) {
+                                clientIdToUse = UUID.fromString(policy.getClientId());
+                            }
                         }
                     }
                 }
             } catch (Exception e) {
-                log.warn("[KAFKA] Could not fetch invoice/policy/client data: {}", e.getMessage());
+                log.warn("[KAFKA] Could not fetch invoice/policy data: {}", e.getMessage());
+            }
+
+            // Fetch client data if we have a clientId
+            if (clientIdToUse != null) {
+                try {
+                    client = clientServiceClient.getClientById(clientIdToUse.toString());
+                } catch (Exception e) {
+                    log.warn("[KAFKA] Could not fetch client {}: {}", clientIdToUse, e.getMessage());
+                }
             }
 
             Map<String, Object> payload = new HashMap<>();
             payload.put("paymentId", event.getPaymentId().toString());
             payload.put("invoiceId", event.getInvoiceId().toString());
-            payload.put("clientId", invoice != null && invoice.getClientId() != null ? 
-                invoice.getClientId().toString() : (client != null ? client.getId() : null));
+            payload.put("clientId", clientIdToUse != null ? clientIdToUse.toString() : null);
             payload.put("clientEmail", client != null ? client.getEmail() : null);
             payload.put("clientPhone", client != null ? client.getPhone() : null);
             payload.put("amount", payment.getAmount());

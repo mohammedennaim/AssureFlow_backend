@@ -49,7 +49,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         Invoice invoice = invoiceMapper.toDomain(request);
         invoice.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        invoice.setStatus(InvoiceStatus.DRAFT);
+        invoice.setStatus(InvoiceStatus.PENDING);
 
         BigDecimal tax = request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO;
         invoice.setTaxAmount(tax);
