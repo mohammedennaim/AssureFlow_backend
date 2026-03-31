@@ -24,9 +24,11 @@ public interface ClaimMapper {
     @Mapping(target = "approvedBy", ignore = true)
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "slaDeadline", ignore = true)
     @Mapping(target = "documents", ignore = true)
     @Mapping(target = "assessments", ignore = true)
     @Mapping(target = "payout", ignore = true)
+    @Mapping(target = "archivedByAdmin", ignore = true)
     @Mapping(target = "domainEvents", ignore = true)
     Claim toDomain(CreateClaimRequest request);
 }

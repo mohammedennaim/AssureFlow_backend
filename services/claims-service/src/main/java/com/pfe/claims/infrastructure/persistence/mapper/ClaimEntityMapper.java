@@ -16,6 +16,8 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface ClaimEntityMapper {
 
+    @Mapping(target = "slaDeadline", ignore = true)
+    @Mapping(target = "domainEvents", ignore = true)
     Claim toDomain(ClaimEntity entity);
 
     @Mapping(target = "claimId", source = "claim.id")

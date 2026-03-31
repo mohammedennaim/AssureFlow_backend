@@ -201,7 +201,7 @@ spring:
         - id: claims-workflow
           uri: http://claims-service:8080
           predicates:
-            - Path=/api/v1/claims/{id}/approve, /api/v1/claims/{id}/reject, /api/v1/claims/{id}/payout, /api/v1/claims/{id}/close, /api/v1/claims/{id}/submit, /api/v1/claims/{id}/review, /api/v1/claims/{id}/request-info, /api/v1/claims/{id}/mark-as-paid
+            - Path=/api/v1/claims/{id}/approve, /api/v1/claims/{id}/reject, /api/v1/claims/{id}/payout, /api/v1/claims/{id}/close, /api/v1/claims/{id}/submit, /api/v1/claims/{id}/review, /api/v1/claims/{id}/request-info, /api/v1/claims/{id}/mark-as-paid, /api/v1/claims/{id}/archive
             - Method=POST
           filters:
             - StripPrefix=0

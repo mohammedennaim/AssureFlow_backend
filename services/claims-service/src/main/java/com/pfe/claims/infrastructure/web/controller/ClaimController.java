@@ -170,15 +170,27 @@ public class ClaimController {
                 return ResponseEntity.noContent().build();
         }
 
-        @Operation(summary = "Delete a claim", description = "Deletes a claim from the system")
+        @Operation(summary = "Archive a claim", description = "Archives a claim from the admin dashboard while keeping it visible to the client")
         @ApiResponses(value = {
-                        @ApiResponse(responseCode = "204", description = "Claim deleted successfully"),
+                        @ApiResponse(responseCode = "204", description = "Claim archived successfully"),
                         @ApiResponse(responseCode = "404", description = "Claim not found")
         })
-        @DeleteMapping("/{id}")
-        public ResponseEntity<Void> deleteClaim(
-                        @Parameter(description = "The unique ID of the claim to delete") @PathVariable UUID id) {
-                claimService.deleteClaim(id);
+        @PostMapping("/{id}/archive")
+        public ResponseEntity<Void> archiveClaim(
+                        @Parameter(description = "The unique ID of the claim to archive") @PathVariable UUID id) {
+                claimService.archiveClaim(id);
                 return ResponseEntity.noContent().build();
         }
+
+        // @Operation(summary = "Delete a claim", description = "Deletes a claim from the system")
+        // @ApiResponses(value = {
+        //                 @ApiResponse(responseCode = "204", description = "Claim deleted successfully"),
+        //                 @ApiResponse(responseCode = "404", description = "Claim not found")
+        // })
+        // @DeleteMapping("/{id}")
+        // public ResponseEntity<Void> deleteClaim(
+        //                 @Parameter(description = "The unique ID of the claim to delete") @PathVariable UUID id) {
+        //         claimService.deleteClaim(id);
+        //         return ResponseEntity.noContent().build();
+        // }
 }

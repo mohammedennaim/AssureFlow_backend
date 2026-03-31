@@ -41,6 +41,9 @@ public class Claim {
     private UUID assignedTo;
     private LocalDateTime createdAt;
     private LocalDateTime slaDeadline;
+    private LocalDateTime resolvedAt;
+    @Builder.Default
+    private boolean archivedByAdmin = false;
 
     @Builder.Default
     private List<ClaimDocument> documents = new ArrayList<>();
@@ -130,6 +133,7 @@ public class Claim {
                     "Only APPROVED or PAYOUT_INITIATED claims can be marked as paid. Current status: " + this.status);
         }
         this.status = ClaimStatus.PAID;
+        this.resolvedAt = LocalDateTime.now();
     }
 
     public void refund() {
@@ -145,6 +149,16 @@ public class Claim {
             throw new IllegalStateException(
                     "Only PAID, REJECTED or REFUNDED claims can be closed. Current status: " + this.status);
         }
+        this.status = ClaimStatus.CLOSED;
+        this.resolvedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Archives a claim from the admin dashboard while keeping it visible to the client.
+     * This action force-closes the claim regardless of its current status.
+     */
+    public void archiveByAdmin() {
+        this.archivedByAdmin = true;
         this.status = ClaimStatus.CLOSED;
     }
 }

@@ -35,5 +35,7 @@ public interface ClaimService {
 
     void closeClaim(UUID id);
 
+    void archiveClaim(UUID id);
+
     void deleteClaim(UUID id);
 }

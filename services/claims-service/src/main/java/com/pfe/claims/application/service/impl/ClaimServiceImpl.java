@@ -139,31 +139,27 @@ public class ClaimServiceImpl implements ClaimService {
     @Transactional(readOnly = true)
     public List<ClaimDto> getAllClaims() {
         return claimRepository.findAll().stream()
+                .filter(claim -> !claim.isArchivedByAdmin())
                 .map(claimMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT', 'CLIENT')")
     @Transactional
     public ClaimDto updateClaim(UUID id, UpdateClaimRequest request) {
         Claim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ClaimNotFoundException(id));
 
-        if (request.getDescription() != null) {
-            claim.setDescription(request.getDescription());
-        }
-        if (request.getIncidentDate() != null) {
-            claim.setIncidentDate(request.getIncidentDate());
-        }
-        if (request.getEstimatedAmount() != null) {
-            claim.setEstimatedAmount(request.getEstimatedAmount());
-        }
-        if (request.getAssignedTo() != null) {
-            claim.setAssignedTo(request.getAssignedTo());
-        }
+        log.info("Updating claim {} with request: {}", id, request);
+
+        claim.setDescription(request.getDescription());
+        claim.setIncidentDate(request.getIncidentDate());
+        claim.setEstimatedAmount(request.getEstimatedAmount());
+        claim.setAssignedTo(request.getAssignedTo());
 
         Claim updatedClaim = claimRepository.save(claim);
+        log.info("Claim {} updated successfully", id);
         return claimMapper.toDto(updatedClaim);
     }
 
@@ -306,6 +302,24 @@ public class ClaimServiceImpl implements ClaimService {
 
         // Publish status change event
         claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "CLOSED", null);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public void archiveClaim(UUID id) {
+        Claim claim = claimRepository.findById(id)
+                .orElseThrow(() -> new ClaimNotFoundException(id));
+
+        String oldStatus = claim.getStatus() != null ? claim.getStatus().name() : null;
+        boolean wasClosed = claim.getStatus() == ClaimStatus.CLOSED;
+
+        claim.archiveByAdmin();
+        claimRepository.save(claim);
+
+        if (!wasClosed) {
+            claimEventPublisher.publishClaimStatusChanged(id, oldStatus, "CLOSED", null);
+        }
     }
 
     @Override
