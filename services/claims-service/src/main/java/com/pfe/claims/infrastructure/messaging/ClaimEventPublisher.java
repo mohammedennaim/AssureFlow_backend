@@ -2,9 +2,11 @@ package com.pfe.claims.infrastructure.messaging;
 
 import com.pfe.claims.domain.model.Claim;
 import com.pfe.claims.domain.repository.ClaimRepository;
+import com.pfe.claims.infrastructure.client.ClientDto;
 import com.pfe.claims.infrastructure.client.ClientServiceClient;
 import com.pfe.claims.infrastructure.client.PolicyDto;
 import com.pfe.claims.infrastructure.client.PolicyServiceClient;
+import com.pfe.commons.dto.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -30,6 +32,23 @@ public class ClaimEventPublisher {
     private final PolicyServiceClient policyServiceClient;
     private final ClientServiceClient clientServiceClient;
     private final ClaimRepository claimRepository;
+    private final org.springframework.jdbc.core.JdbcTemplate clientJdbcTemplate;
+
+    /**
+     * Get client email directly from client_db (fallback when Feign client fails)
+     */
+    private String getClientEmailFromDB(UUID clientId) {
+        try {
+            log.info("[DB] Trying to fetch email for clientId: {}", clientId);
+            String sql = "SELECT email FROM clients WHERE id = ?";
+            String email = clientJdbcTemplate.queryForObject(sql, String.class, clientId.toString());
+            log.info("[DB] Found email for clientId {}: {}", clientId, email);
+            return email;
+        } catch (Exception e) {
+            log.warn("[DB] Could not fetch client email from client_db for {}: {}", clientId, e.getMessage());
+        }
+        return null;
+    }
 
     /**
      * Publishes a claim created event (claim.submitted).
@@ -46,7 +65,7 @@ public class ClaimEventPublisher {
                 claimNumber = policy.getPolicyNumber(); // Use policy number as reference
                 // Fetch client data
                 try {
-                    var client = clientServiceClient.getClientById(policy.getClientId());
+                    ClientDto client = extractClient(clientServiceClient.getClientById(policy.getClientId()));
                     if (client != null) {
                         clientEmail = client.getEmail();
                         clientPhone = client.getPhone();
@@ -116,10 +135,17 @@ public class ClaimEventPublisher {
                     try {
                         PolicyDto policy = policyServiceClient.getPolicyById(claim.getPolicyId().toString());
                         if (policy != null && policy.getClientId() != null) {
-                            var client = clientServiceClient.getClientById(policy.getClientId().toString());
-                            if (client != null) {
-                                clientEmail = client.getEmail();
-                                clientPhone = client.getPhone();
+                            try {
+                                ClientDto client = extractClient(
+                                        clientServiceClient.getClientById(policy.getClientId().toString()));
+                                if (client != null) {
+                                    clientEmail = client.getEmail();
+                                    clientPhone = client.getPhone();
+                                }
+                            } catch (Exception e) {
+                                log.warn("[KAFKA] Could not fetch client via Feign: {}. Trying DB fallback...", e.getMessage());
+                                // Fallback: get client email directly from DB
+                                clientEmail = getClientEmailFromDB(UUID.fromString(policy.getClientId().toString()));
                             }
                         }
                     } catch (Exception e) {
@@ -291,7 +317,17 @@ public class ClaimEventPublisher {
             case "REJECTED" -> "claim.rejected";
             case "PAID" -> "claim.paid";
             case "SUBMITTED" -> "claim.submitted";
+            case "UNDER_REVIEW" -> "claim.under_review";
+            case "INFO_REQUESTED" -> "claim.info_requested";
+            case "CLOSED" -> "claim.closed";
             default -> "claim.updated";
         };
+    }
+
+    private ClientDto extractClient(BaseResponse<ClientDto> response) {
+        if (response == null || !response.isSuccess()) {
+            return null;
+        }
+        return response.getData();
     }
 }

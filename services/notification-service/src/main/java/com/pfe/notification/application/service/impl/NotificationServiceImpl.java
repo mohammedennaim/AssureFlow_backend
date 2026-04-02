@@ -119,16 +119,20 @@ public class NotificationServiceImpl implements NotificationService {
                         notification.getSubject(),
                         notification.getContent());
                 notification.send();
-                log.info("[NOTIFICATION] Email sent successfully: id={}", id);
+                log.info("[NOTIFICATION] Email sent successfully: id={}, recipient={}", id, notification.getRecipient());
             } else if (NotificationChannel.SMS.equals(notification.getChannel())
                     && notification.getRecipient() != null) {
                 twilioSmsService.sendSms(notification.getRecipient(), notification.getContent());
                 notification.send();
-                log.info("[NOTIFICATION] SMS sent successfully via Twilio: id={}", id);
-            } else {
-                log.info("[NOTIFICATION] Channel={} — recipient={} — delivery method not configured",
-                        notification.getChannel(), notification.getRecipient());
+                log.info("[NOTIFICATION] SMS sent successfully via Twilio: id={}, recipient={}", id, notification.getRecipient());
+            } else if (NotificationChannel.IN_APP.equals(notification.getChannel())) {
+                // In-app notifications are stored in DB and retrieved by frontend
                 notification.send();
+                log.info("[NOTIFICATION] In-app notification marked as sent: id={}, type={}", id, notification.getType());
+            } else {
+                log.warn("[NOTIFICATION] Unknown channel or missing recipient: channel={}, id={}", 
+                        notification.getChannel(), id);
+                notification.fail();
             }
         } catch (Exception e) {
             log.error("[NOTIFICATION] Failed to send notification id={}: {}", id, e.getMessage(), e);
@@ -190,32 +194,32 @@ public class NotificationServiceImpl implements NotificationService {
         long pendingCount = notificationRepository.countByStatus(NotificationStatus.PENDING);
         long failedCount = notificationRepository.countByStatus(NotificationStatus.FAILED);
         long deliveredCount = notificationRepository.countByStatus(NotificationStatus.DELIVERED);
-        
+
         stats.put("sentCount", sentCount);
         stats.put("pendingCount", pendingCount);
         stats.put("failedCount", failedCount);
         stats.put("deliveredCount", deliveredCount);
-        
+
         // Notifications by channel
         long emailCount = notificationRepository.countByChannel(NotificationChannel.EMAIL);
         long smsCount = notificationRepository.countByChannel(NotificationChannel.SMS);
-        long pushCount = notificationRepository.countByChannel(NotificationChannel.PUSH);
-        
+        long inAppCount = notificationRepository.countByChannel(NotificationChannel.IN_APP);
+
         stats.put("emailCount", emailCount);
         stats.put("smsCount", smsCount);
-        stats.put("pushCount", pushCount);
-        
+        stats.put("inAppCount", inAppCount);
+
         // Success rate
-        double successRate = totalNotifications > 0 
-            ? ((double) (sentCount + deliveredCount) / totalNotifications) * 100 
+        double successRate = totalNotifications > 0
+            ? ((double) (sentCount + deliveredCount) / totalNotifications) * 100
             : 0.0;
         stats.put("successRate", Math.round(successRate * 100.0) / 100.0);
-        
+
         // Recent notifications (last 7 days)
         long recentNotifications = notificationRepository.countByCreatedAtAfter(
             java.time.LocalDateTime.now().minusDays(7));
         stats.put("recentNotifications", recentNotifications);
-        
+
         return stats;
     }
 }

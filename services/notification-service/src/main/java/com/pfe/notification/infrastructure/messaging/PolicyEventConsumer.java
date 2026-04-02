@@ -365,6 +365,13 @@ public class PolicyEventConsumer {
 
         String recipient = clientEmail != null ? clientEmail : clientId;
 
+        // Professional Email Message
+        String emailSubject = "⚠️ Rappel Important : Votre police d'assurance " + policyNumber + " arrive à expiration";
+        String emailContent = buildProfessionalExpiringEmail(policyNumber, expirationDate, daysUntilExpiry);
+
+        // Professional SMS Message
+        String smsContent = buildProfessionalExpiringSms(policyNumber, expirationDate, daysUntilExpiry);
+
         if (recipient == null || recipient.isBlank()) {
             log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
             // Only create SMS if phone is available
@@ -373,9 +380,8 @@ public class PolicyEventConsumer {
                         .type(NotificationType.POLICY_EXPIRING)
                         .channel(NotificationChannel.SMS)
                         .recipient(clientPhone)
-                        .subject("Police " + policyNumber + " expire bientôt")
-                        .content("Rappel: Police " + policyNumber + " expire le " + expirationDate +
-                                " (dans " + daysUntilExpiry + " jours). Renouvelez maintenant.")
+                        .subject("AssureFlow - " + policyNumber)
+                        .content(smsContent)
                         .build();
                 var smsDto = notificationService.createNotificationInternal(smsRequest);
                 notificationService.sendNotificationInternal(smsDto.getId());
@@ -389,28 +395,59 @@ public class PolicyEventConsumer {
                 .type(NotificationType.POLICY_EXPIRING)
                 .channel(NotificationChannel.EMAIL)
                 .recipient(recipient)
-                .subject("Rappel : Votre police d'assurance arrive à expiration")
-                .content("Votre police " + policyNumber + " arrivera à expiration le " + expirationDate + 
-                        " (dans " + daysUntilExpiry + " jours). Pensez à la renouveler pour rester couvert.")
+                .subject(emailSubject)
+                .content(emailContent)
                 .build();
         var emailDto = notificationService.createNotificationInternal(emailRequest);
         notificationService.sendNotificationInternal(emailDto.getId());
-        
+
         // Create SMS notification if phone number is available
         if (clientPhone != null && !clientPhone.isBlank()) {
             CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
                     .type(NotificationType.POLICY_EXPIRING)
                     .channel(NotificationChannel.SMS)
                     .recipient(clientPhone)
-                    .subject("Police " + policyNumber + " expire bientôt")
-                    .content("Rappel: Police " + policyNumber + " expire le " + expirationDate +
-                            " (dans " + daysUntilExpiry + " jours). Renouvelez maintenant.")
+                    .subject("AssureFlow - " + policyNumber)
+                    .content(smsContent)
                     .build();
             var smsDto = notificationService.createNotificationInternal(smsRequest);
             notificationService.sendNotificationInternal(smsDto.getId());
             log.info("[NOTIFICATION] POLICY_EXPIRING SMS sent to {}", clientPhone);
         }
-        
+
         log.info("[NOTIFICATION] POLICY_EXPIRING email sent to {}", recipient);
+    }
+
+    /**
+     * Build professional email message for policy expiration
+     */
+    private String buildProfessionalExpiringEmail(String policyNumber, Object expirationDate, Object daysUntilExpiry) {
+        StringBuilder content = new StringBuilder();
+        content.append("Bonjour,\n\n");
+        content.append("Nous vous informons que votre police d'assurance N° ").append(policyNumber)
+                .append(" arrivera à expiration le ").append(expirationDate)
+                .append(" (dans ").append(daysUntilExpiry).append(" jours).\n\n");
+        content.append("Afin de maintenir votre couverture d'assurance sans interruption, ")
+                .append("nous vous invitons à renouveler votre police avant la date d'échéance.\n\n");
+        content.append("Pour procéder au renouvellement, vous pouvez :\n");
+        content.append("  • Vous connecter à votre espace client sur notre site web\n");
+        content.append("  • Contacter notre service client au 555-1234\n");
+        content.append("  • Visiter l'une de nos agences\n\n");
+        content.append("Notre équipe reste à votre disposition pour toute information complémentaire.\n\n");
+        content.append("Cordialement,\n");
+        content.append("L'équipe AssureFlow\n");
+        content.append("Service Client - 24/7\n");
+        content.append("www.assureflow.com | contact@assureflow.com");
+        return content.toString();
+    }
+
+    /**
+     * Build professional SMS message for policy expiration (max 160 chars)
+     */
+    private String buildProfessionalExpiringSms(String policyNumber, Object expirationDate, Object daysUntilExpiry) {
+        return String.format(
+            "AssureFlow: Votre police %s expire le %s (%s jours). Renouvelez maintenant pour éviter toute interruption de couverture. Contact: 555-1234",
+            policyNumber, expirationDate, daysUntilExpiry
+        );
     }
 }

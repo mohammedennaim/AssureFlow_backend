@@ -1,16 +1,19 @@
+# syntax=docker/dockerfile:1.7
+
 # ============================================================
-# 🐳 Dockerfile Multi-Stage OPTIMIZED - AssureFlow Platform
+# Dockerfile Multi-Stage OPTIMIZED - AssureFlow Platform
 # ============================================================
 # Compatible Windows, Mac (M1/M2/M3) & Linux | Java 17 | Spring Boot 3.1.5
 # Optimized for fast rebuilds with Maven cache
 # ============================================================
 
 # ============================================================
-# 🔨 STAGE 1: BUILD (Maven + JDK 17)
+# STAGE 1: BUILD (Maven + JDK 17)
 # ============================================================
 FROM maven:3.9-eclipse-temurin-17 AS builder
 
 ARG SERVICE_NAME
+ARG MAVEN_CLI_OPTS="-B -ntp -Ddocker.build=true -DskipTests -Dmaven.test.skip=true"
 
 WORKDIR /build
 
@@ -27,7 +30,8 @@ COPY shared-kernel/pom.xml shared-kernel/
 COPY services/${SERVICE_NAME}/pom.xml services/${SERVICE_NAME}/
 
 # Install parent POM
-RUN mvn -N -f pom.xml install -Ddocker.build=true -B
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -N -f pom.xml install ${MAVEN_CLI_OPTS}
 
 # ============================================================
 # LAYER 2: Build shared-kernel (CACHED unless shared-kernel changes)
@@ -37,23 +41,26 @@ RUN mvn -N -f pom.xml install -Ddocker.build=true -B
 COPY shared-kernel/src shared-kernel/src
 
 # Build and install shared-kernel first (needed by services)
-RUN mvn -f shared-kernel/pom.xml clean install -Ddocker.build=true -Dmaven.test.skip=true -B -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f shared-kernel/pom.xml clean install ${MAVEN_CLI_OPTS}
 
-# Now resolve service dependencies (shared-kernel is available)
-RUN mvn -f services/${SERVICE_NAME}/pom.xml dependency:resolve dependency:resolve-plugins -B
+# Resolve service dependencies and plugins
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f services/${SERVICE_NAME}/pom.xml dependency:resolve dependency:resolve-plugins ${MAVEN_CLI_OPTS}
 
 # ============================================================
-# LAYER 3: Build service (Only rebuilt when service code changes)
+# LAYER 3: Build service (only rebuilt when service code changes)
 # ============================================================
 
 # Copy service sources
 COPY services/${SERVICE_NAME}/src services/${SERVICE_NAME}/src
 
 # Build service
-RUN mvn -f services/${SERVICE_NAME}/pom.xml clean package -Ddocker.build=true -Dmaven.test.skip=true -B -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f services/${SERVICE_NAME}/pom.xml clean package ${MAVEN_CLI_OPTS}
 
 # ============================================================
-# 📦 STAGE 2: RUNTIME (JRE 17)
+# STAGE 2: RUNTIME (JRE 17)
 # ============================================================
 FROM eclipse-temurin:17-jre AS runtime
 

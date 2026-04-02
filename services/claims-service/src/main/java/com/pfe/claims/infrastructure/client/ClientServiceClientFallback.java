@@ -1,5 +1,6 @@
 package com.pfe.claims.infrastructure.client;
 
+import com.pfe.commons.dto.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,8 +15,8 @@ import org.springframework.stereotype.Component;
 public class ClientServiceClientFallback implements ClientServiceClient {
 
     @Override
-    public ClientDto getClientById(String id) {
-        log.warn("[FALLBACK] client-service unavailable, returning null for client: {}", id);
-        return null;
+    public BaseResponse<ClientDto> getClientById(String identifier) {
+        log.warn("[FALLBACK] client-service unavailable, returning error response for client: {}", identifier);
+        return BaseResponse.error("Client service is unavailable");
     }
 }

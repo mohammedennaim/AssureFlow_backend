@@ -10,6 +10,7 @@ import com.pfe.billing.infrastructure.client.ClientDto;
 import com.pfe.billing.infrastructure.client.ClientServiceClient;
 import com.pfe.billing.infrastructure.client.PolicyDto;
 import com.pfe.billing.infrastructure.client.PolicyServiceClient;
+import com.pfe.commons.dto.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -76,7 +77,7 @@ public class BillingEventPublisher {
             // Fetch client data if we have a clientId
             if (clientIdToUse != null) {
                 try {
-                    client = clientServiceClient.getClientById(clientIdToUse.toString());
+                    client = extractClient(clientServiceClient.getClientById(clientIdToUse.toString()));
                 } catch (Exception e) {
                     log.warn("[KAFKA] Could not fetch client {}: {}", clientIdToUse, e.getMessage());
                 }
@@ -160,7 +161,7 @@ public class BillingEventPublisher {
             // Fetch client data if we have a clientId
             if (clientIdToUse != null) {
                 try {
-                    client = clientServiceClient.getClientById(clientIdToUse.toString());
+                    client = extractClient(clientServiceClient.getClientById(clientIdToUse.toString()));
                 } catch (Exception e) {
                     log.warn("[KAFKA] Could not fetch client {}: {}", clientIdToUse, e.getMessage());
                 }
@@ -196,5 +197,12 @@ public class BillingEventPublisher {
         } catch (Exception e) {
             log.error("[KAFKA] Error publishing PaymentReceivedEvent", e);
         }
+    }
+
+    private ClientDto extractClient(BaseResponse<ClientDto> response) {
+        if (response == null || !response.isSuccess()) {
+            return null;
+        }
+        return response.getData();
     }
 }

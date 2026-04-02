@@ -14,6 +14,7 @@ import com.pfe.claims.infrastructure.client.ClientDto;
 import com.pfe.claims.infrastructure.client.PolicyDto;
 import com.pfe.claims.infrastructure.client.PolicyServiceClient;
 import com.pfe.claims.infrastructure.messaging.ClaimEventPublisher;
+import com.pfe.commons.dto.BaseResponse;
 import com.pfe.commons.exceptions.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -344,7 +345,11 @@ public class ClaimServiceImpl implements ClaimService {
             if (policy == null || policy.getClientId() == null) {
                 return null;
             }
-            return clientServiceClient.getClientById(policy.getClientId());
+            BaseResponse<ClientDto> response = clientServiceClient.getClientById(policy.getClientId());
+            if (response != null && response.isSuccess()) {
+                return response.getData();
+            }
+            return null;
         } catch (Exception e) {
             log.warn("[KAFKA] Could not fetch client data for notification: {}", e.getMessage());
             return null;

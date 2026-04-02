@@ -1,6 +1,7 @@
 package com.pfe.billing.infrastructure.client;
 
 import com.pfe.billing.infrastructure.config.FeignConfig;
+import com.pfe.commons.dto.BaseResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -12,14 +13,14 @@ import org.springframework.web.bind.annotation.PathVariable;
  */
 @FeignClient(
         name = "client-service",
-        url = "${feign.client.config.client-service.url: http://localhost:8084}",
+        url = "${feign.client.config.client-service.url:http://localhost:8084}",
         configuration = FeignConfig.class,
         fallback = ClientServiceClientFallback.class
 )
 public interface ClientServiceClient {
 
-    @GetMapping("/api/v1/clients/{id}")
+    @GetMapping("/api/v1/clients/{identifier}")
     @CircuitBreaker(name = "client-service")
     @Retry(name = "client-service")
-    ClientDto getClientById(@PathVariable("id") String id);
+    BaseResponse<ClientDto> getClientById(@PathVariable("identifier") String identifier);
 }

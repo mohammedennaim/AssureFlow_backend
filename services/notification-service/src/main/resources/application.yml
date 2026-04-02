@@ -35,6 +35,8 @@ spring:
       data-locations: classpath*:data.sql
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    listener:
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:1}
     consumer:
       group-id: notification-service-group
       auto-offset-reset: earliest
@@ -101,6 +103,8 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:assureflow_secure_2024}
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+    listener:
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:1}
   jpa:
     hibernate:
       ddl-auto: create

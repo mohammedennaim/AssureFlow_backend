@@ -3,6 +3,7 @@ package com.pfe.claims.infrastructure.config;
 import feign.Logger;
 import feign.Request;
 import feign.RequestInterceptor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -12,6 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class FeignConfig {
+
+    @Value("${service.account.token:}")
+    private String serviceAccountToken;
 
     @Bean
     public Logger.Level feignLoggerLevel() {
@@ -26,7 +30,13 @@ public class FeignConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {
-            // Forward Authorization header from incoming request to Feign clients
+            // Always prefer service token for inter-service calls to avoid role mismatch (e.g., CLIENT token).
+            if (serviceAccountToken != null && !serviceAccountToken.isEmpty()) {
+                requestTemplate.header("Authorization", "Bearer " + serviceAccountToken);
+                return;
+            }
+
+            // Fallback: forward caller token if service token is not configured.
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
                 String authHeader = attributes.getRequest().getHeader("Authorization");

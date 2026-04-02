@@ -44,6 +44,12 @@ public class JwtService {
         return generateToken(extraClaims, userDetails);
     }
 
+    public String generateToken(UserDetails userDetails, List<String> roles, long customExpiration) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", roles);
+        return buildToken(extraClaims, userDetails, customExpiration);
+    }
+
     public String generateToken(
             Map<String, Object> extraClaims,
             UserDetails userDetails) {

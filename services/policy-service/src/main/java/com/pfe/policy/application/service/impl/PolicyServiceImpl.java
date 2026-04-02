@@ -42,7 +42,7 @@ public class PolicyServiceImpl implements PolicyService {
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public PolicyDto createPolicy(CreatePolicyRequest request) {
-        validateClientExists(request.getClientId());
+        ClientDto client = validateClientExists(request.getClientId());
 
         Policy policy = policyMapper.toDomain(request);
         policy.setPolicyNumber("POL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
@@ -65,8 +65,8 @@ public class PolicyServiceImpl implements PolicyService {
                 .policyId(savedPolicy.getId())
                 .policyNumber(savedPolicy.getPolicyNumber())
                 .clientId(savedPolicy.getClientId())
-                .clientEmail(getClientEmail(savedPolicy.getClientId()))
-                .clientPhone(getClientPhone(savedPolicy.getClientId()))
+                .clientEmail(client != null ? client.getEmail() : null)
+                .clientPhone(client != null ? client.getPhone() : null)
                 .type(savedPolicy.getType() != null ? savedPolicy.getType().name() : null)
                 .status(savedPolicy.getStatus() != null ? savedPolicy.getStatus().name() : null)
                 .premiumAmount(savedPolicy.getPremiumAmount())
@@ -86,7 +86,7 @@ public class PolicyServiceImpl implements PolicyService {
         return policyMapper.toDto(savedPolicy);
     }
 
-    private void validateClientExists(String clientId) {
+    private ClientDto validateClientExists(String clientId) {
         if (clientId == null || clientId.isBlank()) {
             throw new BusinessException("Client ID is required");
         }
@@ -96,6 +96,7 @@ public class PolicyServiceImpl implements PolicyService {
                 throw new BusinessException("Client not found with ID: " + clientId);
             }
             log.info("Client validated successfully for ID: {}", clientId);
+            return response.getData();
         } catch (BusinessException e) {
             throw e;
         } catch (feign.FeignException e) {
@@ -104,26 +105,14 @@ public class PolicyServiceImpl implements PolicyService {
         }
     }
 
-    private String getClientEmail(String clientId) {
+    private ClientDto getClientSafely(String clientId) {
         try {
             BaseResponse<ClientDto> response = clientServiceClient.getClientById(clientId);
-            if (response != null && response.getData() != null) {
-                return response.getData().getEmail();
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                return response.getData();
             }
         } catch (Exception e) {
-            log.warn("Failed to fetch client email for {}: {}", clientId, e.getMessage());
-        }
-        return null;
-    }
-
-    private String getClientPhone(String clientId) {
-        try {
-            BaseResponse<ClientDto> response = clientServiceClient.getClientById(clientId);
-            if (response != null && response.getData() != null) {
-                return response.getData().getPhone();
-            }
-        } catch (Exception e) {
-            log.warn("Failed to fetch client phone for {}: {}", clientId, e.getMessage());
+            log.warn("Failed to fetch client details for {}: {}", clientId, e.getMessage());
         }
         return null;
     }
@@ -309,11 +298,12 @@ public class PolicyServiceImpl implements PolicyService {
 
     private java.util.Map<String, Object> buildPolicyEventMap(Policy policy, String reason) {
         java.util.Map<String, Object> eventMap = new java.util.HashMap<>();
+        ClientDto client = getClientSafely(policy.getClientId());
         eventMap.put("policyId", policy.getId());
         eventMap.put("policyNumber", policy.getPolicyNumber());
         eventMap.put("clientId", policy.getClientId());
-        eventMap.put("clientEmail", getClientEmail(policy.getClientId()));
-        eventMap.put("clientPhone", getClientPhone(policy.getClientId()));
+        eventMap.put("clientEmail", client != null ? client.getEmail() : null);
+        eventMap.put("clientPhone", client != null ? client.getPhone() : null);
         eventMap.put("type", policy.getType() != null ? policy.getType().name() : null);
         eventMap.put("status", policy.getStatus() != null ? policy.getStatus().name() : null);
         eventMap.put("premiumAmount", policy.getPremiumAmount());

@@ -45,7 +45,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public InvoiceDto createInvoice(CreateInvoiceRequest request) {
-        validatePolicyExists(request.getPolicyId());
+        PolicyDto policy = validatePolicyExists(request.getPolicyId());
+        validateInvoiceAmountAgainstPolicy(request.getAmount(), policy);
 
         Invoice invoice = invoiceMapper.toDomain(request);
         invoice.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
@@ -67,7 +68,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         return invoiceMapper.toDto(saved);
     }
 
-    private void validatePolicyExists(UUID policyId) {
+    private PolicyDto validatePolicyExists(UUID policyId) {
         if (policyId == null) {
             throw new BusinessException("Policy ID is required");
         }
@@ -77,13 +78,33 @@ public class InvoiceServiceImpl implements InvoiceService {
                 throw new BusinessException("Policy not found with ID: " + policyId);
             }
             log.info("Policy validated for invoice: {} (status: {})", policy.getPolicyNumber(), policy.getStatus());
+            return policy;
         } catch (BusinessException e) {
             throw e;
         } catch (feign.FeignException e) {
             log.warn("Unable to validate policy {} via Feign ({}). Skipping validation.", policyId, e.status());
             // Skip validation if policy service is unavailable or returns 403
             // Frontend already validates policy existence
+            return null;
         }
+    }
+
+    private void validateInvoiceAmountAgainstPolicy(BigDecimal invoiceAmount, PolicyDto policy) {
+        if (policy == null || policy.getPremiumAmount() == null) {
+            return; // Skip validation if policy data is unavailable
+        }
+        if (invoiceAmount.compareTo(policy.getPremiumAmount()) > 0) {
+            log.warn("Invoice amount {} exceeds policy premium {} for policy {}", 
+                    invoiceAmount, policy.getPremiumAmount(), policy.getPolicyNumber());
+            throw new BusinessException(
+                String.format(
+                    "Le montant de la facture (%s) ne peut pas dépasser la prime de la police (%s)",
+                    invoiceAmount, policy.getPremiumAmount()
+                )
+            );
+        }
+        log.info("Invoice amount validated: {} <= policy premium {}", 
+                invoiceAmount, policy.getPremiumAmount());
     }
 
     @Override

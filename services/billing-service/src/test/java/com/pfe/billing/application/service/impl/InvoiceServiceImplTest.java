@@ -118,6 +118,87 @@ class InvoiceServiceImplTest {
             assertThrows(BusinessException.class, () -> invoiceService.createInvoice(request));
             verify(invoiceRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("Should throw when invoice amount exceeds policy premium")
+        void shouldThrowWhenInvoiceAmountExceedsPremium() {
+            CreateInvoiceRequest request = new CreateInvoiceRequest();
+            request.setPolicyId(POLICY_ID);
+            request.setClientId(CLIENT_ID);
+            request.setAmount(new BigDecimal("15000")); // Amount > Premium
+            request.setTaxAmount(new BigDecimal("3000"));
+            request.setDueDate(LocalDate.now().plusMonths(1));
+
+            PolicyDto policyDto = new PolicyDto();
+            policyDto.setPolicyNumber("POL-ABCD1234");
+            policyDto.setPremiumAmount(new BigDecimal("12000")); // Premium = 12000
+
+            when(policyServiceClient.getPolicyById(POLICY_ID.toString())).thenReturn(policyDto);
+
+            BusinessException exception = assertThrows(BusinessException.class, () -> invoiceService.createInvoice(request));
+            assertTrue(exception.getMessage().contains("ne peut pas dépasser"));
+            verify(invoiceRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should create invoice when amount is less than policy premium")
+        void shouldCreateInvoiceWhenAmountLessThanPremium() {
+            CreateInvoiceRequest request = new CreateInvoiceRequest();
+            request.setPolicyId(POLICY_ID);
+            request.setClientId(CLIENT_ID);
+            request.setAmount(new BigDecimal("10000")); // Amount < Premium
+            request.setTaxAmount(new BigDecimal("2000"));
+            request.setDueDate(LocalDate.now().plusMonths(1));
+
+            PolicyDto policyDto = new PolicyDto();
+            policyDto.setPolicyNumber("POL-ABCD1234");
+            policyDto.setPremiumAmount(new BigDecimal("12000")); // Premium = 12000
+
+            Invoice invoice = createTestInvoice(InvoiceStatus.DRAFT);
+            InvoiceDto dto = new InvoiceDto();
+            dto.setId(INVOICE_ID);
+
+            when(policyServiceClient.getPolicyById(POLICY_ID.toString())).thenReturn(policyDto);
+            when(invoiceMapper.toDomain(request)).thenReturn(invoice);
+            when(invoiceRepository.save(any(Invoice.class))).thenReturn(invoice);
+            when(invoiceMapper.toDto(invoice)).thenReturn(dto);
+
+            InvoiceDto result = assertDoesNotThrow(() -> invoiceService.createInvoice(request));
+
+            assertNotNull(result);
+            assertEquals(INVOICE_ID, result.getId());
+            verify(invoiceRepository).save(any(Invoice.class));
+        }
+
+        @Test
+        @DisplayName("Should create invoice when amount equals policy premium")
+        void shouldCreateInvoiceWhenAmountEqualsPremium() {
+            CreateInvoiceRequest request = new CreateInvoiceRequest();
+            request.setPolicyId(POLICY_ID);
+            request.setClientId(CLIENT_ID);
+            request.setAmount(new BigDecimal("12000")); // Amount == Premium
+            request.setTaxAmount(new BigDecimal("2400"));
+            request.setDueDate(LocalDate.now().plusMonths(1));
+
+            PolicyDto policyDto = new PolicyDto();
+            policyDto.setPolicyNumber("POL-ABCD1234");
+            policyDto.setPremiumAmount(new BigDecimal("12000")); // Premium = 12000
+
+            Invoice invoice = createTestInvoice(InvoiceStatus.DRAFT);
+            InvoiceDto dto = new InvoiceDto();
+            dto.setId(INVOICE_ID);
+
+            when(policyServiceClient.getPolicyById(POLICY_ID.toString())).thenReturn(policyDto);
+            when(invoiceMapper.toDomain(request)).thenReturn(invoice);
+            when(invoiceRepository.save(any(Invoice.class))).thenReturn(invoice);
+            when(invoiceMapper.toDto(invoice)).thenReturn(dto);
+
+            InvoiceDto result = assertDoesNotThrow(() -> invoiceService.createInvoice(request));
+
+            assertNotNull(result);
+            assertEquals(INVOICE_ID, result.getId());
+            verify(invoiceRepository).save(any(Invoice.class));
+        }
     }
 
     // ===================== READ =====================

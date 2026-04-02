@@ -1,5 +1,5 @@
 # ============================================================
-# 🐳 .dockerignore - AssureFlow Platform
+# .dockerignore - AssureFlow Platform
 # ============================================================
 # Optimized for fast Docker builds with minimal context
 # ============================================================
@@ -20,6 +20,8 @@ buildNumber.properties
 **/*.jar
 **/*.war
 **/*.ear
+.m2/
+.home/
 
 # --- IDE ---
 .idea/

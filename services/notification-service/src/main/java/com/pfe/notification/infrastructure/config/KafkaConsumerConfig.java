@@ -30,6 +30,9 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
 
+    @Value("${spring.kafka.listener.concurrency:1}")
+    private Integer listenerConcurrency;
+
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
@@ -57,8 +60,8 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         
-        // Configure concurrent consumers for better throughput
-        factory.setConcurrency(3);
+        // Keep a conservative default for single-broker local Docker setups.
+        factory.setConcurrency(Math.max(1, listenerConcurrency));
         
         // Configure container properties
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.BATCH);
