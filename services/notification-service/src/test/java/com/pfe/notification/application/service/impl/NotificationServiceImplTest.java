@@ -5,8 +5,11 @@ import com.pfe.notification.application.dto.NotificationDto;
 import com.pfe.notification.application.mapper.NotificationMapper;
 import com.pfe.notification.domain.exception.NotificationNotFoundException;
 import com.pfe.notification.domain.model.Notification;
+import com.pfe.notification.domain.model.NotificationChannel;
 import com.pfe.notification.domain.model.NotificationStatus;
 import com.pfe.notification.domain.repository.NotificationRepository;
+import com.pfe.notification.infrastructure.email.EmailNotificationService;
+import com.pfe.notification.infrastructure.sms.TwilioSmsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,6 +36,12 @@ class NotificationServiceImplTest {
     @Mock
     private NotificationMapper notificationMapper;
 
+    @Mock
+    private EmailNotificationService emailNotificationService;
+
+    @Mock
+    private TwilioSmsService twilioSmsService;
+
     @InjectMocks
     private NotificationServiceImpl notificationService;
 
@@ -54,6 +63,7 @@ class NotificationServiceImplTest {
         notification = Notification.builder()
                 .id(notificationId)
                 .policyId(policyId)
+                .channel(NotificationChannel.EMAIL)
                 .recipient("test@example.com")
                 .content("Test message")
                 .status(NotificationStatus.PENDING)
@@ -121,6 +131,7 @@ class NotificationServiceImplTest {
         @DisplayName("Should send notification successfully")
         void shouldSendNotificationSuccessfully() {
             when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            doNothing().when(emailNotificationService).sendEmail(any(), any(), any());
 
             notificationService.sendNotificationInternal(notificationId);
 
