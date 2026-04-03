@@ -4,6 +4,7 @@ import com.pfe.commons.dto.BaseResponse;
 import com.pfe.notification.application.dto.CreateNotificationRequest;
 import com.pfe.notification.application.dto.NotificationDto;
 import com.pfe.notification.application.service.NotificationService;
+import com.pfe.notification.domain.model.NotificationChannel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -59,6 +60,16 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Page<NotificationDto> list = notificationService.getAllNotificationsPaged(page, size);
+        return ResponseEntity.ok(BaseResponse.success(list));
+    }
+
+    @GetMapping("/channel/{channel}")
+    @Operation(summary = "Get notifications by channel (paginated)")
+    public ResponseEntity<BaseResponse<Page<NotificationDto>>> getNotificationsByChannel(
+            @PathVariable NotificationChannel channel,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<NotificationDto> list = notificationService.getNotificationsByChannelPaged(channel, page, size);
         return ResponseEntity.ok(BaseResponse.success(list));
     }
 

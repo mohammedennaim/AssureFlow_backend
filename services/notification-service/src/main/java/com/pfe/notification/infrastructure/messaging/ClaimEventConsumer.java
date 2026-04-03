@@ -58,7 +58,7 @@ public class ClaimEventConsumer {
     }
 
     /**
-     * Handles claim.submitted event - notifies CLIENT only
+     * Handles claim.submitted event - notifies CLIENT and ADMIN
      */
     private void handleClaimSubmitted(Map<String, Object> payload) {
         String clientId = (String) payload.get("clientId");
@@ -68,7 +68,7 @@ public class ClaimEventConsumer {
         String clientEmail = (String) payload.get("clientEmail");
         String recipient = clientEmail != null ? clientEmail : clientId;
 
-        // Send notification to CLIENT only
+        // Send notification to CLIENT (EMAIL + SMS)
         if (recipient == null || recipient.isBlank()) {
             log.warn("[NOTIFICATION] No recipient (email or clientId) for claim={}, skipping email notification", claimId);
             if (clientPhone != null && !clientPhone.isBlank()) {
@@ -89,6 +89,11 @@ public class ClaimEventConsumer {
 
             log.info("[NOTIFICATION] CLAIM_SUBMITTED email sent to client {}", recipient);
         }
+
+        // Send IN_APP notification to ADMIN
+        sendInAppNotificationToAdmin("CLAIM_SUBMITTED",
+            "Nouvelle réclamation soumise",
+            "Le client " + (clientEmail != null ? clientEmail : clientId) + " a soumis la réclamation " + claimNumber);
     }
 
     /**
@@ -123,6 +128,11 @@ public class ClaimEventConsumer {
         }
 
         log.info("[NOTIFICATION] CLAIM_UNDER_REVIEW email sent to client {}", recipient);
+
+        // Send IN_APP notification to ADMIN
+        sendInAppNotificationToAdmin("CLAIM_UNDER_REVIEW",
+            "Réclamation en cours de traitement",
+            "La réclamation " + claimNumber + " est en cours de traitement");
     }
 
     /**
@@ -159,10 +169,15 @@ public class ClaimEventConsumer {
         }
 
         log.info("[NOTIFICATION] CLAIM_APPROVED email sent to {}", recipient);
+
+        // Send IN_APP notification to ADMIN
+        sendInAppNotificationToAdmin("CLAIM_APPROVED",
+            "Réclamation approuvée",
+            "La réclamation " + claimRef + " a été approuvée. Montant: " + amount);
     }
 
     /**
-     * Handles claim.rejected event - notifies CLIENT only
+     * Handles claim.rejected event - notifies CLIENT and ADMIN
      */
     private void handleClaimRejected(Map<String, Object> payload) {
         String clientId = (String) payload.get("clientId");
@@ -198,6 +213,11 @@ public class ClaimEventConsumer {
         }
 
         log.info("[NOTIFICATION] CLAIM_REJECTED email sent to {}", recipient);
+
+        // Send IN_APP notification to ADMIN
+        sendInAppNotificationToAdmin("CLAIM_REJECTED",
+            "Réclamation refusée",
+            "La réclamation " + claimRef + " a été refusée." + (rejectionReason != null ? " Raison: " + rejectionReason : ""));
     }
 
     /**
@@ -234,11 +254,12 @@ public class ClaimEventConsumer {
         }
 
         log.info("[NOTIFICATION] CLAIM_PAID email sent to {}", recipient);
-    }
 
-    /**
-     * Handles claim.sla.breached event - notifies CLIENT only
-     */
+        // Send IN_APP notification to ADMIN
+        sendInAppNotificationToAdmin("CLAIM_PAID",
+            "Réclamation payée",
+            "Le paiement de " + amount + " a été effectué pour la réclamation " + claimRef);
+    }
     private void handleClaimSlaBreached(Map<String, Object> payload) {
         String claimId = (String) payload.get("claimId");
         String claimNumber = (String) payload.get("claimNumber");
@@ -395,6 +416,32 @@ public class ClaimEventConsumer {
             notificationService.sendNotificationInternal(dto.getId());
         } catch (Exception e) {
             log.error("[NOTIFICATION] Failed to send SMS to {}: {}", phone, e.getMessage());
+        }
+    }
+
+    /**
+     * Sends IN_APP notification to ADMIN for dashboard visibility
+     */
+    private void sendInAppNotificationToAdmin(String type, String subject, String content) {
+        try {
+            NotificationType notificationType;
+            try {
+                notificationType = NotificationType.valueOf(type);
+            } catch (IllegalArgumentException e) {
+                notificationType = NotificationType.CLAIM_SUBMITTED;
+            }
+
+            CreateNotificationRequest request = CreateNotificationRequest.builder()
+                    .type(notificationType)
+                    .channel(NotificationChannel.IN_APP)
+                    .recipient("ADMIN")
+                    .subject(subject)
+                    .content(content)
+                    .build();
+            var dto = notificationService.createNotificationInternal(request);
+            log.info("[NOTIFICATION] IN_APP notification created for ADMIN: {}", subject);
+        } catch (Exception e) {
+            log.error("[NOTIFICATION] Failed to send IN_APP notification to ADMIN: {}", e.getMessage());
         }
     }
 }

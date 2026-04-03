@@ -311,8 +311,11 @@ public class PolicyServiceImpl implements PolicyService {
         eventMap.put("startDate", policy.getStartDate());
         eventMap.put("endDate", policy.getEndDate());
         if (reason != null) {
-            eventMap.put("rejectionReason", reason);
-            eventMap.put("cancellationReason", reason);
+            if (policy.getStatus() == com.pfe.policy.domain.model.PolicyStatus.CANCELLED) {
+                eventMap.put("cancellationReason", reason);
+            } else {
+                eventMap.put("rejectionReason", reason);
+            }
         }
         return eventMap;
     }

@@ -16,7 +16,7 @@ public class EmailNotificationService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:no-reply@assureflow.local}")
+    @Value("${spring.mail.username}")
     private String fromAddress;
 
     public void sendEmail(String to, String subject, String content) {

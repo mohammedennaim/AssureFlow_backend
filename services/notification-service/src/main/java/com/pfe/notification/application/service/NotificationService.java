@@ -2,6 +2,7 @@ package com.pfe.notification.application.service;
 
 import com.pfe.notification.application.dto.CreateNotificationRequest;
 import com.pfe.notification.application.dto.NotificationDto;
+import com.pfe.notification.domain.model.NotificationChannel;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -21,6 +22,8 @@ public interface NotificationService {
     List<NotificationDto> getAllNotifications();
 
     Page<NotificationDto> getAllNotificationsPaged(int page, int size);
+
+    Page<NotificationDto> getNotificationsByChannelPaged(NotificationChannel channel, int page, int size);
 
     void sendNotification(UUID id);
 

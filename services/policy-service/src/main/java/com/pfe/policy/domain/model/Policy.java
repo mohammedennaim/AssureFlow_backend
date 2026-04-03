@@ -120,11 +120,6 @@ public class Policy {
         return this.premiumAmount;
     }
 
-    public Policy evaluatePolicy() {
-        calculatePremium();
-        return this;
-    }
-
     public void submit() {
         if (this.status != PolicyStatus.DRAFT) {
             throw new IllegalStateException("Only DRAFT policies can be submitted. Current status: " + this.status);

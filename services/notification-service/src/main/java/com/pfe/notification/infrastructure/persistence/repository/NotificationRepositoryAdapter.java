@@ -111,4 +111,15 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     public long countByCreatedAtAfter(LocalDateTime date) {
         return jpaRepository.countByCreatedAtAfter(date);
     }
+
+    @Override
+    public List<Notification> findByChannel(NotificationChannel channel) {
+        return jpaRepository.findByChannel(channel).stream()
+                .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<Notification> findByChannel(NotificationChannel channel, Pageable pageable) {
+        return jpaRepository.findByChannel(channel, pageable).map(mapper::toDomain);
+    }
 }

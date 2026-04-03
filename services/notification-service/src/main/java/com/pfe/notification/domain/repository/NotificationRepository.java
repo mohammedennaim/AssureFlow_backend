@@ -44,4 +44,8 @@ public interface NotificationRepository {
     long countByChannel(NotificationChannel channel);
 
     long countByCreatedAtAfter(LocalDateTime date);
+
+    List<Notification> findByChannel(NotificationChannel channel);
+
+    Page<Notification> findByChannel(NotificationChannel channel, Pageable pageable);
 }

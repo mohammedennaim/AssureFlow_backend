@@ -76,13 +76,6 @@ public class Claim {
         }
     }
 
-    /**
-     * Submits a new claim for processing.
-     * A claim can only be submitted once (from a null or fresh status).
-     *
-     * @throws IllegalStateException if the claim has already been submitted or is
-     *                               in any other active state
-     */
     public void submit() {
         if (this.status != null) {
             throw new IllegalStateException(
@@ -119,14 +112,6 @@ public class Claim {
         }
     }
 
-    public void initiatePayout() {
-        if (this.status != ClaimStatus.APPROVED) {
-            throw new IllegalStateException(
-                    "Only APPROVED claims can initiate payout. Current status: " + this.status);
-        }
-        this.status = ClaimStatus.PAYOUT_INITIATED;
-    }
-
     public void markAsPaid() {
         if (this.status != ClaimStatus.APPROVED && this.status != ClaimStatus.PAYOUT_INITIATED) {
             throw new IllegalStateException(
@@ -134,13 +119,6 @@ public class Claim {
         }
         this.status = ClaimStatus.PAID;
         this.resolvedAt = LocalDateTime.now();
-    }
-
-    public void refund() {
-        if (this.status != ClaimStatus.PAID) {
-            throw new IllegalStateException("Only PAID claims can be refunded. Current status: " + this.status);
-        }
-        this.status = ClaimStatus.REFUNDED;
     }
 
     public void close() {
@@ -153,10 +131,6 @@ public class Claim {
         this.resolvedAt = LocalDateTime.now();
     }
 
-    /**
-     * Archives a claim from the admin dashboard while keeping it visible to the client.
-     * This action force-closes the claim regardless of its current status.
-     */
     public void archiveByAdmin() {
         this.archivedByAdmin = true;
         this.status = ClaimStatus.CLOSED;

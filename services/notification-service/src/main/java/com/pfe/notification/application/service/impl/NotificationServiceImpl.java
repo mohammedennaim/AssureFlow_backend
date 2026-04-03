@@ -97,6 +97,14 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
+    public Page<NotificationDto> getNotificationsByChannelPaged(NotificationChannel channel, int page, int size) {
+        return notificationRepository.findByChannel(channel,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+                .map(notificationMapper::toDto);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional
     public void sendNotification(UUID id) {
         sendNotificationInternal(id);
