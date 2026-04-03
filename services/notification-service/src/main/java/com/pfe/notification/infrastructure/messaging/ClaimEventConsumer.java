@@ -68,7 +68,7 @@ public class ClaimEventConsumer {
         String clientEmail = (String) payload.get("clientEmail");
         String recipient = clientEmail != null ? clientEmail : clientId;
 
-        // Send notification to CLIENT (EMAIL + SMS)
+        // Send notification to CLIENT (EMAIL + SMS + IN_APP)
         if (recipient == null || recipient.isBlank()) {
             log.warn("[NOTIFICATION] No recipient (email or clientId) for claim={}, skipping email notification", claimId);
             if (clientPhone != null && !clientPhone.isBlank()) {
@@ -86,6 +86,11 @@ public class ClaimEventConsumer {
                     "Réclamation " + claimNumber + " enregistrée",
                     "Votre réclamation " + claimNumber + " a été enregistrée. Nous vous contactons sous 48h.");
             }
+            
+            // Send IN_APP to CLIENT
+            sendInAppNotification(recipient, NotificationType.CLAIM_SUBMITTED,
+                "Réclamation soumise",
+                "Votre réclamation " + claimNumber + " a été enregistrée.");
 
             log.info("[NOTIFICATION] CLAIM_SUBMITTED email sent to client {}", recipient);
         }
@@ -97,7 +102,7 @@ public class ClaimEventConsumer {
     }
 
     /**
-     * Handles claim.under_review event - notifies CLIENT only
+     * Handles claim.under_review event - notifies CLIENT and ADMIN
      */
     private void handleClaimUnderReview(Map<String, Object> payload) {
         String clientId = (String) payload.get("clientId");
@@ -127,6 +132,11 @@ public class ClaimEventConsumer {
                 "AssureFlow: Votre réclamation " + claimNumber + " est en cours de traitement. Nous vous contactons sous 48h.");
         }
 
+        // Send IN_APP to CLIENT
+        sendInAppNotification(recipient, NotificationType.CLAIM_UNDER_REVIEW,
+            "Réclamation en cours",
+            "Votre réclamation " + claimNumber + " est en cours de traitement.");
+
         log.info("[NOTIFICATION] CLAIM_UNDER_REVIEW email sent to client {}", recipient);
 
         // Send IN_APP notification to ADMIN
@@ -136,7 +146,7 @@ public class ClaimEventConsumer {
     }
 
     /**
-     * Handles claim.approved event - notifies CLIENT only
+     * Handles claim.approved event - notifies CLIENT and ADMIN
      */
     private void handleClaimApproved(Map<String, Object> payload) {
         String clientId = (String) payload.get("clientId");
@@ -167,6 +177,11 @@ public class ClaimEventConsumer {
                 "Réclamation " + claimRef + " approuvée",
                 "Bonne nouvelle ! Votre réclamation " + claimRef + " est approuvée. Montant: " + amount + ".");
         }
+
+        // Send IN_APP to CLIENT
+        sendInAppNotification(recipient, NotificationType.CLAIM_APPROVED,
+            "Réclamation approuvée",
+            "Félicitations ! Votre réclamation " + claimRef + " est approuvée. Montant: " + amount);
 
         log.info("[NOTIFICATION] CLAIM_APPROVED email sent to {}", recipient);
 
@@ -212,6 +227,11 @@ public class ClaimEventConsumer {
                 "Votre réclamation " + claimRef + " n'a pas été approuvée." + reasonSuffix);
         }
 
+        // Send IN_APP to CLIENT
+        sendInAppNotification(recipient, NotificationType.CLAIM_REJECTED,
+            "Réclamation refusée",
+            "Votre réclamation " + claimRef + " a été refusée." + (rejectionReason != null ? " Raison: " + rejectionReason : ""));
+
         log.info("[NOTIFICATION] CLAIM_REJECTED email sent to {}", recipient);
 
         // Send IN_APP notification to ADMIN
@@ -221,7 +241,7 @@ public class ClaimEventConsumer {
     }
 
     /**
-     * Handles claim.paid event - notifies CLIENT only
+     * Handles claim.paid event - notifies CLIENT and ADMIN
      */
     private void handleClaimPaid(Map<String, Object> payload) {
         String clientId = (String) payload.get("clientId");
@@ -252,6 +272,11 @@ public class ClaimEventConsumer {
                 "Paiement réclamation " + claimRef,
                 "Paiement de " + amount + " effectué pour réclamation " + claimRef + ".");
         }
+
+        // Send IN_APP to CLIENT
+        sendInAppNotification(recipient, NotificationType.CLAIM_PAID,
+            "Paiement effectué",
+            "Le paiement de " + amount + " a été effectué pour votre réclamation " + claimRef);
 
         log.info("[NOTIFICATION] CLAIM_PAID email sent to {}", recipient);
 
@@ -416,6 +441,25 @@ public class ClaimEventConsumer {
             notificationService.sendNotificationInternal(dto.getId());
         } catch (Exception e) {
             log.error("[NOTIFICATION] Failed to send SMS to {}: {}", phone, e.getMessage());
+        }
+    }
+
+    /**
+     * Sends IN_APP notification to CLIENT for dashboard visibility
+     */
+    private void sendInAppNotification(String recipient, NotificationType type, String subject, String content) {
+        try {
+            CreateNotificationRequest request = CreateNotificationRequest.builder()
+                    .type(type)
+                    .channel(NotificationChannel.IN_APP)
+                    .recipient(recipient)
+                    .subject(subject)
+                    .content(content)
+                    .build();
+            var dto = notificationService.createNotificationInternal(request);
+            log.info("[NOTIFICATION] IN_APP notification created for CLIENT {}: {}", recipient, subject);
+        } catch (Exception e) {
+            log.error("[NOTIFICATION] Failed to send IN_APP notification to CLIENT {}: {}", recipient, e.getMessage());
         }
     }
 
