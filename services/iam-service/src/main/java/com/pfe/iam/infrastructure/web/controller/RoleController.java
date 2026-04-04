@@ -47,9 +47,9 @@ public class RoleController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete role")
-    public ResponseEntity<Void> deleteRole(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<Void>> deleteRole(@PathVariable String id) {
         roleService.deleteRole(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.success(null, "Role deleted successfully"));
     }
 
     @PostMapping("/{id}/permissions/{permissionId}")
@@ -86,8 +86,8 @@ public class RoleController {
 
     @DeleteMapping("/permissions/{id}")
     @Operation(summary = "Delete permission")
-    public ResponseEntity<Void> deletePermission(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<Void>> deletePermission(@PathVariable String id) {
         roleService.deletePermission(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.success(null, "Permission deleted successfully"));
     }
 }

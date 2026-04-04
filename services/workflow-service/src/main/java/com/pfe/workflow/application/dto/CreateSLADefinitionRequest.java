@@ -26,6 +26,8 @@ public class CreateSLADefinitionRequest {
     @Min(value = 1, message = "Duration must be at least 1 hour")
     private Integer durationHours;
     
+    @Builder.Default
     private Boolean autoEscalate = true;
+    @Builder.Default
     private Boolean active = true;
 }

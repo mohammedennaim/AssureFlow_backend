@@ -11,16 +11,14 @@ import com.pfe.billing.infrastructure.client.ClientServiceClient;
 import com.pfe.billing.infrastructure.client.PolicyDto;
 import com.pfe.billing.infrastructure.client.PolicyServiceClient;
 import com.pfe.commons.dto.BaseResponse;
-import lombok.RequiredArgsConstructor;
+import com.pfe.commons.messaging.AbstractEventPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Publisher for billing-related Kafka events.
@@ -28,15 +26,25 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class BillingEventPublisher {
+public class BillingEventPublisher extends AbstractEventPublisher {
 
     private static final String BILLING_TOPIC = "billing-events";
-    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
     private final PolicyServiceClient policyServiceClient;
     private final ClientServiceClient clientServiceClient;
+
+    public BillingEventPublisher(KafkaTemplate<String, Object> kafkaTemplate,
+                                 InvoiceRepository invoiceRepository,
+                                 PaymentRepository paymentRepository,
+                                 PolicyServiceClient policyServiceClient,
+                                 ClientServiceClient clientServiceClient) {
+        super(kafkaTemplate, "billing-service");
+        this.invoiceRepository = invoiceRepository;
+        this.paymentRepository = paymentRepository;
+        this.policyServiceClient = policyServiceClient;
+        this.clientServiceClient = clientServiceClient;
+    }
 
     /**
      * Publishes an invoice generated event.
@@ -47,7 +55,7 @@ public class BillingEventPublisher {
             // Fetch invoice data
             Invoice invoice = invoiceRepository.findById(event.getInvoiceId())
                     .orElse(null);
-            
+
             if (invoice == null) {
                 log.warn("[KAFKA] Invoice not found for event: {}", event.getInvoiceId());
                 return;
@@ -92,25 +100,10 @@ public class BillingEventPublisher {
             payload.put("amount", invoice.getTotalAmount());
             payload.put("dueDate", invoice.getDueDate() != null ? invoice.getDueDate().toString() : null);
             payload.put("invoiceNumber", invoice.getInvoiceNumber());
-            payload.put("timestamp", event.getEventTimestamp() != null ? event.getEventTimestamp().toString() : 
+            payload.put("timestamp", event.getEventTimestamp() != null ? event.getEventTimestamp().toString() :
                 java.time.LocalDateTime.now().toString());
 
-            String eventType = "invoice.generated";
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(BILLING_TOPIC, eventType, payload);
-
-            future.whenComplete((result, ex) -> {
-                if (ex != null) {
-                    log.error("[KAFKA] Failed to publish InvoiceGeneratedEvent for invoice {}: {}",
-                            event.getInvoiceId(), ex.getMessage());
-                } else {
-                    log.info("[KAFKA] InvoiceGeneratedEvent published → invoice={} topic={} partition={} offset={}",
-                            event.getInvoiceId(),
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                }
-            });
+            publish(BILLING_TOPIC, "invoice.generated", payload);
         } catch (Exception e) {
             log.error("[KAFKA] Error publishing InvoiceGeneratedEvent", e);
         }
@@ -125,7 +118,7 @@ public class BillingEventPublisher {
             // Fetch payment data
             Payment payment = paymentRepository.findById(event.getPaymentId())
                     .orElse(null);
-            
+
             if (payment == null) {
                 log.warn("[KAFKA] Payment not found for event: {}", event.getPaymentId());
                 return;
@@ -175,25 +168,10 @@ public class BillingEventPublisher {
             payload.put("clientPhone", client != null ? client.getPhone() : null);
             payload.put("amount", payment.getAmount());
             payload.put("paymentMethod", payment.getMethod() != null ? payment.getMethod().name() : null);
-            payload.put("timestamp", event.getEventTimestamp() != null ? event.getEventTimestamp().toString() : 
+            payload.put("timestamp", event.getEventTimestamp() != null ? event.getEventTimestamp().toString() :
                 java.time.LocalDateTime.now().toString());
 
-            String eventType = "payment.received";
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(BILLING_TOPIC, eventType, payload);
-
-            future.whenComplete((result, ex) -> {
-                if (ex != null) {
-                    log.error("[KAFKA] Failed to publish PaymentReceivedEvent for payment {}: {}",
-                            event.getPaymentId(), ex.getMessage());
-                } else {
-                    log.info("[KAFKA] PaymentReceivedEvent published → payment={} topic={} partition={} offset={}",
-                            event.getPaymentId(),
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                }
-            });
+            publish(BILLING_TOPIC, "payment.received", payload);
         } catch (Exception e) {
             log.error("[KAFKA] Error publishing PaymentReceivedEvent", e);
         }

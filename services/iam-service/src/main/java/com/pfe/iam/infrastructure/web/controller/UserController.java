@@ -58,9 +58,9 @@ public class UserController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete user")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<Void>> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.success(null, "User deleted successfully"));
     }
 
     @PostMapping("/{id}/roles")
@@ -90,9 +90,9 @@ public class UserController {
 
     @DeleteMapping("/{id}/sessions")
     @Operation(summary = "Invalidate all user sessions")
-    public ResponseEntity<Void> invalidateUserSessions(@PathVariable String id) {
+    public ResponseEntity<BaseResponse<Void>> invalidateUserSessions(@PathVariable String id) {
         sessionService.invalidateAllUserSessions(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.success(null, "User sessions invalidated successfully"));
     }
 
     @GetMapping("/{id}/audit-logs")

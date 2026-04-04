@@ -1,51 +1,25 @@
-server:
-  port: 8082
-
-springdoc:
-  api-docs:
-    enabled: true
-    path: /v3/api-docs
-  swagger-ui:
-    enabled: true
-  show-actuator: false
-  packages-to-scan: com.pfe.billing.infrastructure.web.controller
-  paths-to-match: /api/v1/**
+# ============================================================
+# 💰 BILLING SERVICE - Specific Configuration
+# ============================================================
+# Imports shared configuration from shared-kernel
+# ============================================================
 
 spring:
+  config:
+    import: "classpath:/application-shared.yml"
   application:
     name: billing-service
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:billing_db}
     username: ${DB_USER:assureflow}
     password: ${DB_PASSWORD:assureflow123}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    defer-datasource-initialization: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  sql:
-    init:
-      mode: embedded
-      continue-on-error: false
-      encoding: UTF-8
-      schema-locations: classpath*:schema.sql
-      data-locations: classpath*:data.sql
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: billing-service-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+# ============================================================
+# 🔗 Feign Client Configuration (Service-Specific)
+# ============================================================
 feign:
   client:
     config:
@@ -56,7 +30,9 @@ feign:
   circuitbreaker:
     enabled: true
 
-# Resilience4j Circuit Breaker
+# ============================================================
+# 🛡️ Resilience4j (Service-Specific Circuit Breakers)
+# ============================================================
 resilience4j:
   circuitbreaker:
     instances:
@@ -73,21 +49,21 @@ resilience4j:
         max-attempts: 3
         wait-duration: 500ms
 
-# JWT
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: 86400000
+# ============================================================
+# 📚 SpringDoc (Service-Specific Package Scan)
+# ============================================================
+springdoc:
+  packages-to-scan: com.pfe.billing.infrastructure.web.controller
 
-# Actuator
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info
-  endpoint:
-    health:
-      show-details: always
+# ============================================================
+# 🌐 Server Configuration
+# ============================================================
+server:
+  port: 8082
 
+# ============================================================
+# 🐳 Docker Profile Overrides (Service-Specific)
+# ============================================================
 ---
 spring:
   config:
@@ -99,16 +75,6 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:assureflow_secure_2024}
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    defer-datasource-initialization: true
-  sql:
-    init:
-      mode: always
-      continue-on-error: false
-      encoding: UTF-8
-      data-locations: classpath:data.sql
 server:
   port: 8080
 
@@ -119,10 +85,3 @@ feign:
         url: http://policy-service:8080
       client-service:
         url: http://client-service:8080
-
-# Logging SQL
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.hibernate.tool.schema.internal: INFO

@@ -4,6 +4,7 @@ import com.pfe.claims.application.dto.ClaimDto;
 import com.pfe.claims.application.dto.CreateClaimRequest;
 import com.pfe.claims.application.dto.UpdateClaimRequest;
 import com.pfe.claims.application.service.ClaimService;
+import com.pfe.commons.dto.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,8 +34,10 @@ public class ClaimController {
                         @ApiResponse(responseCode = "400", description = "Invalid input provided")
         })
         @PostMapping
-        public ResponseEntity<ClaimDto> createClaim(@Valid @RequestBody CreateClaimRequest request) {
-                return ResponseEntity.status(HttpStatus.CREATED).body(claimService.createClaim(request));
+        public ResponseEntity<BaseResponse<ClaimDto>> createClaim(@Valid @RequestBody CreateClaimRequest request) {
+                ClaimDto claim = claimService.createClaim(request);
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body(BaseResponse.success(claim, "Claim created successfully"));
         }
 
         @Operation(summary = "Get a claim by ID", description = "Retrieves a specific claim using its unique ID")
@@ -43,32 +46,36 @@ public class ClaimController {
                         @ApiResponse(responseCode = "404", description = "Claim not found")
         })
         @GetMapping("/{id}")
-        public ResponseEntity<ClaimDto> getClaimById(
+        public ResponseEntity<BaseResponse<ClaimDto>> getClaimById(
                         @Parameter(description = "The unique ID of the claim") @PathVariable UUID id) {
-                return ResponseEntity.ok(claimService.getClaimById(id));
+                ClaimDto claim = claimService.getClaimById(id);
+                return ResponseEntity.ok(BaseResponse.success(claim, "Claim retrieved successfully"));
         }
 
         @Operation(summary = "Get claims by Client ID", description = "Retrieves all claims associated with a specific client")
         @ApiResponse(responseCode = "200", description = "List of claims retrieved successfully")
         @GetMapping("/client/{clientId}")
-        public ResponseEntity<List<ClaimDto>> getClaimsByClientId(
+        public ResponseEntity<BaseResponse<List<ClaimDto>>> getClaimsByClientId(
                         @Parameter(description = "The unique ID of the client") @PathVariable UUID clientId) {
-                return ResponseEntity.ok(claimService.getClaimsByClientId(clientId));
+                List<ClaimDto> claims = claimService.getClaimsByClientId(clientId);
+                return ResponseEntity.ok(BaseResponse.success(claims, "Claims retrieved successfully"));
         }
 
         @Operation(summary = "Get claims by Policy ID", description = "Retrieves all claims associated with a specific policy")
         @ApiResponse(responseCode = "200", description = "List of claims retrieved successfully")
         @GetMapping("/policy/{policyId}")
-        public ResponseEntity<List<ClaimDto>> getClaimsByPolicyId(
+        public ResponseEntity<BaseResponse<List<ClaimDto>>> getClaimsByPolicyId(
                         @Parameter(description = "The unique ID of the policy") @PathVariable UUID policyId) {
-                return ResponseEntity.ok(claimService.getClaimsByPolicyId(policyId));
+                List<ClaimDto> claims = claimService.getClaimsByPolicyId(policyId);
+                return ResponseEntity.ok(BaseResponse.success(claims, "Claims retrieved successfully"));
         }
 
         @Operation(summary = "Get all claims", description = "Retrieves all claims in the system")
         @ApiResponse(responseCode = "200", description = "List of all claims retrieved successfully")
         @GetMapping
-        public ResponseEntity<List<ClaimDto>> getAllClaims() {
-                return ResponseEntity.ok(claimService.getAllClaims());
+        public ResponseEntity<BaseResponse<List<ClaimDto>>> getAllClaims() {
+                List<ClaimDto> claims = claimService.getAllClaims();
+                return ResponseEntity.ok(BaseResponse.success(claims, "Claims retrieved successfully"));
         }
 
         @Operation(summary = "Update an existing claim", description = "Updates specific fields of an existing claim")
@@ -77,10 +84,11 @@ public class ClaimController {
                         @ApiResponse(responseCode = "404", description = "Claim not found")
         })
         @PatchMapping("/{id}")
-        public ResponseEntity<ClaimDto> updateClaim(
+        public ResponseEntity<BaseResponse<ClaimDto>> updateClaim(
                         @Parameter(description = "The unique ID of the claim to update") @PathVariable UUID id,
                         @RequestBody @Valid UpdateClaimRequest request) {
-                return ResponseEntity.ok(claimService.updateClaim(id, request));
+                ClaimDto claim = claimService.updateClaim(id, request);
+                return ResponseEntity.ok(BaseResponse.success(claim, "Claim updated successfully"));
         }
 
         @Operation(summary = "Submit a claim", description = "Submits a claim for processing")
@@ -89,10 +97,10 @@ public class ClaimController {
                         @ApiResponse(responseCode = "400", description = "Claim cannot be submitted (invalid status)")
         })
         @PostMapping("/{id}/submit")
-        public ResponseEntity<Void> submitClaim(
+        public ResponseEntity<BaseResponse<Void>> submitClaim(
                         @Parameter(description = "The unique ID of the claim") @PathVariable UUID id) {
                 claimService.submitClaim(id);
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(BaseResponse.success(null, "Claim submitted successfully"));
         }
 
         @Operation(summary = "Review a claim", description = "Marks a submitted claim as under review")
@@ -101,10 +109,10 @@ public class ClaimController {
                         @ApiResponse(responseCode = "400", description = "Claim cannot be reviewed (invalid status)")
         })
         @PostMapping("/{id}/review")
-        public ResponseEntity<Void> reviewClaim(
+        public ResponseEntity<BaseResponse<Void>> reviewClaim(
                         @Parameter(description = "The unique ID of the claim") @PathVariable UUID id) {
                 claimService.reviewClaim(id);
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(BaseResponse.success(null, "Claim marked as under review"));
         }
 
         @Operation(summary = "Approve a claim", description = "Approves a claim under review with an approved amount")
@@ -113,12 +121,12 @@ public class ClaimController {
                         @ApiResponse(responseCode = "400", description = "Claim cannot be approved (invalid status)")
         })
         @PostMapping("/{id}/approve")
-        public ResponseEntity<Void> approveClaim(
+        public ResponseEntity<BaseResponse<Void>> approveClaim(
                         @Parameter(description = "The unique ID of the claim") @PathVariable UUID id,
                         @Parameter(description = "Approved amount") @RequestParam BigDecimal amount,
                         @Parameter(description = "ID of the approver") @RequestParam UUID approvedBy) {
                 claimService.approveClaim(id, amount, approvedBy);
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(BaseResponse.success(null, "Claim approved successfully"));
         }
 
         @Operation(summary = "Reject a claim", description = "Rejects a claim under review with a reason")
@@ -127,11 +135,11 @@ public class ClaimController {
                         @ApiResponse(responseCode = "400", description = "Claim cannot be rejected (invalid status)")
         })
         @PostMapping("/{id}/reject")
-        public ResponseEntity<Void> rejectClaim(
+        public ResponseEntity<BaseResponse<Void>> rejectClaim(
                         @Parameter(description = "The unique ID of the claim") @PathVariable UUID id,
                         @Parameter(description = "Reason for rejection") @RequestParam String reason) {
                 claimService.rejectClaim(id, reason);
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(BaseResponse.success(null, "Claim rejected successfully"));
         }
 
         @Operation(summary = "Request additional info", description = "Requests additional information for a claim")
@@ -140,10 +148,10 @@ public class ClaimController {
                         @ApiResponse(responseCode = "400", description = "Cannot request info (invalid status)")
         })
         @PostMapping("/{id}/request-info")
-        public ResponseEntity<Void> requestInfo(
+        public ResponseEntity<BaseResponse<Void>> requestInfo(
                         @Parameter(description = "The unique ID of the claim") @PathVariable UUID id) {
                 claimService.requestInfo(id);
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(BaseResponse.success(null, "Info requested successfully"));
         }
 
         @Operation(summary = "Mark claim as paid", description = "Marks an approved or payout-initiated claim as paid")
@@ -152,10 +160,10 @@ public class ClaimController {
                         @ApiResponse(responseCode = "400", description = "Claim cannot be marked as paid (invalid status)")
         })
         @PostMapping("/{id}/mark-as-paid")
-        public ResponseEntity<Void> markAsPaid(
+        public ResponseEntity<BaseResponse<Void>> markAsPaid(
                         @Parameter(description = "The unique ID of the claim") @PathVariable UUID id) {
                 claimService.markAsPaid(id);
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(BaseResponse.success(null, "Claim marked as paid successfully"));
         }
 
         @Operation(summary = "Close a claim", description = "Closes a paid, rejected, or refunded claim")
@@ -164,10 +172,10 @@ public class ClaimController {
                         @ApiResponse(responseCode = "400", description = "Claim cannot be closed (invalid status)")
         })
         @PostMapping("/{id}/close")
-        public ResponseEntity<Void> closeClaim(
+        public ResponseEntity<BaseResponse<Void>> closeClaim(
                         @Parameter(description = "The unique ID of the claim") @PathVariable UUID id) {
                 claimService.closeClaim(id);
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(BaseResponse.success(null, "Claim closed successfully"));
         }
 
         @Operation(summary = "Archive a claim", description = "Archives a claim from the admin dashboard while keeping it visible to the client")
@@ -176,10 +184,10 @@ public class ClaimController {
                         @ApiResponse(responseCode = "404", description = "Claim not found")
         })
         @PostMapping("/{id}/archive")
-        public ResponseEntity<Void> archiveClaim(
+        public ResponseEntity<BaseResponse<Void>> archiveClaim(
                         @Parameter(description = "The unique ID of the claim to archive") @PathVariable UUID id) {
                 claimService.archiveClaim(id);
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(BaseResponse.success(null, "Claim archived successfully"));
         }
 
 }

@@ -1,0 +1,95 @@
+# ============================================================
+# 📦 SHARED CONFIGURATION - AssureFlow Microservices
+# ============================================================
+# Imported by all microservices via: spring.config.import
+# Contains ONLY configuration that is IDENTICAL across services
+# ============================================================
+
+# ============================================================
+# 📚 API Documentation (SpringDoc)
+# ============================================================
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+  show-actuator: false
+  paths-to-match: /api/v1/**
+
+# ============================================================
+# 🗄️ JPA / Hibernate (Common Settings)
+# ============================================================
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  sql:
+    init:
+      mode: embedded
+      continue-on-error: false
+      encoding: UTF-8
+      schema-locations: classpath*:schema.sql
+      data-locations: classpath*:data.sql
+
+# ============================================================
+# 📨 Kafka (Common Producer/Consumer Configuration)
+# ============================================================
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+# ============================================================
+# 🔐 JWT (Common Security Configuration)
+# ============================================================
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000 # 24 hours
+
+# ============================================================
+# 📊 Actuator (Common Monitoring Configuration)
+# ============================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+# ============================================================
+# 🐳 Docker Profile Overrides
+# ============================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  jpa:
+    hibernate:
+      ddl-auto: create
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+      continue-on-error: false
+      encoding: UTF-8
+      data-locations: classpath:data.sql
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+server:
+  port: 8080

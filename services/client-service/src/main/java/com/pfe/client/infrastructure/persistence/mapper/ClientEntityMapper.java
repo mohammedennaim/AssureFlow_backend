@@ -6,13 +6,11 @@ import com.pfe.client.infrastructure.persistence.entity.AddressEntity;
 import com.pfe.client.infrastructure.persistence.entity.ClientEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ClientEntityMapper {
-    ClientEntityMapper INSTANCE = Mappers.getMapper(ClientEntityMapper.class);
 
     ClientEntity toEntity(Client client);
 

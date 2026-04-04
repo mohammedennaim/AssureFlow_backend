@@ -52,6 +52,7 @@ public class NotificationEntity {
     private LocalDateTime sentAt;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean read = false;
 
     @Column(nullable = false, updatable = false)

@@ -1,58 +1,29 @@
-server:
-  port: 8085
-
-springdoc:
-  api-docs:
-    enabled: true
-    path: /v3/api-docs
-  swagger-ui:
-    enabled: true
-  show-actuator: false
-  packages-to-scan: com.pfe.notification.infrastructure.web.controller
-  paths-to-match: /api/v1/**
+# ============================================================
+# 📧 NOTIFICATION SERVICE - Specific Configuration
+# ============================================================
+# Imports shared configuration from shared-kernel
+# ============================================================
 
 spring:
+  config:
+    import: "classpath:/application-shared.yml"
   application:
     name: notification-service
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:notification_db}
     username: ${DB_USER:assureflow}
     password: ${DB_PASSWORD:assureflow123}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    defer-datasource-initialization: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  sql:
-    init:
-      mode: embedded
-      continue-on-error: false
-      encoding: UTF-8
-      schema-locations: classpath*:schema.sql
-      data-locations: classpath*:data.sql
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     listener:
       concurrency: ${KAFKA_LISTENER_CONCURRENCY:1}
     consumer:
       group-id: notification-service-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "*"
-        # Session timeout configuration - increased for stability
         session.timeout.ms: 45000
         heartbeat.interval.ms: 15000
         max.poll.interval.ms: 300000
         max.poll.records: 100
         fetch.max.wait.ms: 500
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
@@ -68,7 +39,9 @@ spring:
           timeout: 30000
           writetimeout: 30000
 
-# Twilio SMS Configuration
+# ============================================================
+# 📱 Twilio SMS Configuration (Service-Specific)
+# ============================================================
 twilio:
   account:
     sid: ${TWILIO_ACCOUNT_SID:your_account_sid}
@@ -77,21 +50,21 @@ twilio:
   phone:
     number: ${TWILIO_PHONE_NUMBER:+1234567890}
 
-# JWT
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: 86400000
+# ============================================================
+# 📚 SpringDoc (Service-Specific Package Scan)
+# ============================================================
+springdoc:
+  packages-to-scan: com.pfe.notification.infrastructure.web.controller
 
-# Actuator
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info
-  endpoint:
-    health:
-      show-details: always
+# ============================================================
+# 🌐 Server Configuration
+# ============================================================
+server:
+  port: 8085
 
+# ============================================================
+# 🐳 Docker Profile Overrides (Service-Specific)
+# ============================================================
 ---
 spring:
   config:
@@ -105,16 +78,6 @@ spring:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
     listener:
       concurrency: ${KAFKA_LISTENER_CONCURRENCY:1}
-  jpa:
-    hibernate:
-      ddl-auto: create
-    defer-datasource-initialization: true
-  sql:
-    init:
-      mode: always
-      continue-on-error: false
-      encoding: UTF-8
-      data-locations: classpath:data.sql
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
@@ -129,7 +92,7 @@ spring:
           connectiontimeout: 10000
           timeout: 30000
           writetimeout: 30000
-  # Twilio SMS Configuration (Docker)
+
 twilio:
   account:
     sid: ${TWILIO_ACCOUNT_SID:your_account_sid}
@@ -137,5 +100,6 @@ twilio:
     token: ${TWILIO_AUTH_TOKEN:your_auth_token}
   phone:
     number: ${TWILIO_PHONE_NUMBER:+1234567890}
+
 server:
   port: 8080

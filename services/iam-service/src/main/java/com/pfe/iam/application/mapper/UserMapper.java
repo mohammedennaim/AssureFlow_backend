@@ -13,8 +13,11 @@ public interface UserMapper {
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "role", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     User toDomain(RegisterRequest request);
 
     @Mapping(target = "role", expression = "java(user.getRole() != null ? user.getRole().getName().name() : null)")
+    @Mapping(target = "roles", ignore = true)
     UserDto toDto(User user);
 }

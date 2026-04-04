@@ -25,6 +25,7 @@ public interface ClaimMapper {
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "slaDeadline", ignore = true)
+    @Mapping(target = "resolvedAt", ignore = true)
     @Mapping(target = "documents", ignore = true)
     @Mapping(target = "assessments", ignore = true)
     @Mapping(target = "payout", ignore = true)

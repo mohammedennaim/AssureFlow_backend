@@ -17,6 +17,7 @@ import org.mapstruct.MappingTarget;
 public interface ClaimEntityMapper {
 
     @Mapping(target = "slaDeadline", ignore = true)
+    @Mapping(target = "resolvedAt", ignore = true)
     @Mapping(target = "domainEvents", ignore = true)
     Claim toDomain(ClaimEntity entity);
 

@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface SAGAMapper {
 
+    @Mapping(target = "domainEvents", ignore = true)
     SAGATransaction toDomain(SAGATransactionEntity entity);
 
     SAGATransactionEntity toEntity(SAGATransaction domain);

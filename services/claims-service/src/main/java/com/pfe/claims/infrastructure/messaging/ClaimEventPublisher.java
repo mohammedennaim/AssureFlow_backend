@@ -7,32 +7,41 @@ import com.pfe.claims.infrastructure.client.ClientServiceClient;
 import com.pfe.claims.infrastructure.client.PolicyDto;
 import com.pfe.claims.infrastructure.client.PolicyServiceClient;
 import com.pfe.commons.dto.BaseResponse;
-import lombok.RequiredArgsConstructor;
+import com.pfe.commons.messaging.AbstractEventPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Publisher for claim-related Kafka events.
  * Publishes claim lifecycle events to the "claim-events" topic.
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
-public class ClaimEventPublisher {
+public class ClaimEventPublisher extends AbstractEventPublisher {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private static final String TOPIC = "claim-events";
     private final PolicyServiceClient policyServiceClient;
     private final ClientServiceClient clientServiceClient;
     private final ClaimRepository claimRepository;
     private final org.springframework.jdbc.core.JdbcTemplate clientJdbcTemplate;
+
+    public ClaimEventPublisher(KafkaTemplate<String, Object> kafkaTemplate,
+                               PolicyServiceClient policyServiceClient,
+                               ClientServiceClient clientServiceClient,
+                               ClaimRepository claimRepository,
+                               org.springframework.jdbc.core.JdbcTemplate clientJdbcTemplate) {
+        super(kafkaTemplate, "claims-service");
+        this.policyServiceClient = policyServiceClient;
+        this.clientServiceClient = clientServiceClient;
+        this.claimRepository = claimRepository;
+        this.clientJdbcTemplate = clientJdbcTemplate;
+    }
 
     /**
      * Get client email directly from client_db (fallback when Feign client fails)
@@ -91,22 +100,7 @@ public class ClaimEventPublisher {
         payload.put("status", "SUBMITTED");
         payload.put("timestamp", LocalDateTime.now().toString());
 
-        String eventType = "claim.submitted";
-        CompletableFuture<SendResult<String, Object>> future =
-                kafkaTemplate.send("claim-events", eventType, payload);
-
-        future.whenComplete((result, ex) -> {
-            if (ex != null) {
-                log.error("[KAFKA] Failed to publish claim.submitted event for claim {}: {}",
-                        claimId, ex.getMessage());
-            } else {
-                log.info("[KAFKA] claim.submitted published → claim={} topic={} partition={} offset={}",
-                        claimId,
-                        result.getRecordMetadata().topic(),
-                        result.getRecordMetadata().partition(),
-                        result.getRecordMetadata().offset());
-            }
-        });
+        publish(TOPIC, "claim.submitted", payload);
     }
 
     /**
@@ -131,7 +125,7 @@ public class ClaimEventPublisher {
                     var claim = claimOpt.get();
                     claimNumber = claim.getClaimNumber();
                     clientId = claim.getClientId() != null ? claim.getClientId().toString() : null;
-                    
+
                     try {
                         PolicyDto policy = policyServiceClient.getPolicyById(claim.getPolicyId().toString());
                         if (policy != null && policy.getClientId() != null) {
@@ -168,21 +162,7 @@ public class ClaimEventPublisher {
             payload.put("userId", userId != null ? userId.toString() : null);
             payload.put("timestamp", java.time.LocalDateTime.now().toString());
 
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send("claim-events", eventType, payload);
-
-            future.whenComplete((result, ex) -> {
-                if (ex != null) {
-                    log.error("[KAFKA] Failed to publish {} event for claim {}: {}",
-                            eventType, claimId, ex.getMessage());
-                } else {
-                    log.info("[KAFKA] {} published → claim={} topic={} partition={} offset={}",
-                            eventType, claimId,
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                }
-            });
+            publish(TOPIC, eventType, payload);
         } catch (Exception e) {
             log.error("[KAFKA] Error publishing claim status event", e);
         }
@@ -191,7 +171,7 @@ public class ClaimEventPublisher {
     /**
      * Publishes a claim approved event with amount.
      */
-    public void publishClaimApproved(UUID claimId, String claimNumber, String clientId, String clientEmail, 
+    public void publishClaimApproved(UUID claimId, String claimNumber, String clientId, String clientEmail,
                                       String clientPhone, Object approvedAmount) {
         publishClaimEvent("claim.approved", claimId, claimNumber, clientId, clientEmail, clientPhone, approvedAmount);
     }
@@ -211,22 +191,7 @@ public class ClaimEventPublisher {
             payload.put("rejectionReason", rejectionReason);
             payload.put("timestamp", LocalDateTime.now().toString());
 
-            String eventType = "claim.rejected";
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send("claim-events", eventType, payload);
-
-            future.whenComplete((result, ex) -> {
-                if (ex != null) {
-                    log.error("[KAFKA] Failed to publish {} event for claim {}: {}",
-                            eventType, claimId, ex.getMessage());
-                } else {
-                    log.info("[KAFKA] {} published → claim={} topic={} partition={} offset={}",
-                            eventType, claimId,
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                }
-            });
+            publish(TOPIC, "claim.rejected", payload);
         } catch (Exception e) {
             log.error("[KAFKA] Error publishing {} event", "claim.rejected", e);
         }
@@ -255,22 +220,7 @@ public class ClaimEventPublisher {
             payload.put("slaBreached", true);
             payload.put("timestamp", LocalDateTime.now().toString());
 
-            String eventType = "claim.sla.breached";
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send("claim-events", eventType, payload);
-
-            future.whenComplete((result, ex) -> {
-                if (ex != null) {
-                    log.error("[KAFKA] Failed to publish {} event for claim {}: {}",
-                            eventType, claimId, ex.getMessage());
-                } else {
-                    log.info("[KAFKA] {} published → claim={} topic={} partition={} offset={}",
-                            eventType, claimId,
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                }
-            });
+            publish(TOPIC, "claim.sla.breached", payload);
         } catch (Exception e) {
             log.error("[KAFKA] Error publishing {} event", "claim.sla.breached", e);
         }
@@ -291,21 +241,7 @@ public class ClaimEventPublisher {
             }
             payload.put("timestamp", LocalDateTime.now().toString());
 
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send("claim-events", eventType, payload);
-
-            future.whenComplete((result, ex) -> {
-                if (ex != null) {
-                    log.error("[KAFKA] Failed to publish {} event for claim {}: {}",
-                            eventType, claimId, ex.getMessage());
-                } else {
-                    log.info("[KAFKA] {} published → claim={} topic={} partition={} offset={}",
-                            eventType, claimId,
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                }
-            });
+            publish(TOPIC, eventType, payload);
         } catch (Exception e) {
             log.error("[KAFKA] Error publishing {} event", eventType, e);
         }

@@ -1,17 +1,13 @@
-server:
-  port: 8087
-
-springdoc:
-  api-docs:
-    enabled: true
-    path: /v3/api-docs
-  swagger-ui:
-    enabled: true
-  show-actuator: false
-  packages-to-scan: com.pfe.workflow.infrastructure.web.controller
-  paths-to-match: /api/v1/**
+# ============================================================
+# 🔄 WORKFLOW SERVICE - Specific Configuration
+# ============================================================
+# Imports shared configuration from shared-kernel
+# Note: Workflow service uses ddl-auto: none (manual schema)
+# ============================================================
 
 spring:
+  config:
+    import: "classpath:/application-shared.yml"
   application:
     name: workflow-service
   datasource:
@@ -21,11 +17,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: false
     defer-datasource-initialization: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
   sql:
     init:
@@ -34,33 +28,24 @@ spring:
       encoding: UTF-8
       data-locations: classpath:data.sql
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: workflow-service-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
-# JWT
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: 86400000
+# ============================================================
+# 📚 SpringDoc (Service-Specific Package Scan)
+# ============================================================
+springdoc:
+  packages-to-scan: com.pfe.workflow.infrastructure.web.controller
 
-# Actuator
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info
-  endpoint:
-    health:
-      show-details: always
+# ============================================================
+# 🌐 Server Configuration
+# ============================================================
+server:
+  port: 8087
 
+# ============================================================
+# 🐳 Docker Profile Overrides (Service-Specific)
+# ============================================================
 ---
 spring:
   config:

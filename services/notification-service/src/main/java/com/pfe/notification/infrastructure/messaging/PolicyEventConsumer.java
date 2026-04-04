@@ -35,7 +35,6 @@ public class PolicyEventConsumer {
         try {
             log.info("[KAFKA] notification-service received policy event type={} partition={} offset={}",
                     eventType, partition, offset);
-            log.info("[KAFKA] Payload content: {}", payload);
 
             if (payload == null || payload.isEmpty()) {
                 log.warn("[KAFKA] Received null or empty payload for event type={}, skipping", eventType);
@@ -43,411 +42,182 @@ public class PolicyEventConsumer {
             }
 
             switch (eventType) {
-                case "policy.created" -> handlePolicyCreated(payload);
-                case "policy.approved" -> handlePolicyApproved(payload);
-                case "policy.rejected" -> handlePolicyRejected(payload);
-                case "policy.renewed" -> handlePolicyRenewed(payload);
+                case "policy.created"   -> handlePolicyCreated(payload);
+                case "policy.approved"  -> handlePolicyApproved(payload);
+                case "policy.rejected"  -> handlePolicyRejected(payload);
+                case "policy.renewed"   -> handlePolicyRenewed(payload);
                 case "policy.cancelled" -> handlePolicyCancelled(payload);
-                case "policy.expiring" -> handlePolicyExpiring(payload);
+                case "policy.expiring"  -> handlePolicyExpiring(payload);
                 default -> log.debug("[NOTIFICATION] Ignoring unhandled policy event: {}", eventType);
             }
         } catch (Exception e) {
             log.error("[KAFKA] Exception in onPolicyEvent for type={}: {}", eventType, e.getMessage(), e);
-            // Don't rethrow - let the error handler manage retries
-            // This prevents one bad message from blocking the entire consumer
         }
     }
 
-    private void handlePolicyCreated(Map<String, Object> payload) {
-        log.debug("[NOTIFICATION] Processing policy.created payload: {}", payload);
+    // -------------------------------------------------------------------------
+    // Handlers
+    // -------------------------------------------------------------------------
 
-        String policyId = (String) payload.get("policyId");
+    private void handlePolicyCreated(Map<String, Object> payload) {
         String policyNumber = (String) payload.get("policyNumber");
-        String clientId = (String) payload.get("clientId");
-        String policyType = (String) payload.get("type");
-        String clientEmail = (String) payload.get("clientEmail");
-        String clientPhone = (String) payload.get("clientPhone");
+        String policyType   = (String) payload.get("type");
+        String clientEmail  = (String) payload.get("clientEmail");
+        String clientPhone  = (String) payload.get("clientPhone");
         Object premiumAmount = payload.get("premiumAmount");
 
-        log.info("[NOTIFICATION] Extracted data - policyNumber={}, clientEmail={}, clientPhone={}",
-            policyNumber, clientEmail, clientPhone);
+        String emailSubject = "Votre police d'assurance a ete creee";
+        String emailContent = "Votre police " + policyNumber + " de type " + policyType
+                + " a ete creee avec succes. Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "EUR.";
+        String smsContent   = "Police " + policyNumber + " creee. Type: " + policyType
+                + ". Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "EUR.";
+        String smsSubject   = "Police " + policyNumber + " creee";
 
-        String recipient = clientEmail != null ? clientEmail : clientId;
-
-        if (recipient == null || recipient.isBlank()) {
-            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
-            // Only create SMS if phone is available
-            if (clientPhone != null && !clientPhone.isBlank()) {
-                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                        .type(NotificationType.POLICY_CREATED)
-                        .channel(NotificationChannel.SMS)
-                        .recipient(clientPhone)
-                        .subject("Police " + policyNumber + " créée")
-                        .content("Police " + policyNumber + " créée. Type: " + policyType +
-                                ". Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "€.")
-                        .build();
-                var smsDto = notificationService.createNotificationInternal(smsRequest);
-                notificationService.sendNotificationInternal(smsDto.getId());
-                log.info("[NOTIFICATION] POLICY_CREATED SMS sent to {}", clientPhone);
-            }
-            return;
-        }
-
-        // Create EMAIL notification
-        CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
-                .type(NotificationType.POLICY_CREATED)
-                .channel(NotificationChannel.EMAIL)
-                .recipient(recipient)
-                .subject("Votre police d'assurance a été créée")
-                .content("Votre police " + policyNumber + " de type " + policyType +
-                        " a été créée avec succès. Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "€.")
-                .build();
-        var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotificationInternal(emailDto.getId());
-
-        // Create SMS notification if phone number is available
-        if (clientPhone != null && !clientPhone.isBlank()) {
-            CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                    .type(NotificationType.POLICY_CREATED)
-                    .channel(NotificationChannel.SMS)
-                    .recipient(clientPhone)
-                    .subject("Police " + policyNumber + " créée")
-                    .content("Police " + policyNumber + " créée. Type: " + policyType +
-                            ". Prime: " + (premiumAmount != null ? premiumAmount : "N/A") + "€.")
-                    .build();
-            var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotificationInternal(smsDto.getId());
-            log.info("[NOTIFICATION] POLICY_CREATED SMS sent to {}", clientPhone);
-        }
-
-        log.info("[NOTIFICATION] POLICY_CREATED email sent to {}", recipient);
+        sendNotifications(NotificationType.POLICY_CREATED, policyNumber,
+                clientEmail, clientPhone, emailSubject, emailContent, smsSubject, smsContent);
     }
 
     private void handlePolicyApproved(Map<String, Object> payload) {
-        String policyId = (String) payload.get("policyId");
         String policyNumber = (String) payload.get("policyNumber");
-        String clientId = (String) payload.get("clientId");
-        String clientEmail = (String) payload.get("clientEmail");
-        String clientPhone = (String) payload.get("clientPhone");
+        String clientEmail  = (String) payload.get("clientEmail");
+        String clientPhone  = (String) payload.get("clientPhone");
 
-        String recipient = clientEmail != null ? clientEmail : clientId;
+        String emailSubject = "Votre police d'assurance a ete approuvee";
+        String emailContent = "Bonne nouvelle ! Votre police " + policyNumber
+                + " a ete approuvee. Votre couverture est maintenant active.";
+        String smsContent   = "Police " + policyNumber + " approuvee. Couverture active.";
+        String smsSubject   = "Police " + policyNumber + " approuvee";
 
-        if (recipient == null || recipient.isBlank()) {
-            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
-            // Only create SMS if phone is available
-            if (clientPhone != null && !clientPhone.isBlank()) {
-                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                        .type(NotificationType.POLICY_APPROVED)
-                        .channel(NotificationChannel.SMS)
-                        .recipient(clientPhone)
-                        .subject("Police " + policyNumber + " approuvée")
-                        .content("Police " + policyNumber + " approuvée. Couverture active.")
-                        .build();
-                var smsDto = notificationService.createNotificationInternal(smsRequest);
-                notificationService.sendNotificationInternal(smsDto.getId());
-                log.info("[NOTIFICATION] POLICY_APPROVED SMS sent to {}", clientPhone);
-            }
-            return;
-        }
-
-        // Create EMAIL notification
-        CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
-                .type(NotificationType.POLICY_APPROVED)
-                .channel(NotificationChannel.EMAIL)
-                .recipient(recipient)
-                .subject("Votre police d'assurance a été approuvée")
-                .content("Bonne nouvelle ! Votre police " + policyNumber + " a été approuvée. " +
-                        "Votre couverture est maintenant active.")
-                .build();
-        var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotificationInternal(emailDto.getId());
-        
-        // Create SMS notification if phone number is available
-        if (clientPhone != null && !clientPhone.isBlank()) {
-            CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                    .type(NotificationType.POLICY_APPROVED)
-                    .channel(NotificationChannel.SMS)
-                    .recipient(clientPhone)
-                    .subject("Police " + policyNumber + " approuvée")
-                    .content("Police " + policyNumber + " approuvée. Couverture active.")
-                    .build();
-            var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotificationInternal(smsDto.getId());
-            log.info("[NOTIFICATION] POLICY_APPROVED SMS sent to {}", clientPhone);
-        }
-        
-        log.info("[NOTIFICATION] POLICY_APPROVED email sent to {}", recipient);
+        sendNotifications(NotificationType.POLICY_APPROVED, policyNumber,
+                clientEmail, clientPhone, emailSubject, emailContent, smsSubject, smsContent);
     }
 
     private void handlePolicyRejected(Map<String, Object> payload) {
-        String policyId = (String) payload.get("policyId");
-        String policyNumber = (String) payload.get("policyNumber");
-        String clientId = (String) payload.get("clientId");
-        String rejectionReason = (String) payload.get("rejectionReason");
-        String clientEmail = (String) payload.get("clientEmail");
-        String clientPhone = (String) payload.get("clientPhone");
+        String policyNumber     = (String) payload.get("policyNumber");
+        String rejectionReason  = (String) payload.get("rejectionReason");
+        String clientEmail      = (String) payload.get("clientEmail");
+        String clientPhone      = (String) payload.get("clientPhone");
 
-        String recipient = clientEmail != null ? clientEmail : clientId;
+        String emailSubject = "Votre police d'assurance a ete refusee";
+        String emailContent = "Votre demande de police " + policyNumber + " n'a pas pu etre approuvee. "
+                + "Raison : " + rejectionReason + ". Contactez-nous pour plus d'informations.";
+        String smsContent   = "Police " + policyNumber + " refusee. Raison: " + rejectionReason + ". Contactez-nous.";
+        String smsSubject   = "Police " + policyNumber + " refusee";
 
-        if (recipient == null || recipient.isBlank()) {
-            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
-            // Only create SMS if phone is available
-            if (clientPhone != null && !clientPhone.isBlank()) {
-                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                        .type(NotificationType.POLICY_REJECTED)
-                        .channel(NotificationChannel.SMS)
-                        .recipient(clientPhone)
-                        .subject("Police " + policyNumber + " refusée")
-                        .content("Police " + policyNumber + " refusée. Raison: " + rejectionReason +
-                                ". Contactez-nous.")
-                        .build();
-                var smsDto = notificationService.createNotificationInternal(smsRequest);
-                notificationService.sendNotificationInternal(smsDto.getId());
-                log.info("[NOTIFICATION] POLICY_REJECTED SMS sent to {}", clientPhone);
-            }
-            return;
-        }
-
-        // Create EMAIL notification
-        CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
-                .type(NotificationType.POLICY_REJECTED)
-                .channel(NotificationChannel.EMAIL)
-                .recipient(recipient)
-                .subject("Votre police d'assurance a été refusée")
-                .content("Votre demande de police " + policyNumber + " n'a pas pu être approuvée. " +
-                        "Raison : " + rejectionReason + ". Contactez-nous pour plus d'informations.")
-                .build();
-        var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotificationInternal(emailDto.getId());
-        
-        // Create SMS notification if phone number is available
-        if (clientPhone != null && !clientPhone.isBlank()) {
-            CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                    .type(NotificationType.POLICY_REJECTED)
-                    .channel(NotificationChannel.SMS)
-                    .recipient(clientPhone)
-                    .subject("Police " + policyNumber + " refusée")
-                    .content("Police " + policyNumber + " refusée. Raison: " + rejectionReason +
-                            ". Contactez-nous.")
-                    .build();
-            var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotificationInternal(smsDto.getId());
-            log.info("[NOTIFICATION] POLICY_REJECTED SMS sent to {}", clientPhone);
-        }
-        
-        log.info("[NOTIFICATION] POLICY_REJECTED email sent to {}", recipient);
+        sendNotifications(NotificationType.POLICY_REJECTED, policyNumber,
+                clientEmail, clientPhone, emailSubject, emailContent, smsSubject, smsContent);
     }
 
     private void handlePolicyRenewed(Map<String, Object> payload) {
-        String policyId = (String) payload.get("policyId");
         String policyNumber = (String) payload.get("policyNumber");
-        String clientId = (String) payload.get("clientId");
-        String clientEmail = (String) payload.get("clientEmail");
-        String clientPhone = (String) payload.get("clientPhone");
-        Object renewalDate = payload.get("renewalDate");
+        String clientEmail  = (String) payload.get("clientEmail");
+        String clientPhone  = (String) payload.get("clientPhone");
+        Object renewalDate  = payload.get("renewalDate");
 
-        String recipient = clientEmail != null ? clientEmail : clientId;
+        String emailSubject = "Votre police d'assurance a ete renouvelee";
+        String emailContent = "Votre police " + policyNumber + " a ete renouvelee avec succes. "
+                + "Date de renouvellement : " + renewalDate + ".";
+        String smsContent   = "Police " + policyNumber + " renouvelee. Date: " + renewalDate + ".";
+        String smsSubject   = "Police " + policyNumber + " renouvelee";
 
-        if (recipient == null || recipient.isBlank()) {
-            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
-            // Only create SMS if phone is available
-            if (clientPhone != null && !clientPhone.isBlank()) {
-                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                        .type(NotificationType.POLICY_RENEWED)
-                        .channel(NotificationChannel.SMS)
-                        .recipient(clientPhone)
-                        .subject("Police " + policyNumber + " renouvelée")
-                        .content("Police " + policyNumber + " renouvelée. Date: " + renewalDate + ".")
-                        .build();
-                var smsDto = notificationService.createNotificationInternal(smsRequest);
-                notificationService.sendNotificationInternal(smsDto.getId());
-                log.info("[NOTIFICATION] POLICY_RENEWED SMS sent to {}", clientPhone);
-            }
-            return;
-        }
-
-        // Create EMAIL notification
-        CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
-                .type(NotificationType.POLICY_RENEWED)
-                .channel(NotificationChannel.EMAIL)
-                .recipient(recipient)
-                .subject("Votre police d'assurance a été renouvelée")
-                .content("Votre police " + policyNumber + " a été renouvelée avec succès. " +
-                        "Date de renouvellement : " + renewalDate + ".")
-                .build();
-        var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotificationInternal(emailDto.getId());
-        
-        // Create SMS notification if phone number is available
-        if (clientPhone != null && !clientPhone.isBlank()) {
-            CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                    .type(NotificationType.POLICY_RENEWED)
-                    .channel(NotificationChannel.SMS)
-                    .recipient(clientPhone)
-                    .subject("Police " + policyNumber + " renouvelée")
-                    .content("Police " + policyNumber + " renouvelée. Date: " + renewalDate + ".")
-                    .build();
-            var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotificationInternal(smsDto.getId());
-            log.info("[NOTIFICATION] POLICY_RENEWED SMS sent to {}", clientPhone);
-        }
-        
-        log.info("[NOTIFICATION] POLICY_RENEWED email sent to {}", recipient);
+        sendNotifications(NotificationType.POLICY_RENEWED, policyNumber,
+                clientEmail, clientPhone, emailSubject, emailContent, smsSubject, smsContent);
     }
 
     private void handlePolicyCancelled(Map<String, Object> payload) {
-        String policyId = (String) payload.get("policyId");
-        String policyNumber = (String) payload.get("policyNumber");
-        String clientId = (String) payload.get("clientId");
-        String cancellationReason = (String) payload.get("cancellationReason");
-        String clientEmail = (String) payload.get("clientEmail");
-        String clientPhone = (String) payload.get("clientPhone");
+        String policyNumber        = (String) payload.get("policyNumber");
+        String cancellationReason  = (String) payload.get("cancellationReason");
+        String clientEmail         = (String) payload.get("clientEmail");
+        String clientPhone         = (String) payload.get("clientPhone");
 
-        String recipient = clientEmail != null ? clientEmail : clientId;
+        String emailSubject = "Votre police d'assurance a ete annulee";
+        String emailContent = "Votre police " + policyNumber + " a ete annulee. "
+                + "Raison : " + cancellationReason + ". Pour toute question, contactez notre service client.";
+        String smsContent   = "Police " + policyNumber + " annulee. Raison: " + cancellationReason + ". Contactez-nous.";
+        String smsSubject   = "Police " + policyNumber + " annulee";
 
-        if (recipient == null || recipient.isBlank()) {
-            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
-            // Only create SMS if phone is available
-            if (clientPhone != null && !clientPhone.isBlank()) {
-                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                        .type(NotificationType.POLICY_CANCELLED)
-                        .channel(NotificationChannel.SMS)
-                        .recipient(clientPhone)
-                        .subject("Police " + policyNumber + " annulée")
-                        .content("Police " + policyNumber + " annulée. Raison: " + cancellationReason +
-                                ". Contactez-nous.")
-                        .build();
-                var smsDto = notificationService.createNotificationInternal(smsRequest);
-                notificationService.sendNotificationInternal(smsDto.getId());
-                log.info("[NOTIFICATION] POLICY_CANCELLED SMS sent to {}", clientPhone);
-            }
-            return;
-        }
-
-        // Create EMAIL notification
-        CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
-                .type(NotificationType.POLICY_CANCELLED)
-                .channel(NotificationChannel.EMAIL)
-                .recipient(recipient)
-                .subject("Votre police d'assurance a été annulée")
-                .content("Votre police " + policyNumber + " a été annulée. " +
-                        "Raison : " + cancellationReason + ". Pour toute question, contactez notre service client.")
-                .build();
-        var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotificationInternal(emailDto.getId());
-        
-        // Create SMS notification if phone number is available
-        if (clientPhone != null && !clientPhone.isBlank()) {
-            CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                    .type(NotificationType.POLICY_CANCELLED)
-                    .channel(NotificationChannel.SMS)
-                    .recipient(clientPhone)
-                    .subject("Police " + policyNumber + " annulée")
-                    .content("Police " + policyNumber + " annulée. Raison: " + cancellationReason +
-                            ". Contactez-nous.")
-                    .build();
-            var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotificationInternal(smsDto.getId());
-            log.info("[NOTIFICATION] POLICY_CANCELLED SMS sent to {}", clientPhone);
-        }
-        
-        log.info("[NOTIFICATION] POLICY_CANCELLED email sent to {}", recipient);
+        sendNotifications(NotificationType.POLICY_CANCELLED, policyNumber,
+                clientEmail, clientPhone, emailSubject, emailContent, smsSubject, smsContent);
     }
 
     private void handlePolicyExpiring(Map<String, Object> payload) {
-        String policyId = (String) payload.get("policyId");
-        String policyNumber = (String) payload.get("policyNumber");
-        String clientId = (String) payload.get("clientId");
-        String clientEmail = (String) payload.get("clientEmail");
-        String clientPhone = (String) payload.get("clientPhone");
+        String policyNumber   = (String) payload.get("policyNumber");
+        String clientEmail    = (String) payload.get("clientEmail");
+        String clientPhone    = (String) payload.get("clientPhone");
         Object expirationDate = payload.get("expirationDate");
         Object daysUntilExpiry = payload.get("daysUntilExpiry");
 
-        String recipient = clientEmail != null ? clientEmail : clientId;
+        String emailSubject = "Rappel Important : Votre police d'assurance " + policyNumber + " arrive a expiration";
+        String emailContent = buildExpiringEmailContent(policyNumber, expirationDate, daysUntilExpiry);
+        String smsContent   = buildExpiringSmsContent(policyNumber, expirationDate, daysUntilExpiry);
+        String smsSubject   = "AssureFlow - " + policyNumber;
 
-        // Professional Email Message
-        String emailSubject = "⚠️ Rappel Important : Votre police d'assurance " + policyNumber + " arrive à expiration";
-        String emailContent = buildProfessionalExpiringEmail(policyNumber, expirationDate, daysUntilExpiry);
+        sendNotifications(NotificationType.POLICY_EXPIRING, policyNumber,
+                clientEmail, clientPhone, emailSubject, emailContent, smsSubject, smsContent);
+    }
 
-        // Professional SMS Message
-        String smsContent = buildProfessionalExpiringSms(policyNumber, expirationDate, daysUntilExpiry);
+    // -------------------------------------------------------------------------
+    // Shared send utility — avoids duplicating email+SMS logic in every handler
+    // -------------------------------------------------------------------------
 
-        if (recipient == null || recipient.isBlank()) {
-            log.warn("[NOTIFICATION] No recipient (email or clientId) for policy={}, skipping email notification", policyNumber);
-            // Only create SMS if phone is available
-            if (clientPhone != null && !clientPhone.isBlank()) {
-                CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                        .type(NotificationType.POLICY_EXPIRING)
-                        .channel(NotificationChannel.SMS)
-                        .recipient(clientPhone)
-                        .subject("AssureFlow - " + policyNumber)
-                        .content(smsContent)
-                        .build();
-                var smsDto = notificationService.createNotificationInternal(smsRequest);
-                notificationService.sendNotificationInternal(smsDto.getId());
-                log.info("[NOTIFICATION] POLICY_EXPIRING SMS sent to {}", clientPhone);
-            }
+    private void sendNotifications(NotificationType type, String policyNumber,
+                                   String clientEmail, String clientPhone,
+                                   String emailSubject, String emailContent,
+                                   String smsSubject, String smsContent) {
+
+        boolean hasEmail = clientEmail != null && !clientEmail.isBlank();
+        boolean hasPhone = clientPhone != null && !clientPhone.isBlank();
+
+        if (!hasEmail && !hasPhone) {
+            log.warn("[NOTIFICATION] No recipient for policy={}, skipping all notifications", policyNumber);
             return;
         }
 
-        // Create EMAIL notification
-        CreateNotificationRequest emailRequest = CreateNotificationRequest.builder()
-                .type(NotificationType.POLICY_EXPIRING)
-                .channel(NotificationChannel.EMAIL)
-                .recipient(recipient)
-                .subject(emailSubject)
-                .content(emailContent)
-                .build();
-        var emailDto = notificationService.createNotificationInternal(emailRequest);
-        notificationService.sendNotificationInternal(emailDto.getId());
-
-        // Create SMS notification if phone number is available
-        if (clientPhone != null && !clientPhone.isBlank()) {
-            CreateNotificationRequest smsRequest = CreateNotificationRequest.builder()
-                    .type(NotificationType.POLICY_EXPIRING)
-                    .channel(NotificationChannel.SMS)
-                    .recipient(clientPhone)
-                    .subject("AssureFlow - " + policyNumber)
-                    .content(smsContent)
-                    .build();
-            var smsDto = notificationService.createNotificationInternal(smsRequest);
-            notificationService.sendNotificationInternal(smsDto.getId());
-            log.info("[NOTIFICATION] POLICY_EXPIRING SMS sent to {}", clientPhone);
+        if (hasEmail) {
+            send(type, NotificationChannel.EMAIL, clientEmail, emailSubject, emailContent);
+            log.info("[NOTIFICATION] {} EMAIL sent to {}", type, clientEmail);
         }
 
-        log.info("[NOTIFICATION] POLICY_EXPIRING email sent to {}", recipient);
+        if (hasPhone) {
+            send(type, NotificationChannel.SMS, clientPhone, smsSubject, smsContent);
+            log.info("[NOTIFICATION] {} SMS sent to {}", type, clientPhone);
+        }
     }
 
-    /**
-     * Build professional email message for policy expiration
-     */
-    private String buildProfessionalExpiringEmail(String policyNumber, Object expirationDate, Object daysUntilExpiry) {
-        StringBuilder content = new StringBuilder();
-        content.append("Bonjour,\n\n");
-        content.append("Nous vous informons que votre police d'assurance N° ").append(policyNumber)
-                .append(" arrivera à expiration le ").append(expirationDate)
-                .append(" (dans ").append(daysUntilExpiry).append(" jours).\n\n");
-        content.append("Afin de maintenir votre couverture d'assurance sans interruption, ")
-                .append("nous vous invitons à renouveler votre police avant la date d'échéance.\n\n");
-        content.append("Pour procéder au renouvellement, vous pouvez :\n");
-        content.append("  • Vous connecter à votre espace client sur notre site web\n");
-        content.append("  • Contacter notre service client au 555-1234\n");
-        content.append("  • Visiter l'une de nos agences\n\n");
-        content.append("Notre équipe reste à votre disposition pour toute information complémentaire.\n\n");
-        content.append("Cordialement,\n");
-        content.append("L'équipe AssureFlow\n");
-        content.append("Service Client - 24/7\n");
-        content.append("www.assureflow.com | contact@assureflow.com");
-        return content.toString();
+    private void send(NotificationType type, NotificationChannel channel,
+                      String recipient, String subject, String content) {
+        CreateNotificationRequest request = CreateNotificationRequest.builder()
+                .type(type)
+                .channel(channel)
+                .recipient(recipient)
+                .subject(subject)
+                .content(content)
+                .build();
+        var dto = notificationService.createNotificationInternal(request);
+        notificationService.sendNotificationInternal(dto.getId());
     }
 
-    /**
-     * Build professional SMS message for policy expiration (max 160 chars)
-     */
-    private String buildProfessionalExpiringSms(String policyNumber, Object expirationDate, Object daysUntilExpiry) {
+    // -------------------------------------------------------------------------
+    // Content builders for expiring notifications
+    // -------------------------------------------------------------------------
+
+    private String buildExpiringEmailContent(String policyNumber, Object expirationDate, Object daysUntilExpiry) {
+        return "Bonjour,\n\n"
+                + "Nous vous informons que votre police d'assurance N " + policyNumber
+                + " arrivera a expiration le " + expirationDate
+                + " (dans " + daysUntilExpiry + " jours).\n\n"
+                + "Afin de maintenir votre couverture sans interruption, "
+                + "nous vous invitons a renouveler votre police avant la date d'echeance.\n\n"
+                + "Pour proceder au renouvellement :\n"
+                + "  - Connectez-vous a votre espace client\n"
+                + "  - Contactez notre service client au 555-1234\n"
+                + "  - Visitez l'une de nos agences\n\n"
+                + "Cordialement,\nL'equipe AssureFlow\nwww.assureflow.com | contact@assureflow.com";
+    }
+
+    private String buildExpiringSmsContent(String policyNumber, Object expirationDate, Object daysUntilExpiry) {
         return String.format(
-            "AssureFlow: Votre police %s expire le %s (%s jours). Renouvelez maintenant pour éviter toute interruption de couverture. Contact: 555-1234",
-            policyNumber, expirationDate, daysUntilExpiry
-        );
+                "AssureFlow: Votre police %s expire le %s (%s jours). Renouvelez maintenant. Contact: 555-1234",
+                policyNumber, expirationDate, daysUntilExpiry);
     }
 }

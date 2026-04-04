@@ -100,9 +100,9 @@ public class ClientController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a client")
-    public ResponseEntity<Void> deleteClient(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> deleteClient(@PathVariable UUID id) {
         clientService.deleteClient(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.success(null, "Client deleted successfully"));
     }
 
     @GetMapping("/search")

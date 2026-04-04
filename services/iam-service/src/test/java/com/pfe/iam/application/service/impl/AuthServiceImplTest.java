@@ -12,6 +12,7 @@ import com.pfe.iam.domain.model.Role;
 import com.pfe.iam.domain.model.User;
 import com.pfe.iam.domain.model.UserRole;
 import com.pfe.iam.domain.repository.PasswordResetTokenRepository;
+import com.pfe.iam.domain.repository.RoleRepository;
 import com.pfe.iam.domain.repository.UserRepository;
 import com.pfe.commons.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,8 @@ class AuthServiceImplTest {
     private AuditService auditService;
     @Mock
     private SessionService sessionService;
+    @Mock
+    private RoleRepository roleRepository;
     @Mock
     private PasswordResetTokenRepository passwordResetTokenRepository;
 
@@ -102,6 +105,7 @@ class AuthServiceImplTest {
             when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
             when(userMapper.toDomain(registerRequest)).thenReturn(user);
             when(passwordEncoder.encode(anyString())).thenReturn("hashedpassword");
+            when(roleRepository.findByName(UserRole.CLIENT)).thenReturn(Optional.of(user.getRole()));
             when(userRepository.save(any(User.class))).thenReturn(user);
             when(userMapper.toDto(any(User.class))).thenReturn(userDto);
 

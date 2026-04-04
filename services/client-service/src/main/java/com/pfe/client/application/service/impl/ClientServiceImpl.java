@@ -248,17 +248,30 @@ public class ClientServiceImpl implements ClientService {
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public List<ClientResponse> getAllClients(int page, int size) {
-        return clientRepository.findAll(page, size).stream()
-                .peek(c -> c.setAddresses(addressRepository.findByClientId(c.getId())))
-                .map(mapper::toResponse)
-                .collect(Collectors.toList());
+        log.debug("Fetching clients page={} size={}", page, size);
+        List<Client> clients = clientRepository.findAll(page, size);
+        if (clients.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> clientIds = clients.stream().map(Client::getId).collect(Collectors.toList());
+        Map<UUID, List<Address>> addressesByClientId = addressRepository.findByClientIdIn(clientIds)
+                .stream()
+                .collect(Collectors.groupingBy(Address::getClientId));
+        clients.forEach(c -> c.setAddresses(addressesByClientId.getOrDefault(c.getId(), List.of())));
+        return clients.stream().map(mapper::toResponse).collect(Collectors.toList());
     }
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     @Transactional(readOnly = true)
     public List<ClientResponse> search(ClientSearchCriteria criteria, int page, int size) {
-        return clientRepository.findAll(page, size).stream()
+        log.debug("Searching clients with criteria: {}", criteria);
+        List<Client> clients = clientRepository.findAll(page, size);
+        if (clients.isEmpty()) {
+            return List.of();
+        }
+
+        List<Client> filtered = clients.stream()
                 .filter(c -> {
                     if (criteria.getFirstName() != null && (c.getFirstName() == null
                             || !c.getFirstName().toLowerCase().contains(criteria.getFirstName().toLowerCase())))
@@ -278,9 +291,15 @@ public class ClientServiceImpl implements ClientService {
                         return false;
                     return true;
                 })
-                .peek(c -> c.setAddresses(addressRepository.findByClientId(c.getId())))
-                .map(mapper::toResponse)
                 .collect(Collectors.toList());
+
+        List<UUID> clientIds = filtered.stream().map(Client::getId).collect(Collectors.toList());
+        Map<UUID, List<Address>> addressesByClientId = addressRepository.findByClientIdIn(clientIds)
+                .stream()
+                .collect(Collectors.groupingBy(Address::getClientId));
+        filtered.forEach(c -> c.setAddresses(addressesByClientId.getOrDefault(c.getId(), List.of())));
+
+        return filtered.stream().map(mapper::toResponse).collect(Collectors.toList());
     }
 
     @Override

@@ -16,6 +16,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface PolicyEntityMapper {
 
+    @Mapping(target = "domainEvents", ignore = true)
     Policy toDomain(PolicyEntity entity);
 
     @Mapping(target = "policyId", source = "policy.id")

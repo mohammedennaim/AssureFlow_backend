@@ -14,7 +14,7 @@ import java.util.UUID;
 @Repository
 public interface EscalationRepository extends JpaRepository<Escalation, UUID> {
     
-    Page<EscalationStatus> findByEntityTypeAndEntityId(String entityType, UUID entityId, Pageable pageable);
+    Page<Escalation> findByEntityTypeAndEntityId(String entityType, UUID entityId, Pageable pageable);
     
     Page<Escalation> findByStatus(EscalationStatus status, Pageable pageable);
     
