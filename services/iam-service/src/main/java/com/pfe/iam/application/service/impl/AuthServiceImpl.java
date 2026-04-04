@@ -7,8 +7,11 @@ import com.pfe.iam.application.service.AuthService;
 import com.pfe.iam.application.service.SessionService;
 import com.pfe.iam.domain.exception.EmailAlreadyExistsException;
 import com.pfe.iam.domain.model.PasswordResetToken;
+import com.pfe.iam.domain.model.Role;
 import com.pfe.iam.domain.model.User;
+import com.pfe.iam.domain.model.UserRole;
 import com.pfe.iam.domain.repository.PasswordResetTokenRepository;
+import com.pfe.iam.domain.repository.RoleRepository;
 import com.pfe.iam.domain.repository.UserRepository;
 import com.pfe.commons.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 public class AuthServiceImpl implements AuthService {
 
         private final UserRepository userRepository;
+        private final RoleRepository roleRepository;
         private final PasswordEncoder passwordEncoder;
         private final JwtService jwtService;
         private final AuthenticationManager authenticationManager;
@@ -51,9 +55,15 @@ public class AuthServiceImpl implements AuthService {
                 user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
                 user.setActive(true);
 
+                // Assign default CLIENT role for self-registration
+                Role defaultRole = roleRepository.findByName(UserRole.CLIENT)
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Default CLIENT role not found in database. Please ensure roles are seeded."));
+                user.setRole(defaultRole);
+
                 User savedUser = userRepository.save(user);
                 auditService.log(savedUser.getId().toString(), "USER_REGISTERED");
-                log.info("User registered: {}", savedUser.getEmail());
+                log.info("User registered with CLIENT role: {}", savedUser.getEmail());
                 return userMapper.toDto(savedUser);
         }
 
