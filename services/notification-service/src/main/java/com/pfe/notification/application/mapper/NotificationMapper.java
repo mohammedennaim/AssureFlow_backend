@@ -14,6 +14,7 @@ public interface NotificationMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "sentAt", ignore = true)
     @Mapping(target = "read", ignore = true)
     Notification toDomain(CreateNotificationRequest request);

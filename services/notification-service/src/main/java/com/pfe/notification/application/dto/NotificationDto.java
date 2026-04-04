@@ -26,6 +26,7 @@ public class NotificationDto {
     private String content;
     private NotificationStatus status;
     private UUID policyId;
+    private LocalDateTime createdAt;
     private LocalDateTime sentAt;
     private boolean read;
 }

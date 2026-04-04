@@ -354,7 +354,7 @@ public class ClaimEventConsumer {
     }
 
     /**
-     * Handles claim.closed event - notifies CLIENT only
+     * Handles claim.closed event - notifies CLIENT and ADMIN
      */
     private void handleClaimClosed(Map<String, Object> payload) {
         String clientId = (String) payload.get("clientId");
@@ -384,6 +384,16 @@ public class ClaimEventConsumer {
                 "Réclamation " + claimRef + " clôturée",
                 "AssureFlow: Votre réclamation " + claimRef + " est clôturée.");
         }
+
+        // Send IN_APP to CLIENT
+        sendInAppNotification(recipient, NotificationType.CLAIM_UNDER_REVIEW,
+            "Réclamation clôturée",
+            "Votre réclamation " + claimRef + " est maintenant clôturée.");
+
+        // Send IN_APP notification to ADMIN
+        sendInAppNotificationToAdmin("CLAIM_UNDER_REVIEW",
+            "Réclamation clôturée",
+            "La réclamation " + claimRef + " a été clôturée.");
 
         log.info("[NOTIFICATION] CLAIM_CLOSED notification sent to {}", recipient);
     }
