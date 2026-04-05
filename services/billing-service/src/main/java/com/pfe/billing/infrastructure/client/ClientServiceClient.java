@@ -8,9 +8,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-/**
- * Feign client for calling client-service.
- */
 @FeignClient(
         name = "client-service",
         url = "${feign.client.config.client-service.url:http://localhost:8084}",

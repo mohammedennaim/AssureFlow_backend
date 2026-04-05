@@ -26,7 +26,6 @@ public class FeignConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {
-            // Forward Authorization header from incoming request to Feign clients
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
                 String authHeader = attributes.getRequest().getHeader("Authorization");

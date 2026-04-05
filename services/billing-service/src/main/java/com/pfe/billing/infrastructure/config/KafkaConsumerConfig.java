@@ -14,9 +14,6 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Kafka consumer configuration for billing-service.
- */
 @Configuration
 @EnableKafka
 public class KafkaConsumerConfig {

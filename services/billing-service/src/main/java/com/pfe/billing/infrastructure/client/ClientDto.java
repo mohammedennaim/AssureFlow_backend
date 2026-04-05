@@ -5,9 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * DTO representing a client from client-service.
- */
+
 @Data
 @Builder
 @NoArgsConstructor

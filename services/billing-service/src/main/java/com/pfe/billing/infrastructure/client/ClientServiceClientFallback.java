@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * Fallback implementation for ClientServiceClient.
- * Returns null when client-service is unavailable.
- */
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
